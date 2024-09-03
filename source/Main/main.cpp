@@ -23,6 +23,8 @@ int main() {
 	}
 
 	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1);
+	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 
 	CEngine my_engine;
 	my_engine.HelloWorld();
@@ -30,7 +32,7 @@ int main() {
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
-		//glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		glfwSwapBuffers(window);
 	}
