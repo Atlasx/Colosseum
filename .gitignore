@@ -1,3 +1,6 @@
 [Bb]uild/
 [Gg]enerated/
 [Bb]in/
+
+out/
+.vs/
