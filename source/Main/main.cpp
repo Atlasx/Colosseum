@@ -79,7 +79,7 @@ int main() {
 		"out vec4 fragColor;\n"
 		"void main()\n"
 		"{\n"
-		"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);"
+		"	fragColor = vec4(0.0f, 0.5f, 0.8f, 1.0f);"
 		"}\n";
 
 	unsigned int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -110,29 +110,43 @@ int main() {
 
 
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		0.0f, 0.5f, 0.0f
+		0.5f,  0.5f, 0.0f,  // top right
+		0.5f, -0.5f, 0.0f,  // bottom right
+		-0.5f, -0.5f, 0.0f,  // bottom left
+		-0.5f,  0.5f, 0.0f   // top left
 	};
 
-	unsigned int VBO, VAO;
+	int indices[] = {
+		0, 1, 3,
+		1, 2, 3
+	};
+
+	unsigned int VBO, VAO, EBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-	
+	glGenBuffers(1, &EBO);
+
 	glBindVertexArray(VAO);
 
-	// Bind Vertex Buffer inside the VAO
+	// Load VBO with vertices
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// Set vertex attributes inside VAO
+	// Load EBO with elements
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// Set VAO vertex attributes
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-
-
+	
+	// Unbind VBO and VAO
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
 	while (!glfwWindowShouldClose(window)) {
 
+		glClearColor(0.f, 0.f, 0.f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -141,11 +155,10 @@ int main() {
 
 		processInput(window);
 
-		glfwPollEvents();
-
-		glUseProgram(shaderProgram);
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		// OpenGL Drawing
+		glUseProgram(shaderProgram);	// Set Shader Program
+		glBindVertexArray(VAO);			// Re-bind our VAO
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw from the EBO (referenced from VAO)
 
 		ImGui::ShowDemoWindow();
 		ImGui::Render();
@@ -154,7 +167,13 @@ int main() {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
+
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+	glDeleteProgram(shaderProgram);
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
