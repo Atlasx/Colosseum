@@ -65,10 +65,10 @@ int main() {
 	Shader myShader(vertPath, fragPath);
 
 	float vertices[] = {
-		0.5f,  0.5f, 0.0f,  // top right
-		0.5f, -0.5f, 0.0f,  // bottom right
-		-0.5f, -0.5f, 0.0f,  // bottom left
-		-0.5f,  0.5f, 0.0f   // top left
+		0.5f,  0.5f, 0.0f,		1.0f, 0.0f, 0.0f, // top right
+		0.5f, -0.5f, 0.0f,		0.0f, 1.0f, 0.0f, // bottom right
+		-0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f, // bottom left
+		-0.5f,  0.5f, 0.0f,		0.0f, 0.0f, 0.0f,   // top left
 	};
 
 	int indices[] = {
@@ -92,8 +92,10 @@ int main() {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// Set VAO vertex attributes
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 	
 	// Unbind VBO and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -111,16 +113,19 @@ int main() {
 		processInput(window);
 
 		// OpenGL Drawing
-		//glUseProgram(shaderProgram);	// Set Shader Program
 		myShader.use();
-		
+		float time = glfwGetTime();
+		float value = (sin(time) + 1.0f) / 0.5f;
+		myShader.setFloat3("multColor", value, value, value);
+
 		glBindVertexArray(VAO);			// Re-bind our VAO
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw from the EBO (referenced from VAO)
 
+		ImGui::SetNextWindowPos(ImVec2(10, 10));
 		ImGui::ShowDemoWindow();
+		
+
 		ImGui::Render();
-
-
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
