@@ -1,12 +1,15 @@
 #include <iostream>
 
 #include "engine.h"
+#include "Shader.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
+
+#include <filesystem>
 
 void processInput(GLFWwindow* window);
 
@@ -55,59 +58,11 @@ int main() {
 	CEngine my_engine;
 	my_engine.HelloWorld();
 
-	// Tutorial Crap (refreshing graphics knowledge)
-	const char* vertexShaderSource = "#version 330 core\n"
-		"layout(location = 0) in vec3 aPos;\n"
-		"void main()\n"
-		"{\n"
-		"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-		"}\0";
+	std::filesystem::path assetsPath = ASSETS_PATH;
+	std::filesystem::path vertPath = assetsPath / "shaders/shader.vert";
+	std::filesystem::path fragPath = assetsPath / "shaders/shader.frag";
 
-	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "Shader failed to compile\n" << infoLog << std::endl;
-	}
-
-	const char* fragmentShaderSource = "#version 330 core\n"
-		"out vec4 fragColor;\n"
-		"void main()\n"
-		"{\n"
-		"	fragColor = vec4(0.0f, 0.5f, 0.8f, 1.0f);"
-		"}\n";
-
-	unsigned int fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragShader);
-
-	success = false;
-	glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(fragShader, 512, NULL, infoLog);
-		std::cout << "Fragment Shader failed to compile\n" << infoLog << std::endl;
-	}
-
-	unsigned int shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragShader);
-	glLinkProgram(shaderProgram);
-
-	success = false;
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "Program failed to link\n" << infoLog << std::endl;
-	}
-
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragShader);
-
+	Shader myShader(vertPath, fragPath);
 
 	float vertices[] = {
 		0.5f,  0.5f, 0.0f,  // top right
@@ -156,7 +111,9 @@ int main() {
 		processInput(window);
 
 		// OpenGL Drawing
-		glUseProgram(shaderProgram);	// Set Shader Program
+		//glUseProgram(shaderProgram);	// Set Shader Program
+		myShader.use();
+		
 		glBindVertexArray(VAO);			// Re-bind our VAO
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw from the EBO (referenced from VAO)
 
@@ -173,7 +130,6 @@ int main() {
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
-	glDeleteProgram(shaderProgram);
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

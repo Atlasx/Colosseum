@@ -12,6 +12,7 @@ target_link_libraries(Main PRIVATE
 	glad
 	ImGui
 	glfw
+	RenderLib
 )
 
 target_include_directories(Main PRIVATE ${CMAKE_SOURCE_DIR}/vendor/imgui)
