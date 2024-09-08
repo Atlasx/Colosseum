@@ -11,6 +11,9 @@
 
 #include <filesystem>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 void processInput(GLFWwindow* window);
 
 int main() {
@@ -64,11 +67,35 @@ int main() {
 
 	Shader myShader(vertPath, fragPath);
 
+	std::filesystem::path texturePath = assetsPath / "images/container.jpg";
+
+	int width, height, nrChannels;
+	// Note stbi seems to only like Unix style formatting from filesystem
+	unsigned char* data = stbi_load((char*)texturePath.generic_string().c_str(), &width, &height, &nrChannels, 0);
+	if (!data) {
+		std::cerr << "Failed to load texture!" << std::endl;
+	}
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	stbi_image_free(data);
+
 	float vertices[] = {
-		0.5f,  0.5f, 0.0f,		1.0f, 0.0f, 0.0f, // top right
-		0.5f, -0.5f, 0.0f,		0.0f, 1.0f, 0.0f, // bottom right
-		-0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f, // bottom left
-		-0.5f,  0.5f, 0.0f,		0.0f, 0.0f, 0.0f,   // top left
+		// Positions			Colors				Textures
+		0.5f,  0.5f, 0.0f,		1.0f, 0.0f, 0.0f,	1.0f, 1.0f,	// top right
+		0.5f, -0.5f, 0.0f,		0.0f, 1.0f, 0.0f,	1.0f, 0.0f,	// bottom right
+		-0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f,	0.0f, 0.0f, // bottom left
+		-0.5f,  0.5f, 0.0f,		0.0f, 0.0f, 0.0f,	0.0f, 1.0f,	// top left
 	};
 
 	int indices[] = {
@@ -92,14 +119,19 @@ int main() {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// Set VAO vertex attributes
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 	
 	// Unbind VBO and VAO
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	// Tunables
+	float mixValue = 0.f;
 
 	while (!glfwWindowShouldClose(window)) {
 
@@ -112,17 +144,26 @@ int main() {
 
 		processInput(window);
 
+		ImGui::SetNextWindowPos(ImVec2(10, 10));
+		ImGui::SetNextWindowSize(ImVec2(250, 150));
+		ImGui::Begin("Tunables");
+
 		// OpenGL Drawing
 		myShader.use();
-		float time = glfwGetTime();
-		float value = (sin(time) + 1.0f) / 0.5f;
-		myShader.setFloat3("multColor", value, value, value);
+		
+		ImGui::SliderFloat("Mix", &mixValue, 0.0f, 1.0f);
+		myShader.setFloat("mixPercent", mixValue);
 
+		ImGui::End();
+
+		glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);			// Re-bind our VAO
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw from the EBO (referenced from VAO)
 
-		ImGui::SetNextWindowPos(ImVec2(10, 10));
-		ImGui::ShowDemoWindow();
+		
+
+// 		
+// 		ImGui::ShowDemoWindow();
 		
 
 		ImGui::Render();
