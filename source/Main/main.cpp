@@ -67,6 +67,7 @@ int main() {
 
 	Shader myShader(vertPath, fragPath);
 
+	// Load first testing image
 	std::filesystem::path texturePath = assetsPath / "images/container.jpg";
 
 	int width, height, nrChannels;
@@ -78,6 +79,7 @@ int main() {
 
 	unsigned int texture;
 	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -89,6 +91,29 @@ int main() {
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	stbi_image_free(data);
+	data = nullptr;
+
+	// Load second testing image
+	std::filesystem::path altTexturePath = assetsPath / "images/awesomeface.png";
+
+	stbi_set_flip_vertically_on_load(true);
+	data = stbi_load((char*)altTexturePath.generic_string().c_str(), &width, &height, &nrChannels, 0);
+	if (!data) {
+		std::cerr << "Failed to load alt texture image" << std::endl;
+	}
+
+	unsigned int altTexture;
+	glGenTextures(1, &altTexture);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, altTexture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
 
 	float vertices[] = {
 		// Positions			Colors				Textures
@@ -156,15 +181,20 @@ int main() {
 
 		ImGui::End();
 
+		// Bind texture slots
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, altTexture);
+	
 		glBindVertexArray(VAO);			// Re-bind our VAO
+
+		// Set uniform values
+		myShader.setInt("texture1", 0);
+		myShader.setInt("texture2", 1);
+
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); // Draw from the EBO (referenced from VAO)
 
-		
-
-// 		
-// 		ImGui::ShowDemoWindow();
-		
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
