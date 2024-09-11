@@ -11,10 +11,10 @@ public:
 
 	void load();
 
-
 	void useTexture(GLuint slot);
 
 private:
 	GLuint textureID;
 	GLuint width, height;
+
 };
