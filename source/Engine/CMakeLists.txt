@@ -3,11 +3,20 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(SOURCES
 	src/Engine.cpp
+
+	# Systems
+	src/Systems/EngineSystem.cpp
+	src/Systems/ResourceSystem.cpp
+	src/Systems/InputSystem.cpp
 )
 
 set(INCLUDES
 	include/Engine.h
-	include/EngineSystem.h
+
+	# Systems
+	include/Systems/EngineSystem.h
+	include/Systems/ResourceSystem.h
+	include/Systems/InputSystem.h
 )
 
 source_group("Source Files" FILES ${SOURCES})

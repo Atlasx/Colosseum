@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "engine.h"
+#include "Engine.h"
 #include "Shader.h"
-#include "EngineSystem.h"
+#include "Systems/EngineSystem.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
@@ -59,8 +59,8 @@ int main() {
 	ImGui_ImplOpenGL3_Init("#version 130");
 
 	// Engine Setup
-	CEngine my_engine;
-	my_engine.HelloWorld();
+	CE::Engine my_engine;
+	my_engine.Start();
 
 	std::filesystem::path assetsPath = ASSETS_PATH;
 	std::filesystem::path vertPath = assetsPath / "shaders/shader.vert";
