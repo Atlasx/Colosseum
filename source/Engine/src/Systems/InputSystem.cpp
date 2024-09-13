@@ -12,11 +12,6 @@ namespace CE
 
 	}
 
-	std::vector<std::string> InputSystem::GetDependencies() const
-	{
-		return  {};
-	}
-
 	InputSystem::~InputSystem()
 	{
 

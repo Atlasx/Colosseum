@@ -27,7 +27,7 @@ namespace CE
 		void AddSystems();
 
 		// Systems are initialized and ready to use
-		CEResult InitSystems();
+		void InitSystems();
 
 		std::vector<std::shared_ptr<CEngineSystem>> m_systems;
 

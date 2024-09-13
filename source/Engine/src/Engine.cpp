@@ -2,6 +2,7 @@
 
 #include "Systems/ResourceSystem.h"
 #include "Systems/InputSystem.h"
+#include "Systems/EventSystem.h"
 
 namespace CE
 {
@@ -13,6 +14,10 @@ namespace CE
 	Engine::~Engine()
 	{
 		std::cout << "Good Night Engine" << std::endl;
+
+		for (auto system : m_systems) {
+			system->Shutdown();
+		}
 	}
 
 	void Engine::Start()
@@ -25,19 +30,14 @@ namespace CE
 	{
 		m_systems.push_back(std::make_unique<ResourceSystem>());
 		m_systems.push_back(std::make_unique<InputSystem>());
+		m_systems.push_back(std::make_unique<EventSystem>());
 	}
 
-	CEResult Engine::InitSystems()
+	void Engine::InitSystems()
 	{
 		// TODO dependency sort
-		/*
-		CEResult result = CEResult::Success;
 		for (auto system : m_systems) {
-			result |= system->Startup();
+			system->Startup();
 		}
-
-		return result;
-		*/
-		return CEResult::Success;
 	}
 }

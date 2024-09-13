@@ -1,23 +1,22 @@
 #pragma once
 
+#include <vector>
+#include <string>
+
 #include "Systems/EngineSystem.h"
 
 namespace CE
 {
-	class InputSystem : public CEngineSystem
+	class EventSystem : public CEngineSystem
 	{
 	public:
 
-		/* CEngineSystem Interface */
-
 		std::vector<std::string> GetDependencies() const override
 		{
-			return { "EventSystem" };
+			return {};
 		};
 
-		~InputSystem() override;
-
-		/* Input System */
+		~EventSystem() override;
 
 	protected:
 
