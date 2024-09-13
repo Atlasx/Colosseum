@@ -8,6 +8,7 @@ set(SOURCES
 	src/Systems/EngineSystem.cpp
 	src/Systems/ResourceSystem.cpp
 	src/Systems/InputSystem.cpp
+	src/Systems/EventSystem.cpp
 )
 
 set(INCLUDES
@@ -17,6 +18,7 @@ set(INCLUDES
 	include/Systems/EngineSystem.h
 	include/Systems/ResourceSystem.h
 	include/Systems/InputSystem.h
+	include/Systems/EventSystem.h
 )
 
 source_group("Source Files" FILES ${SOURCES})
