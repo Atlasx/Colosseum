@@ -24,7 +24,12 @@ namespace CE
 	{
 		AddSystems();
 		InitSystems();
-#ifdef C_DEBUG
+#ifdef CRELEASE
+		int foo = 0;
+		foo++;
+#endif
+
+#ifdef CDEBUG
 		TestSystems();
 #endif
 	}
@@ -44,7 +49,7 @@ namespace CE
 		}
 	}
 
-#ifdef C_DEBUG
+#ifdef CDEBUG
 	void Engine::TestSystems() {
 		// Run some tests on systems like loading specific files etc
 

@@ -28,6 +28,7 @@ add_library(Engine STATIC ${SOURCES} ${INCLUDES})
 
 target_include_directories(Engine PUBLIC ${INCLUDE_DIR})
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(Engine PRIVATE C_DEBUG)
-endif()
+target_compile_definitions(Engine PRIVATE 
+	$<$<CONFIG:Release>:CRELEASE>
+	$<$<CONFIG:Debug>:CDEBUG>
+)

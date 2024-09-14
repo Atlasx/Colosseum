@@ -29,7 +29,7 @@ namespace CE
 		// Systems are initialized and ready to use
 		void InitSystems();
 
-#ifdef C_DEBUG
+#ifdef CDEBUG
 		// Some debug only test code during system development
 		void TestSystems();
 #endif
