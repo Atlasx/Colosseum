@@ -7,8 +7,10 @@
 
 namespace CE
 {
-	class EventSystem : public CEngineSystem
+	class EventSystem : public EngineSystem
 	{
+
+		/* CEngineSystem */
 	public:
 
 		std::vector<std::string> GetDependencies() const override

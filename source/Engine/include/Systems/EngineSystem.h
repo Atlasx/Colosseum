@@ -7,12 +7,12 @@ namespace CE
 {
 	class Engine;
 
-	class CEngineSystem
+	class EngineSystem
 	{
 	public:
 		virtual std::vector<std::string> GetDependencies() const = 0;
 
-		virtual ~CEngineSystem() = 0;
+		virtual ~EngineSystem() = 0;
 
 	protected:
 

@@ -24,6 +24,9 @@ namespace CE
 	{
 		AddSystems();
 		InitSystems();
+#ifdef C_DEBUG
+		TestSystems();
+#endif
 	}
 
 	void Engine::AddSystems()
@@ -40,4 +43,11 @@ namespace CE
 			system->Startup();
 		}
 	}
+
+#ifdef C_DEBUG
+	void Engine::TestSystems() {
+		// Run some tests on systems like loading specific files etc
+
+	}
+#endif
 }

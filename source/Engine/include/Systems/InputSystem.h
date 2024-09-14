@@ -4,7 +4,7 @@
 
 namespace CE
 {
-	class InputSystem : public CEngineSystem
+	class InputSystem : public EngineSystem
 	{
 	public:
 

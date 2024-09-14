@@ -29,7 +29,12 @@ namespace CE
 		// Systems are initialized and ready to use
 		void InitSystems();
 
-		std::vector<std::shared_ptr<CEngineSystem>> m_systems;
+#ifdef C_DEBUG
+		// Some debug only test code during system development
+		void TestSystems();
+#endif
+
+		std::vector<std::shared_ptr<EngineSystem>> m_systems;
 
 	};
 }
