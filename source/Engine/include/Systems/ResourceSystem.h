@@ -31,7 +31,8 @@ namespace CE
 
 
 	template<ResourceTypeConcept ResourceType>
-	struct ResourceRequest {
+	struct ResourceRequest
+	{
 		std::filesystem::path m_resourcePath;
 		std::function<void(std::shared_ptr<ResourceType>)> m_callback;
 
@@ -71,31 +72,30 @@ namespace CE
 		// Request Resource
 		// Begins the process of loading a requested resource, adds the request to the queue
 		template<ResourceTypeConcept ResourceType>
-		bool RequestResource(const std::filesystem::path& resourcePath, std::function<void(std::shared_ptr<ResourceType>)> callback) {
-
+		bool RequestResource(const std::filesystem::path& resourcePath, std::function<void(std::shared_ptr<ResourceType>)> callback)
+		{
 			if (!IsValidResourcePath(resourcePath)) {
 				// TODO Logging
 				return false;
 			}
 
 			ResourceRequest req(resourcePath, callback);
-			m_requests.push([req]() {
+			m_requests.push([this, req]() {
 				// TODO Logging
-				ProcessRequest<ResourceType>(req);
+				this->ProcessRequest<ResourceType>(req);
 			});
-
 			return true;
 		}
 
 	private:
-
 		static bool IsValidResourcePath(const std::filesystem::path& rPath);
 
 		template<ResourceTypeConcept ResourceType>
 		std::shared_ptr<ResourceType> LoadResource(const std::filesystem::path& resourcePath);
 
 		template<ResourceTypeConcept ResourceType>
-		void ProcessRequest(const ResourceRequest<ResourceType>& request) {
+		void ProcessRequest(const ResourceRequest<ResourceType>& request)
+		{
 			// TODO Check for already loaded resources here
 			std::shared_ptr<ResourceType> loadedResource = std::move(LoadResource<ResourceType>(request.m_resourcePath));
 			request.m_callback(loadedResource);
@@ -103,9 +103,12 @@ namespace CE
 
 		std::queue<std::function<void()>> m_requests;
 
+	public:
 		/* EngineSystem Interface */
-	public:	
-		std::vector<std::string> GetDependencies() const override {
+		std::string Name() const override { return "InputSystem"; }
+
+		std::vector<std::string> GetDependencies() const override
+		{
 			return {};
 		}
 
@@ -115,5 +118,4 @@ namespace CE
 		void Startup() override;
 		void Shutdown() override;
 	};
-
 }

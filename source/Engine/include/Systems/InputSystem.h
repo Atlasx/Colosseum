@@ -9,6 +9,7 @@ namespace CE
 	public:
 
 		/* CEngineSystem Interface */
+		std::string Name() const override { return "InputSystem"; }
 
 		std::vector<std::string> GetDependencies() const override
 		{

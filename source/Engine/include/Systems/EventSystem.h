@@ -10,9 +10,11 @@ namespace CE
 	class EventSystem : public EngineSystem
 	{
 
-		/* CEngineSystem */
+		
 	public:
+		/* EngineSystem Interface */
 
+		std::string Name() const override { return "EventSystem"; }
 		std::vector<std::string> GetDependencies() const override
 		{
 			return {};

@@ -6,7 +6,8 @@
 
 namespace CE
 {
-	Engine::Engine()
+	Engine::Engine() :
+		m_shutdown(false)
 	{
 		std::cout << "Good Morning Engine" << std::endl;
 	}
@@ -15,7 +16,7 @@ namespace CE
 	{
 		std::cout << "Good Night Engine" << std::endl;
 
-		for (auto system : m_systems) {
+		for (auto [type, system] : m_systems) {
 			system->Shutdown();
 		}
 	}
@@ -24,35 +25,51 @@ namespace CE
 	{
 		AddSystems();
 		InitSystems();
-#ifdef CRELEASE
-		int foo = 0;
-		foo++;
-#endif
 
 #ifdef CDEBUG
 		TestSystems();
 #endif
+
+		//CoreLoop();
 	}
 
 	void Engine::AddSystems()
 	{
-		m_systems.push_back(std::make_unique<ResourceSystem>());
-		m_systems.push_back(std::make_unique<InputSystem>());
-		m_systems.push_back(std::make_unique<EventSystem>());
+		m_systems[typeid(ResourceSystem)] = std::make_unique<ResourceSystem>();
+		m_systems[typeid(InputSystem)] = std::make_unique<InputSystem>();
+		m_systems[typeid(EventSystem)] = std::make_unique<EventSystem>();
 	}
 
 	void Engine::InitSystems()
 	{
+		//DependencyGraph graph;
+		for (auto [type, system] : m_systems) {
+			//graph.AddNode(system->Name(), system->GetDependencies());
+		}
+
 		// TODO dependency sort
-		for (auto system : m_systems) {
+		for (auto [type, system] : m_systems) {
 			system->Startup();
 		}
 	}
 
 #ifdef CDEBUG
-	void Engine::TestSystems() {
+	void Engine::TestSystems()
+	{
 		// Run some tests on systems like loading specific files etc
 
 	}
 #endif
+
+	void Engine::CoreLoop()
+	{
+		while (m_shutdown == false) {
+			Update();
+		}
+	}
+
+	void Engine::Update()
+	{
+
+	}
 }

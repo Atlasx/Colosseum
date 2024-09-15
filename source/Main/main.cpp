@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "Shader.h"
 #include "Systems/EngineSystem.h"
+#include "Systems/ResourceSystem.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
@@ -14,6 +15,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+using namespace CE;
 
 void processInput(GLFWwindow* window);
 
@@ -59,14 +62,20 @@ int main() {
 	ImGui_ImplOpenGL3_Init("#version 130");
 
 	// Engine Setup
-	CE::Engine my_engine;
+	Engine my_engine;
 	my_engine.Start();
 
 	std::filesystem::path assetsPath = ASSETS_PATH;
 	std::filesystem::path vertPath = assetsPath / "shaders/shader.vert";
 	std::filesystem::path fragPath = assetsPath / "shaders/shader.frag";
 
-	Shader myShader(vertPath, fragPath);
+	//Test ResourceSystem
+	auto RS = my_engine.GetSystem<ResourceSystem>();
+	if (RS) {
+		RS->RequestResource<CE::Shader>(vertPath, nullptr);
+	}
+
+	RL::Shader myShader(vertPath, fragPath);
 
 	// Load first testing image
 	std::filesystem::path texturePath = assetsPath / "images/container.jpg";

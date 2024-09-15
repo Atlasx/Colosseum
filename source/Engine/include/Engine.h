@@ -1,8 +1,10 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
+#include <unordered_map>
 #include <memory>
+#include <typeindex>
+#include <typeinfo>
 
 #include "Systems/EngineSystem.h"
 
@@ -19,7 +21,27 @@ namespace CE
 		Engine();
 		~Engine();
 
+		//
+		// Start
+		// 
+		// Entry point into the engine, causes systems to be created and initialized
+		//
 		void Start();
+
+		//
+		// GetSystem<T>
+		// 
+		// Allows for a "singleton-like" design where anyone can query the engine's systems by type given an engine
+		//
+		template<typename System>
+		std::shared_ptr<System> GetSystem() {
+			auto iter = m_systems.find(typeid(System));
+			if (iter != m_systems.end()) {
+				// Dyn cast here to translate from the polymorphic map to the requested system type
+				return std::dynamic_pointer_cast<System>(iter->second);
+			}
+			return nullptr;
+		}
 
 	private:
 		
@@ -34,7 +56,11 @@ namespace CE
 		void TestSystems();
 #endif
 
-		std::vector<std::shared_ptr<EngineSystem>> m_systems;
+		std::unordered_map<std::type_index, std::shared_ptr<EngineSystem>> m_systems;
 
+		bool m_shutdown = false;
+
+		void CoreLoop();
+		void Update();
 	};
 }

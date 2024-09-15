@@ -11,6 +11,7 @@ namespace CE
 	{
 	public:
 		virtual std::vector<std::string> GetDependencies() const = 0;
+		virtual std::string Name() const = 0;
 
 		virtual ~EngineSystem() = 0;
 
