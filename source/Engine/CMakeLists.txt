@@ -26,6 +26,8 @@ source_group("Header Files" FILES ${INCLUDES})
 
 add_library(Engine STATIC ${SOURCES} ${INCLUDES})
 
+target_link_libraries(Engine PRIVATE Common)
+
 target_include_directories(Engine PUBLIC ${INCLUDE_DIR})
 
 target_compile_definitions(Engine PRIVATE 

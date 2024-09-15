@@ -4,6 +4,8 @@
 #include "Systems/InputSystem.h"
 #include "Systems/EventSystem.h"
 
+#include "DependencyGraph.h"
+
 namespace CE
 {
 	Engine::Engine() :
@@ -42,9 +44,9 @@ namespace CE
 
 	void Engine::InitSystems()
 	{
-		//DependencyGraph graph;
+		DependencyGraph graph;
 		for (auto [type, system] : m_systems) {
-			//graph.AddNode(system->Name(), system->GetDependencies());
+			graph.AddNode(system->Name(), system->GetDependencies());
 		}
 
 		// TODO dependency sort
