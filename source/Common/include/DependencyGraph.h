@@ -1,14 +1,21 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
+template<typename T>
 class DependencyGraph
 {
 public:
 
-	void AddNode(const std::string& name, const std::vector<std::string>& dependencies);
+	void AddNode(T node, const std::vector<T>& dependencies) {
+		m_nodes.emplace(node, dependencies);
+	}
 
 	void TopologicalSort();
 
+private:
+	std::unordered_map<T, std::vector<T>> m_nodes;
+	
 };

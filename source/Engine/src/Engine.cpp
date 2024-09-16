@@ -44,7 +44,7 @@ namespace CE
 
 	void Engine::InitSystems()
 	{
-		DependencyGraph graph;
+		DependencyGraph<std::string> graph;
 		for (auto [type, system] : m_systems) {
 			graph.AddNode(system->Name(), system->GetDependencies());
 		}
