@@ -9,18 +9,15 @@ namespace CE
 {
 	class EventSystem : public EngineSystem
 	{
-
+		// More friendship to allow Engine to access protected functions on derived class pointers
+		friend class Engine;
 		
 	public:
 		/* EngineSystem Interface */
 
 		std::string Name() const override { return "EventSystem"; }
-		std::vector<std::string> GetDependencies() const override
-		{
-			return {};
-		};
 
-		~EventSystem() override;
+		EventSystem(Engine* engine) : EngineSystem(engine) {};
 
 	protected:
 

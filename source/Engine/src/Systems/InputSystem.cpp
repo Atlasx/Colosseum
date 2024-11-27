@@ -12,8 +12,4 @@ namespace CE
 
 	}
 
-	InputSystem::~InputSystem()
-	{
-
-	}
 }

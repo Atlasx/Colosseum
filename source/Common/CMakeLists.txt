@@ -2,11 +2,11 @@ set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(SOURCES 
-	src/DependencyGraph.cpp
+
 )
 
 set(HEADERS 
-	include/DependencyGraph.h
+
 )
 
 source_group("Source Files" FILES ${SOURCES})

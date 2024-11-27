@@ -1,5 +1,6 @@
 
 #include "Systems/ResourceSystem.h"
+#include "Systems/InputSystem.h"
 
 namespace CE
 {
@@ -9,11 +10,6 @@ namespace CE
 	}
 
 	void ResourceSystem::Shutdown()
-	{
-
-	}
-
-	ResourceSystem::~ResourceSystem()
 	{
 
 	}
@@ -50,4 +46,12 @@ namespace CE
 	{
 		return std::make_shared<Mesh>();
 	}
+
+#ifdef CDEBUG
+	void ResourceSystem::RunTests()
+	{
+		/*auto ISPointer = Engine::GetSystem<InputSystem>();
+		ISPointer->Name();*/
+	}
+#endif
 }

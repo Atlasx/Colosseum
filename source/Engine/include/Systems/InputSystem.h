@@ -6,17 +6,15 @@ namespace CE
 {
 	class InputSystem : public EngineSystem
 	{
+		// More friendship to allow Engine to access protected functions on derived class pointers
+		friend class Engine;
+
 	public:
 
 		/* CEngineSystem Interface */
 		std::string Name() const override { return "InputSystem"; }
 
-		std::vector<std::string> GetDependencies() const override
-		{
-			return { "EventSystem" };
-		};
-
-		~InputSystem() override;
+		InputSystem(Engine* engine) : EngineSystem(engine) {};
 
 		/* Input System */
 

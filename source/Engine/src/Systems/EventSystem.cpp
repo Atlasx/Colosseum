@@ -11,9 +11,4 @@ namespace CE
 	{
 
 	}
-
-	EventSystem::~EventSystem()
-	{
-
-	}
 }

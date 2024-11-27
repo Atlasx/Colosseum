@@ -56,11 +56,14 @@ namespace CE
 		void TestSystems();
 #endif
 
+		void ShutdownSystems();
+
 		std::unordered_map<std::type_index, std::shared_ptr<EngineSystem>> m_systems;
 
-		bool m_shutdown = false;
+		bool m_exit = false;
 
 		void CoreLoop();
 		void Update();
+		void Render();
 	};
 }

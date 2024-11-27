@@ -3,13 +3,12 @@
 #include "Systems/ResourceSystem.h"
 #include "Systems/InputSystem.h"
 #include "Systems/EventSystem.h"
-
-#include "DependencyGraph.h"
+#include "Systems/RenderSystem.h"
 
 namespace CE
 {
 	Engine::Engine() :
-		m_shutdown(false)
+		m_exit(false)
 	{
 		std::cout << "Good Morning Engine" << std::endl;
 	}
@@ -18,9 +17,7 @@ namespace CE
 	{
 		std::cout << "Good Night Engine" << std::endl;
 
-		for (auto [type, system] : m_systems) {
-			system->Shutdown();
-		}
+		ShutdownSystems();
 	}
 
 	void Engine::Start()
@@ -32,46 +29,80 @@ namespace CE
 		TestSystems();
 #endif
 
-		//CoreLoop();
+		auto renderSystem = GetSystem<RenderSystem>();
+		if (renderSystem) {
+			renderSystem->CreateWindow({ 1280, 720, "Test" });
+		}
+
+		CoreLoop();
 	}
 
 	void Engine::AddSystems()
 	{
-		m_systems[typeid(ResourceSystem)] = std::make_unique<ResourceSystem>();
-		m_systems[typeid(InputSystem)] = std::make_unique<InputSystem>();
-		m_systems[typeid(EventSystem)] = std::make_unique<EventSystem>();
+		m_systems[typeid(ResourceSystem)] = std::make_unique<ResourceSystem>(this);
+		m_systems[typeid(InputSystem)] = std::make_unique<InputSystem>(this);
+		m_systems[typeid(EventSystem)] = std::make_unique<EventSystem>(this);
+		m_systems[typeid(RenderSystem)] = std::make_unique<RenderSystem>(this);
 	}
 
 	void Engine::InitSystems()
 	{
-		DependencyGraph graph;
-		for (auto [type, system] : m_systems) {
-			graph.AddNode(system->Name(), system->GetDependencies());
-		}
+		// Manual Order
+		GetSystem<ResourceSystem>()->Startup();
 
-		// TODO dependency sort
-		for (auto [type, system] : m_systems) {
-			system->Startup();
-		}
+		GetSystem<RenderSystem>()->Startup();
+
+		GetSystem<EventSystem>()->Startup();
+
+		GetSystem<InputSystem>()->Startup();
 	}
 
 #ifdef CDEBUG
 	void Engine::TestSystems()
 	{
 		// Run some tests on systems like loading specific files etc
-
+		GetSystem<ResourceSystem>()->RunTests();
 	}
 #endif
 
 	void Engine::CoreLoop()
 	{
-		while (m_shutdown == false) {
+		int count = 0;
+		while (m_exit == false)
+		{
 			Update();
+			Render();
+
+			// For now just a few frames and then shutdown
+			count++;
+			m_exit = count == 10;
 		}
 	}
 
 	void Engine::Update()
 	{
+		std::cout << "Updating!" << std::endl;
 
+		// TODO Calculate delta time
+	}
+	
+	void Engine::Render()
+	{
+		// Just kind of throwing all rendering in here for now
+		// needs the window system?
+		// put this on a new thread?
+		// cache rs pointer
+		auto renderSystem = GetSystem<RenderSystem>();
+		if (renderSystem) {
+			renderSystem->Render();
+		}
+	}
+
+	void Engine::ShutdownSystems()
+	{
+		for (auto& [key, system] : m_systems)
+		{
+			system->Shutdown();
+		}
 	}
 }

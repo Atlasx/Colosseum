@@ -9,6 +9,7 @@ set(SOURCES
 	src/Systems/ResourceSystem.cpp
 	src/Systems/InputSystem.cpp
 	src/Systems/EventSystem.cpp
+	src/Systems/RenderSystem.cpp
 )
 
 set(INCLUDES
@@ -19,14 +20,26 @@ set(INCLUDES
 	include/Systems/ResourceSystem.h
 	include/Systems/InputSystem.h
 	include/Systems/EventSystem.h
+	include/Systems/RenderSystem.h
 )
 
 source_group("Source Files" FILES ${SOURCES})
 source_group("Header Files" FILES ${INCLUDES})
 
+find_package(OpenGL REQUIRED)
+
 add_library(Engine STATIC ${SOURCES} ${INCLUDES})
 
-target_link_libraries(Engine PRIVATE Common)
+# Removed for now, Common is empty
+target_link_libraries(Engine PRIVATE
+	OpenGL::GL
+	glad
+	ImGui
+	glfw
+)
+
+target_include_directories(Engine PRIVATE ${CMAKE_SOURCE_DIR}/vendor/imgui)
+target_compile_definitions(Engine PRIVATE HAS_IMGUI)
 
 target_include_directories(Engine PUBLIC ${INCLUDE_DIR})
 

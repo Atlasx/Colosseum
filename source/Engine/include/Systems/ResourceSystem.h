@@ -68,6 +68,9 @@ namespace CE
 	//
 	class ResourceSystem : public EngineSystem
 	{
+		// More friendship to allow Engine to access protected functions on derived class pointers
+		friend class Engine;
+
 	public:
 		// Request Resource
 		// Begins the process of loading a requested resource, adds the request to the queue
@@ -107,13 +110,12 @@ namespace CE
 		/* EngineSystem Interface */
 		std::string Name() const override { return "InputSystem"; }
 
-		std::vector<std::string> GetDependencies() const override
-		{
-			return {};
-		}
-
-		~ResourceSystem() override;
+		ResourceSystem(Engine* engine) : EngineSystem(engine) {};
 	
+#ifdef CDEBUG
+		void RunTests();
+#endif
+
 	protected:
 		void Startup() override;
 		void Shutdown() override;
