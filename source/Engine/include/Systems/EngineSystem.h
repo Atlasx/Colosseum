@@ -22,10 +22,14 @@ namespace CE
 		virtual void Startup() = 0;
 		virtual void Shutdown() = 0;
 
+		/*template<typename System>
+		std::shared_ptr<System> GetSystem() const {
+			return m_engine->GetSystem<System>();
+		}*/
+
 		// Engine can access protected interface on polymorphic pointers
 		friend class Engine;
 	
-	private:
 		Engine* m_engine;
 	};
 }

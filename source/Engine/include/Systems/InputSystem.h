@@ -2,13 +2,17 @@
 
 #include "Systems/EngineSystem.h"
 
+class GLFWwindow;
+
 namespace CE
 {
 	class InputSystem : public EngineSystem
 	{
-		// More friendship to allow Engine to access protected functions on derived class pointers
-		friend class Engine;
+	public:
+		void AttachToWindow(GLFWwindow* window);
 
+	private:
+		GLFWwindow* m_window;
 	public:
 
 		/* CEngineSystem Interface */
@@ -22,5 +26,8 @@ namespace CE
 
 		void Startup() override;
 		void Shutdown() override;
+		
+		// More friendship to allow Engine to access protected functions on derived class pointers
+		friend class Engine;
 	};
 }

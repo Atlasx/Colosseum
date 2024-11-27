@@ -8,6 +8,8 @@
 
 #include "Systems/EngineSystem.h"
 
+struct GLFWwindow;
+
 namespace CE
 {
 	enum class CEResult {
@@ -43,8 +45,15 @@ namespace CE
 			return nullptr;
 		}
 
+		GLFWwindow* GetWindow() { return m_window; }
+
 	private:
+
+		GLFWwindow* m_window;
 		
+		// Create necessary glfw window
+		bool Initialize();
+
 		// Add individual systems here regardless of dependency order
 		void AddSystems();
 

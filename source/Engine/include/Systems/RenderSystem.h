@@ -2,46 +2,26 @@
 
 #include "Systems/EngineSystem.h"
 
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
+struct GLFWwindow;
 
 namespace CE 
 {
-	struct WindowData
-	{
-		GLFWwindow* window;
-		ImGuiContext* imguiContext;
-	};
-
 	class RenderSystem : public EngineSystem
 	{
-		struct WindowCreationParams
-		{
-			int width;
-			int height;
-
-			char title[64];
-		};
-
-		void CreateWindow(const WindowCreationParams& params);
-		void DestroyWindow(const WindowData& data);
-
+	public:
 		void Render();
 
-	private:
-		bool m_initialized = false;
 
-		std::vector<WindowData> m_windows;
+	private:
+		GLFWwindow* m_window = nullptr;
 
 		/* EngineSystem Interface */
 	public:
 		std::string Name() const override { return "Render System"; }
 
-		RenderSystem(Engine* engine) : EngineSystem(engine) {}
+		RenderSystem(Engine* engine) :
+			EngineSystem(engine)
+		{}
 
 	protected:
 

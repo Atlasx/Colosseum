@@ -1,5 +1,12 @@
 #include "Engine.h"
 
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+
 #include "Systems/ResourceSystem.h"
 #include "Systems/InputSystem.h"
 #include "Systems/EventSystem.h"
@@ -8,7 +15,8 @@
 namespace CE
 {
 	Engine::Engine() :
-		m_exit(false)
+		m_exit(false),
+		m_window(nullptr)
 	{
 		std::cout << "Good Morning Engine" << std::endl;
 	}
@@ -18,10 +26,20 @@ namespace CE
 		std::cout << "Good Night Engine" << std::endl;
 
 		ShutdownSystems();
+
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+
+		glfwTerminate();
 	}
 
 	void Engine::Start()
 	{
+		if (Initialize() == false)
+		{
+			return;
+		}
+
 		AddSystems();
 		InitSystems();
 
@@ -29,12 +47,46 @@ namespace CE
 		TestSystems();
 #endif
 
-		auto renderSystem = GetSystem<RenderSystem>();
-		if (renderSystem) {
-			renderSystem->CreateWindow({ 1280, 720, "Test" });
+		CoreLoop();
+	}
+
+	bool Engine::Initialize()
+	{
+		if (!glfwInit()) {
+			std::cerr << "Failed to initialize GLFW" << std::endl;
+			return false;
 		}
 
-		CoreLoop();
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // Request OpenGL version 3.x
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Use the core profile
+
+		m_window = glfwCreateWindow(1280, 720, "Render Window", nullptr, nullptr);
+		if (m_window == nullptr) {
+			std::cerr << "Failed to create a GLFW window" << std::endl;
+			glfwTerminate();
+			return false;
+		}
+
+		glfwMakeContextCurrent(m_window);
+		glfwSwapInterval(1);
+
+		if (!gladLoadGL()) {
+			std::cerr << "Failed to initialize GLAD" << std::endl;
+			glfwTerminate();
+			return false;
+		}
+
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+		ImGui::StyleColorsDark();
+		ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+		ImGui_ImplOpenGL3_Init("#version 130");
+
+		return true;
 	}
 
 	void Engine::AddSystems()
@@ -75,7 +127,7 @@ namespace CE
 
 			// For now just a few frames and then shutdown
 			count++;
-			m_exit = count == 10;
+			//m_exit = count == 10;
 		}
 	}
 
