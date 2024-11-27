@@ -119,15 +119,11 @@ namespace CE
 
 	void Engine::CoreLoop()
 	{
-		int count = 0;
 		while (m_exit == false)
 		{
 			Update();
 			Render();
-
-			// For now just a few frames and then shutdown
-			count++;
-			//m_exit = count == 10;
+			ProcessInput();
 		}
 	}
 
@@ -143,11 +139,14 @@ namespace CE
 		// Just kind of throwing all rendering in here for now
 		// needs the window system?
 		// put this on a new thread?
-		// cache rs pointer
-		auto renderSystem = GetSystem<RenderSystem>();
-		if (renderSystem) {
-			renderSystem->Render();
-		}
+		// cache RS pointer
+		GetSystem<RenderSystem>()->Render();
+	}
+
+	void Engine::ProcessInput()
+	{
+		// caching IS pointer?
+		GetSystem<InputSystem>()->PollInput();
 	}
 
 	void Engine::ShutdownSystems()

@@ -5,6 +5,7 @@
 #include <memory>
 #include <typeindex>
 #include <typeinfo>
+#include <cassert>
 
 #include "Systems/EngineSystem.h"
 
@@ -12,11 +13,6 @@ struct GLFWwindow;
 
 namespace CE
 {
-	enum class CEResult {
-		Failed = 0,
-		Success = 1
-	};
-
 	class Engine
 	{
 	public:
@@ -40,8 +36,14 @@ namespace CE
 			auto iter = m_systems.find(typeid(System));
 			if (iter != m_systems.end()) {
 				// Dyn cast here to translate from the polymorphic map to the requested system type
+#ifdef CDEBUG
+				assert(iter->second);
+#endif
 				return std::dynamic_pointer_cast<System>(iter->second);
 			}
+#ifdef CDEBUG
+			assert(false);
+#endif
 			return nullptr;
 		}
 
@@ -74,5 +76,6 @@ namespace CE
 		void CoreLoop();
 		void Update();
 		void Render();
+		void ProcessInput();
 	};
 }
