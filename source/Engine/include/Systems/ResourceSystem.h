@@ -108,7 +108,8 @@ namespace CE
 
 	public:
 		/* EngineSystem Interface */
-		std::string Name() const override { return "InputSystem"; }
+		std::string Name() const override { return "Resource System"; }
+		void DrawGUI() override { return; }
 
 		ResourceSystem(Engine* engine) : EngineSystem(engine) {};
 	

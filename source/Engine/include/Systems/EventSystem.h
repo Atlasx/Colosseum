@@ -15,7 +15,8 @@ namespace CE
 	public:
 		/* EngineSystem Interface */
 
-		std::string Name() const override { return "EventSystem"; }
+		std::string Name() const override { return "Event System"; }
+		void DrawGUI() override { return; }
 
 		EventSystem(Engine* engine) : EngineSystem(engine) {};
 

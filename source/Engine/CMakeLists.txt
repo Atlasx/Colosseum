@@ -4,6 +4,9 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(SOURCES
 	src/Engine.cpp
 
+	# Editor
+	src/GUI/Editor.cpp
+
 	# Systems
 	src/Systems/EngineSystem.cpp
 	src/Systems/ResourceSystem.cpp
@@ -21,6 +24,9 @@ set(INCLUDES
 	include/Systems/InputSystem.h
 	include/Systems/EventSystem.h
 	include/Systems/RenderSystem.h
+
+	#Editor
+	include/GUI/Editor.h
 )
 
 source_group("Source Files" FILES ${SOURCES})
@@ -30,8 +36,7 @@ find_package(OpenGL REQUIRED)
 
 add_library(Engine STATIC ${SOURCES} ${INCLUDES})
 
-# Removed for now, Common is empty
-target_link_libraries(Engine PRIVATE
+target_link_libraries(Engine PUBLIC
 	OpenGL::GL
 	glad
 	ImGui

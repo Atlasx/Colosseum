@@ -6,6 +6,18 @@ class GLFWwindow;
 
 namespace CE
 {	
+	struct KeyboardState
+	{
+		constexpr static unsigned int KEYBOARD_MAX = 348;
+
+		enum KeyState : unsigned char {
+			KS_RELEASED,
+			KS_PRESSED
+		};
+
+		KeyState keys[KEYBOARD_MAX];
+	};
+
 	// Going to use a global here for now, glfw seems to require some way of accessing which engine it is referring to when using the input functions.
 	// Not a fan of this, but I can't think of a better way at the moment
 	class InputSystem;
@@ -23,11 +35,18 @@ namespace CE
 		void OnKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 		void OnMouseButton(GLFWwindow* window, int button, int action, int mods);
 		void OnScroll(GLFWwindow* window, double xOffset, double yOffset);
+		void OnWindowClose(GLFWwindow* window);
+
+		KeyboardState m_keyboardState{};
+		KeyboardState m_prevKeyboardState{};
+
+		void DrawKeyboardState(const KeyboardState& state) const;
 
 	public:
 
 		/* CEngineSystem Interface */
-		std::string Name() const override { return "InputSystem"; }
+		std::string Name() const override { return "Input System"; }
+		void DrawGUI() override;
 
 		InputSystem(Engine* engine) : EngineSystem(engine) {};
 
@@ -59,6 +78,11 @@ namespace CE
 		static void GOnScroll(GLFWwindow* window, double xOffset, double yOffset)
 		{
 			g_input->OnScroll(window, xOffset, yOffset);
+		}
+
+		static void GOnWindowClose(GLFWwindow* window)
+		{
+			g_input->OnWindowClose(window);
 		}
 	};
 }

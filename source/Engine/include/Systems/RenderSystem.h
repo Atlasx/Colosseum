@@ -18,6 +18,7 @@ namespace CE
 		/* EngineSystem Interface */
 	public:
 		std::string Name() const override { return "Render System"; }
+		void DrawGUI() override { return; }
 
 		RenderSystem(Engine* engine) :
 			EngineSystem(engine)

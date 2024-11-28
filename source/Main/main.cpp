@@ -1,21 +1,18 @@
-#include <iostream>
 
 #include "Engine.h"
-#include "Shader.h"
-#include "Systems/EngineSystem.h"
-#include "Systems/ResourceSystem.h"
 
-#include <filesystem>
+#include <iostream>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-using namespace CE;
+//#define STB_IMAGE_IMPLEMENTATION
+//#include "stb_image.h"
 
 //void processInput(GLFWwindow* window);
 
 int main() {
 	std::cout << "Hello Main!" << std::endl;
+
+	CE::Engine my_engine;
+	my_engine.Start();
 
 	//// GLFW Setup
 	//if (!glfwInit()) {
@@ -54,10 +51,6 @@ int main() {
 	//ImGui::StyleColorsDark();
 	//ImGui_ImplGlfw_InitForOpenGL(window, true);
 	//ImGui_ImplOpenGL3_Init("#version 130");
-
-	// Engine Setup
-	Engine my_engine;
-	my_engine.Start();
 
 	/*
 	std::filesystem::path assetsPath = ASSETS_PATH;

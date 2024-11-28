@@ -7,7 +7,16 @@
 #include <typeinfo>
 #include <cassert>
 
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+
 #include "Systems/EngineSystem.h"
+
+#include "GUI/Editor.h"
 
 struct GLFWwindow;
 
@@ -25,6 +34,8 @@ namespace CE
 		// Entry point into the engine, causes systems to be created and initialized
 		//
 		void Start();
+
+		void Stop();
 
 		//
 		// GetSystem<T>
@@ -47,11 +58,13 @@ namespace CE
 			return nullptr;
 		}
 
+		// Dangerous handing out free pointers to our window object
 		GLFWwindow* GetWindow() { return m_window; }
 
 	private:
 
 		GLFWwindow* m_window;
+		DebugMenu m_debugMenu;
 		
 		// Create necessary glfw window
 		bool Initialize();
@@ -66,6 +79,8 @@ namespace CE
 		// Some debug only test code during system development
 		void TestSystems();
 #endif
+
+		void PostSystemInitialize();
 
 		void ShutdownSystems();
 

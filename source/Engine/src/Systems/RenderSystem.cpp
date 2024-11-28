@@ -2,12 +2,6 @@
 
 #include <iostream>
 
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
-#include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-
 #include "Engine.h"
 
 namespace CE
@@ -15,19 +9,8 @@ namespace CE
 
 	void RenderSystem::Render()
 	{
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
 		// Render everything in game...
 		ImGui::ShowDemoWindow();
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		glfwSwapBuffers(m_window);
 	}
 
 	void RenderSystem::Startup()

@@ -1,12 +1,5 @@
 #include "Engine.h"
 
-#include "glad/glad.h"
-#include "GLFW/glfw3.h"
-#include "imgui.h"
-#include "imgui_internal.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-
 #include "Systems/ResourceSystem.h"
 #include "Systems/InputSystem.h"
 #include "Systems/EventSystem.h"
@@ -43,6 +36,8 @@ namespace CE
 		AddSystems();
 		InitSystems();
 
+		PostSystemInitialize();
+
 #ifdef CDEBUG
 		TestSystems();
 #endif
@@ -77,6 +72,12 @@ namespace CE
 			return false;
 		}
 
+		return true;
+	}
+
+	void Engine::PostSystemInitialize()
+	{
+		// ImGui init needs to be after InputSetup for callback chaining
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -85,8 +86,11 @@ namespace CE
 		ImGui::StyleColorsDark();
 		ImGui_ImplGlfw_InitForOpenGL(m_window, true);
 		ImGui_ImplOpenGL3_Init("#version 130");
+	}
 
-		return true;
+	void Engine::Stop()
+	{
+		m_exit = true;
 	}
 
 	void Engine::AddSystems()
@@ -129,7 +133,7 @@ namespace CE
 
 	void Engine::Update()
 	{
-		std::cout << "Updating!" << std::endl;
+		//std::cout << "Updating!" << std::endl;
 
 		// TODO Calculate delta time
 	}
@@ -140,7 +144,43 @@ namespace CE
 		// needs the window system?
 		// put this on a new thread?
 		// cache RS pointer
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
 		GetSystem<RenderSystem>()->Render();
+
+		m_debugMenu.ShowMenuItems();
+		
+		// Main Menu
+		if (ImGui::BeginMainMenuBar())
+		{
+			if (ImGui::BeginMenu("Debug"))
+			{
+				for (auto [key, system] : m_systems)
+				{
+					ImGui::MenuItem(system->Name().c_str(), NULL, &system->m_showDebug);
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMainMenuBar();
+		}
+		
+		// System Debug GUI
+		for (auto [key, system] : m_systems)
+		{
+			system->DrawGUI();
+		}
+
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		glfwSwapBuffers(m_window);
 	}
 
 	void Engine::ProcessInput()
