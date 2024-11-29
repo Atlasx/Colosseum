@@ -48,7 +48,10 @@ namespace CE
 		std::string Name() const override { return "Input System"; }
 		void DrawGUI() override;
 
-		InputSystem(Engine* engine) : EngineSystem(engine) {};
+		InputSystem(Engine* engine) : EngineSystem(engine) 
+		{
+			m_showDebug = true;
+		};
 
 	protected:
 

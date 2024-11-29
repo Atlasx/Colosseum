@@ -118,9 +118,24 @@ namespace CE
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 		ImVec2 startDraw = ImGui::GetCursorScreenPos();
 
-		for (int i = 65; i < 139; i++) {
+		ImGui::BeginChild("KeyboardState", ImVec2(200, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
+
+		// A-Z
+		for (int i = 65; i < 91; i++)
+		{
 			char key = static_cast<char>(i);
-			ImGui::Text("Key: %c, State: %d", key, state.keys[i]);
+			ImGui::Text("Key: %s, State: %d", glfwGetKeyName(i, 0), state.keys[i]);
 		}
+
+		// 1 - 0
+		for (int i = 48; i < 58; i++)
+		{
+			char key = static_cast<char>(i);
+			ImGui::Text("Key: %s, State: %d", glfwGetKeyName(i, 0), state.keys[i]);
+		}
+
+
+
+		ImGui::EndChild();
 	}
 }
