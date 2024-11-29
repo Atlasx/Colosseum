@@ -3,6 +3,8 @@
 #include "Engine.h"
 
 #include <iostream>
+#include <algorithm>
+
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
@@ -33,16 +35,12 @@ namespace CE
 	{
 		if (m_showDebug) 
 		{
-			ImGui::Begin("Input System Debug", &m_showDebug);
+			ImGui::Begin("Input System Debug", &m_showDebug, ImGuiWindowFlags_AlwaysAutoResize);
 			ImGui::Text("Mouse Input");
-			ImGui::Separator();
 			ImGui::Text("TODO mouse input");
-			ImGui::Separator();
 
 			ImGui::Text("Keyboard Input");
-			ImGui::Separator();
 			DrawKeyboardState(m_keyboardState);
-			ImGui::Separator();
 
 			ImGui::End();
 		}
@@ -118,7 +116,12 @@ namespace CE
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
 		ImVec2 startDraw = ImGui::GetCursorScreenPos();
 
-		ImGui::BeginChild("KeyboardState", ImVec2(200, 300), true, ImGuiWindowFlags_HorizontalScrollbar);
+		ImVec2 size = ImGui::GetContentRegionAvail();
+		size.x = 320.f;
+		size.y = std::clamp(size.y, 200.f, 500.f);
+
+		ImGui::BeginChild("KeyboardState", size, true, ImGuiWindowFlags_HorizontalScrollbar);
+		ImGui::Columns(2, "inputColumns", false);
 
 		// A-Z
 		for (int i = 65; i < 91; i++)
@@ -127,6 +130,8 @@ namespace CE
 			ImGui::Text("Key: %s, State: %d", glfwGetKeyName(i, 0), state.keys[i]);
 		}
 
+		ImGui::NextColumn();
+
 		// 1 - 0
 		for (int i = 48; i < 58; i++)
 		{
@@ -134,7 +139,7 @@ namespace CE
 			ImGui::Text("Key: %s, State: %d", glfwGetKeyName(i, 0), state.keys[i]);
 		}
 
-
+		ImGui::Columns(1);
 
 		ImGui::EndChild();
 	}
