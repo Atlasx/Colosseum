@@ -10,7 +10,7 @@ namespace CE
 	void RenderSystem::Render()
 	{
 		// Render everything in game...
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 	}
 
 	void RenderSystem::Startup()

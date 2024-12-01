@@ -4,20 +4,140 @@
 
 #include "imgui.h"
 
+#include <cstdint>
+
 class GLFWwindow;
 
 namespace CE
 {	
+	enum class KeyType : std::uint8_t
+	{
+		// WARNING if this enum changes, be sure to audit translation function for GLFW!
+		UNKNOWN,
+
+		// Numbers
+		NUMBER_KEYS,
+		NUM0, NUM1, NUM2, NUM3, NUM4, NUM5, NUM6, NUM7, NUM8, NUM9,
+		NUMBER_KEYS_MAX,
+
+		// Alphabet (A-Z)
+		ALPHABET_KEYS,
+		A, B, C, D, E, F, G, H, I, J, K, L, M,
+		N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+		ALPHABET_KEYS_MAX,
+
+		// Symbol Keys
+		SYMBOL_KEYS,
+		APOSTROPHE,		// ' 
+		COMMA,			// , 
+		MINUS,			// - 
+		PERIOD,			// . 
+		SLASH,			// / 
+		SEMICOLON,		// ; 
+		EQUAL,			// = 
+		LEFT_BRACKET,	// [
+		BACKSLASH,		// \ 
+		RIGHT_BRACKET,	// ]
+		TILDE,			// ~ 
+		SYMBOL_KEYS_MAX,
+
+		// Control Keys
+		CONTROL_KEYS,
+		ESCAPE,
+		ENTER,
+		TAB,
+		BACKSPACE,
+		INSERT,
+		DELETE,
+		ARROW_RIGHT,
+		ARROW_LEFT,
+		ARROW_DOWN,
+		ARROW_UP,
+		PAGE_UP,
+		PAGE_DOWN,
+		HOME,
+		END,
+		CAPS_LOCK,
+		LEFT_SHIFT,
+		LEFT_CTRL,
+		LEFT_ALT,
+		RIGHT_SHIFT,
+		RIGHT_CTRL,
+		RIGHT_ALT,
+		SPACE,
+		CONTROL_KEYS_MAX,
+
+		// Function Keys
+		FN_KEYS,
+		F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
+		FN_KEYS_MAX,
+		KEYS_MAX
+	};
+
+	enum class KeyState : unsigned char {
+		RELEASED,
+		PRESSED,
+		HELD,
+	};
+
+	namespace InputUtilities 
+	{
+		constexpr KeyType operator+(KeyType key, int offset)
+		{
+			using Underlying = std::underlying_type_t<KeyType>;
+			return static_cast<KeyType>(static_cast<Underlying>(key) + offset);
+		}
+
+		constexpr KeyType operator+(int offset, KeyType key)
+		{
+			return key + offset;
+		}
+
+		constexpr int operator-(KeyType lhs, KeyType rhs)
+		{
+			using Underlying = std::underlying_type_t<KeyType>;
+			return static_cast<Underlying>(lhs) - static_cast<Underlying>(rhs);
+		}
+
+		// Translation globals
+		static bool g_bHasKeymap = false;
+		static int g_glfwKeyToKeyType[348];
+		static int g_keyTypeToGLFWKey[92];
+
+		KeyType GLFWKeyToKeyType(int key);
+		int KeyTypeToGLFWKey(const KeyType key);
+
+		KeyState GLFWActionToKeyState(int action);
+
+		const char* GetKeyName(const KeyType key);
+	}
+
 	struct KeyboardState
 	{
-		constexpr static unsigned int KEYBOARD_MAX = 348;
+		
 
-		enum KeyState : unsigned char {
-			KS_RELEASED,
-			KS_PRESSED
-		};
+	public:
+		KeyState GetKey(const KeyType key) const
+		{
+			return keys[static_cast<std::underlying_type_t<KeyType>>(key)];
+		}
+
+		bool GetKeyHeld(const KeyType key) const
+		{
+			return keys[static_cast<std::underlying_type_t<KeyType>>(key)] == KeyState::HELD;
+		}
+
+	private:
+		constexpr static unsigned int KEYBOARD_MAX = static_cast<unsigned int>(KeyType::KEYS_MAX);
+		
+		inline void SetKey(const KeyType key, const KeyState state)
+		{
+			keys[static_cast<std::underlying_type_t<KeyType>>(key)] = state;
+		}
 
 		KeyState keys[KEYBOARD_MAX];
+
+		friend class InputSystem;
 	};
 
 	// Going to use a global here for now, glfw seems to require some way of accessing which engine it is referring to when using the input functions.

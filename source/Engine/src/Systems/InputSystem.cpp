@@ -16,6 +16,7 @@ namespace CE
 		m_window = m_engine->GetWindow();
 		assert(m_window);
 
+		// Save this instance as the global instance for GLFW callbacks
 		g_input = this;
 
 		// Register callbacks for discrete input
@@ -33,7 +34,7 @@ namespace CE
 
 	void InputSystem::DrawGUI()
 	{
-		if (m_showDebug) 
+		if (m_showDebug)
 		{
 			ImGui::Begin("Input System Debug", &m_showDebug);
 			ImGui::Text("Mouse Input");
@@ -46,10 +47,6 @@ namespace CE
 				DrawKeyboardState(m_keyboardState);
 				ImGui::End();
 			}
-			ImGui::Separator();
-			ImGui::Text("Previous Input");
-			
-			DrawKeyboardState(m_prevKeyboardState);
 			ImGui::End();
 		}
 	}
@@ -57,64 +54,38 @@ namespace CE
 	void InputSystem::PollInput()
 	{
 		glfwPollEvents();
-
-		// Build current input state
-		m_prevKeyboardState = m_keyboardState;
-		m_keyboardState = {};
-
-		for (int i = 0; i < KeyboardState::KEYBOARD_MAX; i++)
-		{
-			m_keyboardState.keys[i] = static_cast<KeyboardState::KeyState>(glfwGetKey(m_window, i));
-		}
-		
 	}
 
 	void InputSystem::OnCursorMoved(GLFWwindow* window, double xPos, double yPos)
 	{
 		if (window != m_window) return;
-		//std::cout << "Cursor Moved Action: " << xPos << ", " << yPos << std::endl;
-		
-		// TODO build move deltas
 
-		ImGuiIO& io = ImGui::GetIO();
-		io.AddMousePosEvent(xPos, yPos);
+		// TODO build move deltas
 	}
 
 	void InputSystem::OnKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
 		if (window != m_window) return;
-		//std::cout << "Key Action: " << key << std::endl;
 
-		m_keyboardState.keys[key] = static_cast<KeyboardState::KeyState>(action);
+		const KeyType keyT = InputUtilities::GLFWKeyToKeyType(key);
+		const KeyState keyS = InputUtilities::GLFWActionToKeyState(action);
 
-		//ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
-
-		//ImGuiIO& io = ImGui::GetIO();
-		//io.AddKeyEvent(static_cast<ImGuiKey>(key + ImGuiKey_NamedKey_BEGIN), action == GLFW_PRESS);
+		m_keyboardState.SetKey(keyT, keyS);
 	}
 
 	void InputSystem::OnMouseButton(GLFWwindow* window, int button, int action, int mods)
 	{
 		if (window != m_window) return;
-		//std::cout << "Mouse Button Action: " << button << std::endl;
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.AddMouseButtonEvent(button, action == GLFW_PRESS);
 	}
 
 	void InputSystem::OnScroll(GLFWwindow* window, double xOffset, double yOffset)
 	{
 		if (window != m_window) return;
-		//std::cout << "Scroll Action" << std::endl;
-
-		ImGuiIO& io = ImGui::GetIO();
-		io.AddMouseWheelEvent(xOffset, yOffset);
 	}
 
 	void InputSystem::OnWindowClose(GLFWwindow* window)
 	{
 		if (window != m_window) return;
-		//std::cout << "Window Close Action" << std::endl;
 
 		m_engine->Stop();
 	}
@@ -130,64 +101,37 @@ namespace CE
 		static float s_keyPadding = 3.f;
 		static float s_externalKeyPadding = 10.f;
 
-		static std::vector<std::vector<int>> s_qwertyDrawOrder = {
-			{GLFW_KEY_ESCAPE, GLFW_KEY_F1, GLFW_KEY_F2, GLFW_KEY_F3, GLFW_KEY_F4, GLFW_KEY_F5, GLFW_KEY_F6,
-			 GLFW_KEY_F7, GLFW_KEY_F8, GLFW_KEY_F9, GLFW_KEY_F10, GLFW_KEY_F11, GLFW_KEY_F12, GLFW_KEY_F13},
-
-			{GLFW_KEY_GRAVE_ACCENT, GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5, GLFW_KEY_6,
-			 GLFW_KEY_7, GLFW_KEY_8, GLFW_KEY_9, GLFW_KEY_0, GLFW_KEY_MINUS, GLFW_KEY_EQUAL, GLFW_KEY_BACKSPACE},
-
-			{GLFW_KEY_TAB, GLFW_KEY_Q, GLFW_KEY_W, GLFW_KEY_E, GLFW_KEY_R, GLFW_KEY_T, GLFW_KEY_Y, GLFW_KEY_U,
-			 GLFW_KEY_I, GLFW_KEY_O, GLFW_KEY_P, GLFW_KEY_LEFT_BRACKET, GLFW_KEY_RIGHT_BRACKET, GLFW_KEY_BACKSLASH},
-
-			{GLFW_KEY_CAPS_LOCK, GLFW_KEY_A, GLFW_KEY_S, GLFW_KEY_D, GLFW_KEY_F, GLFW_KEY_G, GLFW_KEY_H,
-			 GLFW_KEY_J, GLFW_KEY_K, GLFW_KEY_L, GLFW_KEY_SEMICOLON, GLFW_KEY_APOSTROPHE, GLFW_KEY_ENTER},
-
-			{GLFW_KEY_LEFT_SHIFT, GLFW_KEY_Z, GLFW_KEY_X, GLFW_KEY_C, GLFW_KEY_V, GLFW_KEY_B, GLFW_KEY_N,
-			 GLFW_KEY_M, GLFW_KEY_COMMA, GLFW_KEY_PERIOD, GLFW_KEY_SLASH, GLFW_KEY_RIGHT_SHIFT},
-
-			{GLFW_KEY_LEFT_CONTROL, GLFW_KEY_LEFT_ALT, GLFW_KEY_SPACE, GLFW_KEY_RIGHT_ALT, GLFW_KEY_RIGHT_CONTROL}
+		// Translated QWERTY Draw Order from GLFW to KeyType enum
+		static std::vector<std::vector<KeyType>> s_qwertyDrawOrder = {
+			{KeyType::ESCAPE, KeyType::F1, KeyType::F2, KeyType::F3, KeyType::F4, KeyType::F5, KeyType::F6, KeyType::F7, KeyType::F8, KeyType::F9, KeyType::F10, KeyType::F11, KeyType::F12, KeyType::UNKNOWN},
+			{KeyType::TILDE, KeyType::NUM1, KeyType::NUM2, KeyType::NUM3, KeyType::NUM4, KeyType::NUM5, KeyType::NUM6, KeyType::NUM7, KeyType::NUM8, KeyType::NUM9, KeyType::NUM0, KeyType::MINUS, KeyType::EQUAL, KeyType::BACKSPACE},
+			{KeyType::TAB, KeyType::Q, KeyType::W, KeyType::E, KeyType::R, KeyType::T, KeyType::Y, KeyType::U, KeyType::I, KeyType::O, KeyType::P, KeyType::LEFT_BRACKET, KeyType::RIGHT_BRACKET, KeyType::BACKSLASH},
+			{KeyType::CAPS_LOCK, KeyType::A, KeyType::S, KeyType::D, KeyType::F, KeyType::G, KeyType::H, KeyType::J, KeyType::K, KeyType::L, KeyType::SEMICOLON, KeyType::APOSTROPHE, KeyType::ENTER},
+			{KeyType::LEFT_SHIFT, KeyType::Z, KeyType::X, KeyType::C, KeyType::V, KeyType::B, KeyType::N, KeyType::M, KeyType::COMMA, KeyType::PERIOD, KeyType::SLASH, KeyType::RIGHT_SHIFT},
+			{KeyType::LEFT_CTRL, KeyType::LEFT_ALT, KeyType::SPACE, KeyType::RIGHT_ALT, KeyType::RIGHT_CTRL}
 		};
 
-		struct ExtraKeyData
-		{
-			float width;
-			char name[8];
+		static std::unordered_map<KeyType, float> s_keyData = {
+			{KeyType::ESCAPE, 30.f},
+			{KeyType::BACKSPACE, 30.f},
+			{KeyType::TAB, 20.f},
+			{KeyType::BACKSLASH, 10.f},
+			{KeyType::CAPS_LOCK, 30.f},
+			{KeyType::ENTER, 48.f},
+			{KeyType::LEFT_SHIFT, 63.f},
+			{KeyType::RIGHT_SHIFT, 63.f},
+			{KeyType::LEFT_CTRL, 10.f},
+			{KeyType::LEFT_ALT, 10.f},
+			{KeyType::SPACE, 422.f},
+			{KeyType::RIGHT_ALT, 10.f},
+			{KeyType::RIGHT_CTRL, 10.f}
 		};
 
-		static std::unordered_map<int, ExtraKeyData> s_extraKeyData = {
-			{GLFW_KEY_ESCAPE, {30.f, "esc"}},
-			{GLFW_KEY_BACKSPACE, {30.f, "delete"}},
-			{GLFW_KEY_TAB, {20.f, "tab"}},
-			{GLFW_KEY_BACKSLASH, {10.f, "\\"}},
-			{GLFW_KEY_CAPS_LOCK, {30.f, "caps"}},
-			{GLFW_KEY_ENTER, {48.f, "return"}},
-			{GLFW_KEY_LEFT_SHIFT, {63.f, "shift"}},
-			{GLFW_KEY_RIGHT_SHIFT, {63.f, "shift"}},
-			{GLFW_KEY_LEFT_CONTROL, {10.f, "ctrl"}},
-			{GLFW_KEY_LEFT_ALT, {10.f, "alt"}},
-			{GLFW_KEY_SPACE, {422.f, "space"}},
-			{GLFW_KEY_RIGHT_ALT, {10.f, "alt"}},
-			{GLFW_KEY_RIGHT_CONTROL, {10.f, "ctrl"}},
-			{GLFW_KEY_F1, {0.f, "f1"}},
-			{GLFW_KEY_F2, {0.f, "f2"}},
-			{GLFW_KEY_F3, {0.f, "f3"}},
-			{GLFW_KEY_F4, {0.f, "f4"}},
-			{GLFW_KEY_F5, {0.f, "f5"}},
-			{GLFW_KEY_F6, {0.f, "f6"}},
-			{GLFW_KEY_F7, {0.f, "f7"}},
-			{GLFW_KEY_F8, {0.f, "f8"}},
-			{GLFW_KEY_F9, {0.f, "f9"}},
-			{GLFW_KEY_F10, {0.f, "f10"}},
-			{GLFW_KEY_F11, {0.f, "f11"}},
-			{GLFW_KEY_F12, {0.f, "f12"}},
-			{GLFW_KEY_F13, {0.f, "f13"}},
-			{GLFW_KEY_F14, {0.f, "f14"}}
-		};
+
 
 		bool bSizeProvided = !(size.x == 0 || size.y == 0);
 
-		ImGui::PushID(*(state.keys));
+		ImGui::PushID(state.keys);
 		ImGui::BeginChild("keyboard", bSizeProvided ? size : s_maxSize);
 
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -207,29 +151,23 @@ namespace CE
 			columnPos = startDraw.x + s_externalKeyPadding;
 			for (int x = 0; x < s_qwertyDrawOrder[y].size(); x++)
 			{
-				int key = s_qwertyDrawOrder[y][x];
+				KeyType key = s_qwertyDrawOrder[y][x];
 				ImVec2 minPos(columnPos, rowPos);
 				ImVec2 maxPos(columnPos, rowPos);
 
 				float width = s_keyWidth;
+				width += s_keyData.contains(key) ? s_keyData[key] : 0.f;
 				float height = s_keyHeight + rowExtraHeight;
 
-				ImColor keyColor = state.keys[key] ? s_activeColor : s_inactiveColor;
-
-				const bool bHasExtraData = s_extraKeyData.contains(key);
-				if (bHasExtraData)
-				{
-					width += s_extraKeyData[key].width;
-				}
-
+				ImColor keyColor = state.GetKey(key) == KeyState::PRESSED ? s_activeColor : s_inactiveColor;
+		
 				maxPos.x += width;
 				maxPos.y += height;
 				drawList->AddRectFilled(minPos, maxPos, keyColor);
 				columnPos += width + s_keyPadding;
 
 				// Draw Key Name
-				const char* keyName = glfwGetKeyName(key, 0);
-				if (keyName == nullptr) keyName = bHasExtraData ? s_extraKeyData[key].name : nullptr;
+				const char* keyName = InputUtilities::GetKeyName(key);
 				if (keyName)
 				{
 					ImVec2 dim = ImGui::CalcTextSize(keyName);
@@ -245,8 +183,181 @@ namespace CE
 
 		// Cleanup for proper formatting
 		ImGui::SetCursorScreenPos(ImVec2(startDraw.x, rowPos + s_externalKeyPadding));
-		
+
 		ImGui::EndChild();
 		ImGui::PopID();
+	}
+
+	namespace InputUtilities
+	{
+		constexpr void TranslateKeys()
+		{
+			// Had an idea to make either the compiler or cmake write these translation arrays for me.
+			// Going to save the idea for later as it has a near zero benefit other than being cool.
+
+			auto translate = [](int key) -> KeyType
+				{
+					if (key >= GLFW_KEY_A && key <= GLFW_KEY_Z)
+						return static_cast<KeyType>(key - GLFW_KEY_A + KeyType::A);
+					if (key == GLFW_KEY_SPACE)
+						return KeyType::SPACE;
+					if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9)
+						return static_cast<KeyType>(key - GLFW_KEY_0 + KeyType::NUM0);
+					if (key >= GLFW_KEY_COMMA && key <= GLFW_KEY_SLASH)
+						return static_cast<KeyType>(key - GLFW_KEY_COMMA + KeyType::COMMA);
+					if (key >= GLFW_KEY_LEFT_BRACKET && key <= GLFW_KEY_RIGHT_BRACKET)
+						return static_cast<KeyType>(key - GLFW_KEY_LEFT_BRACKET + KeyType::LEFT_BRACKET);
+					if (key >= GLFW_KEY_ESCAPE && key <= GLFW_KEY_END)
+						return static_cast<KeyType>(key - GLFW_KEY_ESCAPE + KeyType::ESCAPE);
+					if (key >= GLFW_KEY_LEFT_SHIFT && key <= GLFW_KEY_LEFT_ALT)
+						return static_cast<KeyType>(key - GLFW_KEY_LEFT_SHIFT + KeyType::LEFT_SHIFT);
+					if (key >= GLFW_KEY_RIGHT_SHIFT && key <= GLFW_KEY_RIGHT_ALT)
+						return static_cast<KeyType>(key - GLFW_KEY_RIGHT_SHIFT + KeyType::RIGHT_SHIFT);
+					if (key == GLFW_KEY_SEMICOLON)
+						return KeyType::SEMICOLON;
+					if (key == GLFW_KEY_CAPS_LOCK)
+						return KeyType::CAPS_LOCK;
+					if (key == GLFW_KEY_EQUAL)
+						return KeyType::EQUAL;
+					if (key == GLFW_KEY_APOSTROPHE)
+						return KeyType::APOSTROPHE;
+					if (key == GLFW_KEY_GRAVE_ACCENT)
+						return KeyType::TILDE;
+					if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F12)
+						return static_cast<KeyType>(key - GLFW_KEY_F1 + KeyType::F1);
+					return KeyType::UNKNOWN;
+				};
+
+			for (int i = 0; i < 348; i++)
+			{
+				KeyType keyType = translate(i);
+				if (keyType != KeyType::UNKNOWN)
+				{
+					g_glfwKeyToKeyType[i] = static_cast<std::underlying_type_t<KeyType>>(keyType);
+					g_keyTypeToGLFWKey[static_cast<std::underlying_type_t<KeyType>>(keyType)] = i;
+				}
+			}
+
+			g_bHasKeymap = true;
+		}
+
+		KeyType GLFWKeyToKeyType(int key)
+		{
+			if (g_bHasKeymap == false) TranslateKeys();
+			return static_cast<KeyType>(g_glfwKeyToKeyType[key]);
+		}
+
+		int KeyTypeToGLFWKey(const KeyType key)
+		{
+			if (g_bHasKeymap == false) TranslateKeys();
+			return g_keyTypeToGLFWKey[static_cast<std::underlying_type_t<KeyType>>(key)];
+		}
+
+		KeyState GLFWActionToKeyState(int action)
+		{
+			return static_cast<KeyState>(action);
+		}
+
+		const char* GetKeyName(const KeyType key)
+		{
+			switch (key)
+			{
+				// Numbers
+			case KeyType::NUM0: return "0";
+			case KeyType::NUM1: return "1";
+			case KeyType::NUM2: return "2";
+			case KeyType::NUM3: return "3";
+			case KeyType::NUM4: return "4";
+			case KeyType::NUM5: return "5";
+			case KeyType::NUM6: return "6";
+			case KeyType::NUM7: return "7";
+			case KeyType::NUM8: return "8";
+			case KeyType::NUM9: return "9";
+
+				// Alphabet (A-Z)
+			case KeyType::A: return "A";
+			case KeyType::B: return "B";
+			case KeyType::C: return "C";
+			case KeyType::D: return "D";
+			case KeyType::E: return "E";
+			case KeyType::F: return "F";
+			case KeyType::G: return "G";
+			case KeyType::H: return "H";
+			case KeyType::I: return "I";
+			case KeyType::J: return "J";
+			case KeyType::K: return "K";
+			case KeyType::L: return "L";
+			case KeyType::M: return "M";
+			case KeyType::N: return "N";
+			case KeyType::O: return "O";
+			case KeyType::P: return "P";
+			case KeyType::Q: return "Q";
+			case KeyType::R: return "R";
+			case KeyType::S: return "S";
+			case KeyType::T: return "T";
+			case KeyType::U: return "U";
+			case KeyType::V: return "V";
+			case KeyType::W: return "W";
+			case KeyType::X: return "X";
+			case KeyType::Y: return "Y";
+			case KeyType::Z: return "Z";
+
+				// Symbol Keys
+			case KeyType::APOSTROPHE: return "'";
+			case KeyType::COMMA: return ",";
+			case KeyType::MINUS: return "-";
+			case KeyType::PERIOD: return ".";
+			case KeyType::SLASH: return "/";
+			case KeyType::SEMICOLON: return ";";
+			case KeyType::EQUAL: return "=";
+			case KeyType::LEFT_BRACKET: return "[";
+			case KeyType::BACKSLASH: return "\\";
+			case KeyType::RIGHT_BRACKET: return "]";
+			case KeyType::TILDE: return "~";
+
+				// Control Keys
+			case KeyType::ESCAPE: return "esc";
+			case KeyType::ENTER: return "ent";
+			case KeyType::TAB: return "tab";
+			case KeyType::BACKSPACE: return "bksp";
+			case KeyType::INSERT: return "ins";
+			case KeyType::DELETE: return "del";
+			case KeyType::ARROW_RIGHT: return "right";
+			case KeyType::ARROW_LEFT: return "left";
+			case KeyType::ARROW_DOWN: return "down";
+			case KeyType::ARROW_UP: return "up";
+			case KeyType::PAGE_UP: return "PgUp";
+			case KeyType::PAGE_DOWN: return "PgDn";
+			case KeyType::HOME: return "home";
+			case KeyType::END: return "end";
+			case KeyType::CAPS_LOCK: return "caps";
+			case KeyType::LEFT_SHIFT: return "shift";
+			case KeyType::LEFT_CTRL: return "ctrl";
+			case KeyType::LEFT_ALT: return "alt";
+			case KeyType::RIGHT_SHIFT: return "shift";
+			case KeyType::RIGHT_CTRL: return "ctrl";
+			case KeyType::RIGHT_ALT: return "alt";
+			case KeyType::SPACE: return "space";
+
+				// Function Keys
+			case KeyType::F1: return "F1";
+			case KeyType::F2: return "F2";
+			case KeyType::F3: return "F3";
+			case KeyType::F4: return "F4";
+			case KeyType::F5: return "F5";
+			case KeyType::F6: return "F6";
+			case KeyType::F7: return "F7";
+			case KeyType::F8: return "F8";
+			case KeyType::F9: return "F9";
+			case KeyType::F10: return "F10";
+			case KeyType::F11: return "F11";
+			case KeyType::F12: return "F12";
+
+				// Default case for unknown values
+			default: return "UNK";
+			}
+		}
+
+
 	}
 }
