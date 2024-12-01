@@ -39,9 +39,17 @@ namespace CE
 			ImGui::Text("Mouse Input");
 			ImGui::Text("TODO mouse input");
 
-			ImGui::Text("Keyboard Input");
-			DrawKeyboardState(m_keyboardState);
-
+			static bool bShowKeyboard = false;
+			ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
+			if (bShowKeyboard) {
+				ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+				DrawKeyboardState(m_keyboardState);
+				ImGui::End();
+			}
+			ImGui::Separator();
+			ImGui::Text("Previous Input");
+			
+			DrawKeyboardState(m_prevKeyboardState);
 			ImGui::End();
 		}
 	}
@@ -111,20 +119,18 @@ namespace CE
 		m_engine->Stop();
 	}
 
-	void InputSystem::DrawKeyboardState(const KeyboardState& state) const
+	void InputSystem::DrawKeyboardState(const KeyboardState& state, const ImVec2& offset, const ImVec2& size) const
 	{
-		ImDrawList* drawList = ImGui::GetWindowDrawList();
-		ImVec2 startDraw = ImGui::GetCursorScreenPos();
+		// This assumes we will use the qwerty layout, magic number essentially
+		static const ImVec2 s_maxSize(719.f, 295.f);
+		static ImColor s_inactiveColor = ImGui::GetColorU32(ImGuiCol_FrameBg);
+		static ImColor s_activeColor = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);
+		static float s_keyWidth = 45.f;
+		static float s_keyHeight = 45.f;
+		static float s_keyPadding = 3.f;
+		static float s_externalKeyPadding = 10.f;
 
-		static ImColor inactiveColor = ImGui::GetColorU32(ImGuiCol_FrameBg);
-		static ImColor activeColor = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);
-		static float keyWidth = 45.f;
-		static float keyHeight = 45.f;
-		static float keyPadding = 3.f;
-		static float externalKeyPadding = 10.f;
-		static ImVec2 halfKey = { keyWidth * 0.5f, keyHeight * 0.5f };
-
-		static std::vector<std::vector<int>> DrawOrder = {
+		static std::vector<std::vector<int>> s_qwertyDrawOrder = {
 			{GLFW_KEY_ESCAPE, GLFW_KEY_F1, GLFW_KEY_F2, GLFW_KEY_F3, GLFW_KEY_F4, GLFW_KEY_F5, GLFW_KEY_F6,
 			 GLFW_KEY_F7, GLFW_KEY_F8, GLFW_KEY_F9, GLFW_KEY_F10, GLFW_KEY_F11, GLFW_KEY_F12, GLFW_KEY_F13},
 
@@ -149,7 +155,7 @@ namespace CE
 			char name[8];
 		};
 
-		static std::unordered_map<int, ExtraKeyData> extraKeyData = {
+		static std::unordered_map<int, ExtraKeyData> s_extraKeyData = {
 			{GLFW_KEY_ESCAPE, {30.f, "esc"}},
 			{GLFW_KEY_BACKSPACE, {30.f, "delete"}},
 			{GLFW_KEY_TAB, {20.f, "tab"}},
@@ -178,40 +184,69 @@ namespace CE
 			{GLFW_KEY_F13, {0.f, "f13"}},
 			{GLFW_KEY_F14, {0.f, "f14"}}
 		};
-		
-		float rowPos = startDraw.y + externalKeyPadding;
+
+		bool bSizeProvided = !(size.x == 0 || size.y == 0);
+
+		ImGui::PushID(*(state.keys));
+		ImGui::BeginChild("keyboard", bSizeProvided ? size : s_maxSize);
+
+		ImDrawList* drawList = ImGui::GetWindowDrawList();
+		ImVec2 startDraw = ImGui::GetCursorScreenPos();
+
+		startDraw.x += offset.x;
+		startDraw.y += offset.y;
+
+		float rowPos = startDraw.y + s_externalKeyPadding;
+		float columnPos = 0.f;
 		float rowExtraHeight = 0;
-		for (int y = 0; y < DrawOrder.size(); y++)
+		for (int y = 0; y < s_qwertyDrawOrder.size(); y++)
 		{
 			// simple make func row smaller
 			rowExtraHeight = y == 0 ? -15.f : 0.f;
 
-			float columnPos = startDraw.x + externalKeyPadding;
-			for (int x = 0; x < DrawOrder[y].size(); x++)
+			columnPos = startDraw.x + s_externalKeyPadding;
+			for (int x = 0; x < s_qwertyDrawOrder[y].size(); x++)
 			{
-				int key = DrawOrder[y][x];
-				float extraWidth = extraKeyData.contains(key) ? extraKeyData[key].width : 0.f;
+				int key = s_qwertyDrawOrder[y][x];
 				ImVec2 minPos(columnPos, rowPos);
-				ImVec2 maxPos(columnPos + keyWidth + extraWidth, rowPos + keyHeight + rowExtraHeight);
-				ImColor keyColor = state.keys[key] ? activeColor : inactiveColor;
+				ImVec2 maxPos(columnPos, rowPos);
 
+				float width = s_keyWidth;
+				float height = s_keyHeight + rowExtraHeight;
+
+				ImColor keyColor = state.keys[key] ? s_activeColor : s_inactiveColor;
+
+				const bool bHasExtraData = s_extraKeyData.contains(key);
+				if (bHasExtraData)
+				{
+					width += s_extraKeyData[key].width;
+				}
+
+				maxPos.x += width;
+				maxPos.y += height;
 				drawList->AddRectFilled(minPos, maxPos, keyColor);
-				columnPos += keyWidth + extraWidth + keyPadding;
+				columnPos += width + s_keyPadding;
 
 				// Draw Key Name
 				const char* keyName = glfwGetKeyName(key, 0);
-				if (keyName == nullptr) keyName = extraKeyData.contains(key) ? extraKeyData[key].name : nullptr;
+				if (keyName == nullptr) keyName = bHasExtraData ? s_extraKeyData[key].name : nullptr;
 				if (keyName)
 				{
 					ImVec2 dim = ImGui::CalcTextSize(keyName);
-					float textMinPosX = minPos.x + halfKey.x + extraWidth * 0.5f - dim.x * 0.5f;
-					float textMinPosY = minPos.y + halfKey.y + rowExtraHeight * 0.5f - dim.y * 0.5f;
+					float textMinPosX = minPos.x + width * 0.5f - dim.x * 0.5f;
+					float textMinPosY = minPos.y + height * 0.5f - dim.y * 0.5f;
 					ImVec2 textMinPos(textMinPosX, textMinPosY);
 					drawList->AddText(textMinPos, ImGui::GetColorU32(ImGuiCol_Text), keyName);
 				}
 			}
 
-			rowPos += keyHeight + keyPadding + rowExtraHeight;
+			rowPos += s_keyHeight + s_keyPadding + rowExtraHeight;
 		}
+
+		// Cleanup for proper formatting
+		ImGui::SetCursorScreenPos(ImVec2(startDraw.x, rowPos + s_externalKeyPadding));
+		
+		ImGui::EndChild();
+		ImGui::PopID();
 	}
 }

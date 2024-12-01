@@ -2,6 +2,8 @@
 
 #include "Systems/EngineSystem.h"
 
+#include "imgui.h"
+
 class GLFWwindow;
 
 namespace CE
@@ -40,7 +42,7 @@ namespace CE
 		KeyboardState m_keyboardState{};
 		KeyboardState m_prevKeyboardState{};
 
-		void DrawKeyboardState(const KeyboardState& state) const;
+		void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset = ImVec2(0, 0), const ImVec2& size = ImVec2(0, 0)) const;
 
 	public:
 
