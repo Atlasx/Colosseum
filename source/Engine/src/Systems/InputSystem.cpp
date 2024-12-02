@@ -62,14 +62,31 @@ namespace CE
 		if (newState != prevKeyState)
 		{
 			// Something has changed in the state! woohoo!
-			ProcessKeyStateChange(key, prevKeyState, newKeyState);
+			ProcessKeyStateChange(key, prevKeyState, newState);
 		}
-		m_keyboardState.SetKey(keyT, keyS);
+		m_keyboardState.SetKey(key, newState);
 	}
 
 	void InputSystem::ProcessKeyStateChange(const KeyType key, const KeyState prevState, const KeyState newState)
 	{
+		//KeyTrigger trigger(prevState, newState);
 
+		// Check if we should fire any actions
+		for (auto& action : m_actions)
+		{
+			if (action->IsBoundTo(key))
+			{
+				action->Execute();
+			}
+		}
+
+		for (auto& axisAction : m_axisActions)
+		{
+			if (axisAction->IsBoundTo(key))
+			{
+
+			}
+		}
 	}
 
 	void InputSystem::OnCursorMoved(GLFWwindow* window, double xPos, double yPos)

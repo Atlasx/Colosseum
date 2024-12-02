@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <iostream>
 #include <functional>
+#include <set>
 
 class GLFWwindow;
 
@@ -139,16 +140,57 @@ namespace CE
 
 		friend class InputSystem;
 	};
-	
+
+	/*
+	* Keys, state changes between keys
+	* multiple key bindings for the same action
+	* accumulate held timers
+	* 
+	* thresholds for duration on held
+	* continuous firing and discrete firing
+	* 
+	* Jump -> bound to space, instantaneous, on pressed
+	* Interact -> bound to e, start timer on pressed, fire trigger on duration
+	* WASD -> bound to WASD, continuously reporting on 2D axis, fires every frame
+	* Mouse Delta -> bound to mouse move, accumulate and report every frame
+	*	side note: consider mid-frame mouse input and partial rotation to input angle
+	* 
+	* Actions are composed of binding, trigger, callback
+	* trigger is updated with key state deltas and per-frame updates
+	* actions are checked every frame if trigger?
+	* maybe actions call in to update their triggers and fire callback if trigger is met
+	* actions can have callbacks with values, axis float values or others
+	* 
+	* input system manages list of actions, sends key state updates, frametime updates
+	* should inputsystem delay callbacks until update tick?
+	* 
+	* 
+	*/
+
+
+
 	class BaseInputAction
 	{
 	public:
 		virtual ~BaseInputAction() = default;
 		virtual void Execute() = 0;
-	protected:
-		KeyType m_binding;
+		//virtual void Update(const KeyType inputKey);
 
-		BaseInputAction(KeyType binding) : m_binding(binding) {}
+		bool IsBoundTo(const KeyType key) 
+		{ 
+			return m_bindings.contains(key) && key != KeyType::UNKNOWN; 
+		}
+
+		void AddBinding(const KeyType key)
+		{ 
+			if (key != KeyType::UNKNOWN) m_bindings.insert(key);
+		}
+
+	protected:
+		std::set<KeyType> m_bindings;
+		BaseInputAction(KeyType binding) {
+			m_bindings.insert(binding);
+		}
 	};
 
 	class InputAction : public BaseInputAction
@@ -204,9 +246,11 @@ namespace CE
 
 	public:
 		void PollInput();
+		void ProcessKeyStateChange(const KeyType key, const KeyState prevState, const KeyState newState);
 
 		void RegisterAction(KeyType keyBinding, InputAction::Callback callback)
 		{
+			// Dynamic allocation here is not desirable. TODO allocation-free and handles
 			m_actions.push_back(std::make_unique<InputAction>(keyBinding, std::move(callback)));
 		}
 
