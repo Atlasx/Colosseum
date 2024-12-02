@@ -118,6 +118,19 @@ namespace CE
 	{
 		// Run some tests on systems like loading specific files etc
 		GetSystem<ResourceSystem>()->RunTests();
+
+		auto IS = GetSystem<InputSystem>();
+		if (IS)
+		{
+			IS->RegisterAction(KeyType::T, []() 
+				{
+					std::cout << "Hey this action system works!" << std::endl;
+				});
+			IS->RegisterAction(KeyType::B, []()
+				{
+					std::cout << "This one also works, not a fluke!" << std::endl;
+				});
+		}
 	}
 #endif
 

@@ -5,6 +5,8 @@
 #include "imgui.h"
 
 #include <cstdint>
+#include <iostream>
+#include <functional>
 
 class GLFWwindow;
 
@@ -114,8 +116,6 @@ namespace CE
 
 	struct KeyboardState
 	{
-		
-
 	public:
 		KeyState GetKey(const KeyType key) const
 		{
@@ -139,6 +139,58 @@ namespace CE
 
 		friend class InputSystem;
 	};
+	
+	class BaseInputAction
+	{
+	public:
+		virtual ~BaseInputAction() = default;
+		virtual void Execute() = 0;
+	protected:
+		KeyType m_binding;
+
+		BaseInputAction(KeyType binding) : m_binding(binding) {}
+	};
+
+	class InputAction : public BaseInputAction
+	{
+	public:
+		using Callback = std::function<void()>;
+
+		InputAction(KeyType keyBinding, Callback callback)
+			: BaseInputAction(keyBinding), m_callback(std::move(callback)) {}
+
+		void Execute() override {
+			if (m_callback) {
+				m_callback();
+			}
+		}
+
+	private:
+		Callback m_callback;
+	};
+
+	class InputAxisAction : public BaseInputAction 
+	{
+	public:
+		using Callback = std::function<void(float)>;
+
+		InputAxisAction(KeyType keyBinding, Callback callback)
+			: BaseInputAction(keyBinding), m_callback(std::move(callback)) {}
+
+		void Execute() override {
+			if (m_callback) {
+				m_callback(m_axisValue);
+			}
+		}
+
+		void SetAxisValue(float value) {
+			m_axisValue = value;
+		}
+
+	private:
+		Callback m_callback;
+		float m_axisValue = 0.0f;
+	};
 
 	// Going to use a global here for now, glfw seems to require some way of accessing which engine it is referring to when using the input functions.
 	// Not a fan of this, but I can't think of a better way at the moment
@@ -147,8 +199,21 @@ namespace CE
 
 	class InputSystem : public EngineSystem
 	{
+		
+		using AxisActionCallback = std::function<void(float)>;
+
 	public:
 		void PollInput();
+
+		void RegisterAction(KeyType keyBinding, InputAction::Callback callback)
+		{
+			m_actions.push_back(std::make_unique<InputAction>(keyBinding, std::move(callback)));
+		}
+
+		void RegisterAxisAction(KeyType keyBinding, InputAxisAction::Callback callback)
+		{
+			m_axisActions.push_back(std::make_unique<InputAxisAction>(keyBinding, std::move(callback)));
+		}
 
 	private:
 		GLFWwindow* m_window = nullptr;
@@ -163,6 +228,15 @@ namespace CE
 		KeyboardState m_prevKeyboardState{};
 
 		void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset = ImVec2(0, 0), const ImVec2& size = ImVec2(0, 0)) const;
+
+		void UpdateKeyState(const KeyType key, const KeyState newState);
+
+		// Storage for our actions
+		std::vector<std::unique_ptr<InputAction>> m_actions;
+		std::vector<std::unique_ptr<InputAxisAction>> m_axisActions;
+
+		// Queue for processing action input events
+		//std::queue<> need this eventually, not sure what type
 
 	public:
 

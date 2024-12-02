@@ -56,6 +56,22 @@ namespace CE
 		glfwPollEvents();
 	}
 
+	void InputSystem::UpdateKeyState(const KeyType key, const KeyState newState)
+	{
+		KeyState prevKeyState = m_keyboardState.GetKey(key);
+		if (newState != prevKeyState)
+		{
+			// Something has changed in the state! woohoo!
+			ProcessKeyStateChange(key, prevKeyState, newKeyState);
+		}
+		m_keyboardState.SetKey(keyT, keyS);
+	}
+
+	void InputSystem::ProcessKeyStateChange(const KeyType key, const KeyState prevState, const KeyState newState)
+	{
+
+	}
+
 	void InputSystem::OnCursorMoved(GLFWwindow* window, double xPos, double yPos)
 	{
 		if (window != m_window) return;
@@ -70,7 +86,7 @@ namespace CE
 		const KeyType keyT = InputUtilities::GLFWKeyToKeyType(key);
 		const KeyState keyS = InputUtilities::GLFWActionToKeyState(action);
 
-		m_keyboardState.SetKey(keyT, keyS);
+		UpdateKeyState(keyT, keyS);
 	}
 
 	void InputSystem::OnMouseButton(GLFWwindow* window, int button, int action, int mods)
