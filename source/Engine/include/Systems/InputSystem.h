@@ -2,6 +2,8 @@
 
 #include "Systems/EngineSystem.h"
 
+#include "ObjectPool.h"
+
 #include "imgui.h"
 
 #include <cstdint>
@@ -188,7 +190,8 @@ namespace CE
 
 	protected:
 		std::set<KeyType> m_bindings;
-		BaseInputAction(KeyType binding) {
+		BaseInputAction() : m_bindings() {}
+		BaseInputAction(KeyType binding) : m_bindings() {
 			m_bindings.insert(binding);
 		}
 	};
@@ -198,6 +201,7 @@ namespace CE
 	public:
 		using Callback = std::function<void()>;
 
+		InputAction() {}
 		InputAction(KeyType keyBinding, Callback callback)
 			: BaseInputAction(keyBinding), m_callback(std::move(callback)) {}
 
@@ -279,6 +283,9 @@ namespace CE
 		std::vector<std::unique_ptr<InputAction>> m_actions;
 		std::vector<std::unique_ptr<InputAxisAction>> m_axisActions;
 
+		std::vector<InputAction> m_testActions;
+		ObjectPool<InputAction, GenericHandle, 100> m_actionPool;
+
 		// Queue for processing action input events
 		//std::queue<> need this eventually, not sure what type
 
@@ -288,7 +295,7 @@ namespace CE
 		std::string Name() const override { return "Input System"; }
 		void DrawGUI() override;
 
-		InputSystem(Engine* engine) : EngineSystem(engine) 
+		InputSystem(Engine* engine) : EngineSystem(engine)
 		{
 			m_showDebug = true;
 		};

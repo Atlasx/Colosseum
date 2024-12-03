@@ -16,7 +16,7 @@ add_subdirectory(source/vendor/glad)
 add_subdirectory(source/vendor/glfw)
 add_subdirectory(source/vendor/imgui)
 
-#add_subdirectory(source/Common)
+add_subdirectory(source/Common)
 add_subdirectory(source/RenderLib)
 add_subdirectory(source/Engine)
 add_subdirectory(source/Main)

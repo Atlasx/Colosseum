@@ -37,6 +37,7 @@ find_package(OpenGL REQUIRED)
 add_library(Engine STATIC ${SOURCES} ${INCLUDES})
 
 target_link_libraries(Engine PUBLIC
+	Common
 	OpenGL::GL
 	glad
 	ImGui
