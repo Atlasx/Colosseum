@@ -32,39 +32,38 @@ namespace CE
 		g_input = nullptr;
 	}
 
-	void InputSystem::DrawGUI()
-	{
-		if (m_showDebug)
-		{
-			ImGui::Begin("Input System Debug", &m_showDebug);
-			ImGui::Text("Mouse Input");
-			ImGui::Text("TODO mouse input");
-
-			static bool bShowKeyboard = false;
-			ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
-			if (bShowKeyboard) {
-				ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-				DrawKeyboardState(m_keyboardState);
-				ImGui::End();
-			}
-			ImGui::End();
-		}
-	}
-
 	void InputSystem::PollInput()
 	{
 		glfwPollEvents();
 	}
 
+	/*
+	 *	Update Key State
+	 * 
+	 *	Updates internal keyboard representation and performs updates on all actions
+	 * 
+	*/
 	void InputSystem::UpdateKeyState(const KeyType key, const KeyState newState)
 	{
-		KeyState prevKeyState = m_keyboardState.GetKey(key);
-		if (newState != prevKeyState)
+		// Update our knowledge base of inputs
+		const KeyState prevState = m_inputKnowledge.currentBoardState.GetKey(key);
+		m_inputKnowledge.currentBoardState.SetKey(key, newState);
+		m_inputKnowledge.previousBoardState.SetKey(key, prevState);
+		m_inputKnowledge.lastKey = key;
+		m_inputKnowledge.lastKeyState = newState;
+
+		// Check all actions 
+		const InputKnowledge& knowledge = GetKnowledge();
+		bool bAnyActionTriggered = false;
+		//for (auto& action : m_actions)
 		{
-			// Something has changed in the state! woohoo!
-			ProcessKeyStateChange(key, prevKeyState, newState);
+			//action->Update(knowledge);
 		}
-		m_keyboardState.SetKey(key, newState);
+	}
+
+	void InputSystem::QueueInputTriggerCallback(const GenericHandle actionHandle)
+	{
+
 	}
 
 	void InputSystem::ProcessKeyStateChange(const KeyType key, const KeyState prevState, const KeyState newState)
@@ -72,21 +71,21 @@ namespace CE
 		//KeyTrigger trigger(prevState, newState);
 
 		// Check if we should fire any actions
-		for (auto& action : m_actions)
+		//for (auto& action : m_actions)
 		{
-			if (action->IsBoundTo(key))
+			//if (action->IsBoundTo(key))
 			{
-				action->Execute();
+			//	action->Execute();
 			}
 		}
 
-		for (auto& axisAction : m_axisActions)
+		/*for (auto& axisAction : m_axisActions)
 		{
 			if (axisAction->IsBoundTo(key))
 			{
 
 			}
-		}
+		}*/
 	}
 
 	void InputSystem::OnCursorMoved(GLFWwindow* window, double xPos, double yPos)
@@ -121,6 +120,25 @@ namespace CE
 		if (window != m_window) return;
 
 		m_engine->Stop();
+	}
+	
+	void InputSystem::DrawGUI()
+	{
+		if (m_showDebug)
+		{
+			ImGui::Begin("Input System Debug", &m_showDebug);
+			ImGui::Text("Mouse Input");
+			ImGui::Text("TODO mouse input");
+
+			static bool bShowKeyboard = false;
+			ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
+			if (bShowKeyboard) {
+				ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+				DrawKeyboardState(GetKnowledge().currentBoardState);
+				ImGui::End();
+			}
+			ImGui::End();
+		}
 	}
 
 	void InputSystem::DrawKeyboardState(const KeyboardState& state, const ImVec2& offset, const ImVec2& size) const

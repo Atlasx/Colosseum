@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <iostream>
 #include <functional>
-#include <set>
+#include <array>
 
 class GLFWwindow;
 
@@ -144,6 +144,8 @@ namespace CE
 	};
 
 	/*
+	* MISC NOTES
+	* 
 	* Keys, state changes between keys
 	* multiple key bindings for the same action
 	* accumulate held timers
@@ -166,62 +168,141 @@ namespace CE
 	* input system manages list of actions, sends key state updates, frametime updates
 	* should inputsystem delay callbacks until update tick?
 	* 
+	* input action maps key bindings to triggers, passing along update information
+	*	carries and calls callback once trigger is met
+	* 
+	* input trigger checks if conditions to fire are met
+	*	tracks duration
+	*	tracks and matches state transitions (OnPressed, OnReleased)
+	* 
+	* pass a reference object or another way of getting input pre-post state
+	* could pass a raw pointed back to the input system or a premade info struct
+	* input system could keep previous frame data and only check inputs on update
+	*	this would be simpler, but would miss out on any input between frames
+	*	bad the more I think about it, taps between frames wouldn't be picked up at all
+	* 
+	* input system and triggers need to process every input, but maybe only send callbacks
+	*	once per frame, at a specific time in the update cycle.
 	* 
 	*/
 
+	// This class is meant to remove triggering logic from the InputAction
+	/*
+	class IInputTrigger
+	{
+	public:
+		virtual ~IInputTrigger() = delete;
+		virtual void UpdateTime(float deltaTime) {}
+		virtual void StateChanged(const KeyState prevState, const KeyState nextState) {}
+		virtual bool IsTriggered() { }
+	private:
+		bool bIsTriggered = false;
+	};
+
+	struct StateTransitionUpdate
+	{
+		KeyState from;
+		KeyState to;
+	};
+
+	struct StateHeldUpdate
+	{
+		KeyState state;
+		float deltaTime;
+	};
+
+	template<typename StateUpdateStruct>
+	class InputTrigger
+	{
+	public:
+		bool Update(StateUpdateStruct update)
+		{
+			return false;
+		}
+	};
 
 
+	// Matches a key state transition to a provided transition
+	class InputStateTrigger : public IInputTrigger
+	{
+	public:
+		InputStateTrigger(const KeyState prev, const KeyState next) : m_prev(prev), m_next(next) {}
+
+		void StateChanged(const KeyState prev, const KeyState next)
+		{
+			if (m_prev == prev && m_next == next)
+			{
+				// Fired
+			}
+		}
+
+	private:
+		const KeyState m_prev;
+		const KeyState m_next;
+	};
+	*/
+
+	struct InputKnowledge
+	{
+		KeyboardState previousBoardState;
+		KeyboardState currentBoardState;
+
+		KeyType lastKey = KeyType::UNKNOWN;
+		KeyState lastKeyState = KeyState::RELEASED;
+
+		unsigned long long currentTime;
+
+		InputKnowledge() : previousBoardState(), currentBoardState(), currentTime(0) {}
+	};
+
+	template <typename _CallbackType = void>
 	class BaseInputAction
 	{
 	public:
+		using Callback = std::function<void(_CallbackType)>;
+
 		virtual ~BaseInputAction() = default;
 		virtual void Execute() = 0;
-		//virtual void Update(const KeyType inputKey);
+		virtual void Update(const InputKnowledge& knowledge) = 0;
 
 		bool IsBoundTo(const KeyType key) 
 		{ 
-			return m_bindings.contains(key) && key != KeyType::UNKNOWN; 
+			// TODO fix with allow multiple bindings
+			return m_binding == key && key != KeyType::UNKNOWN;
 		}
 
 		void AddBinding(const KeyType key)
 		{ 
-			if (key != KeyType::UNKNOWN) m_bindings.insert(key);
+			//if (key != KeyType::UNKNOWN) m_bindings.insert(key);
 		}
 
 	protected:
-		std::set<KeyType> m_bindings;
-		BaseInputAction() : m_bindings() {}
-		BaseInputAction(KeyType binding) : m_bindings() {
-			m_bindings.insert(binding);
-		}
+		Callback m_callback;
+		KeyType m_binding = KeyType::UNKNOWN; 
+
+		BaseInputAction(Callback callback) : m_callback(std::move(callback)), m_binding() {}
 	};
 
-	class InputAction : public BaseInputAction
+	using FloatInputAction = BaseInputAction<float>;
+
+	class InputAction : public BaseInputAction<void>
 	{
 	public:
-		using Callback = std::function<void()>;
-
-		InputAction() {}
-		InputAction(KeyType keyBinding, Callback callback)
-			: BaseInputAction(keyBinding), m_callback(std::move(callback)) {}
+		InputAction() : BaseInputAction(nullptr) {}
+		InputAction(BaseInputAction::Callback cb) : BaseInputAction(std::move(cb)) {}
 
 		void Execute() override {
 			if (m_callback) {
 				m_callback();
 			}
 		}
-
-	private:
-		Callback m_callback;
 	};
 
-	class InputAxisAction : public BaseInputAction 
+	class InputAxisAction : public FloatInputAction
 	{
 	public:
-		using Callback = std::function<void(float)>;
-
-		InputAxisAction(KeyType keyBinding, Callback callback)
-			: BaseInputAction(keyBinding), m_callback(std::move(callback)) {}
+		InputAxisAction(FloatInputAction::Callback callback)
+			: BaseInputAction(std::move(callback)) {}
 
 		void Execute() override {
 			if (m_callback) {
@@ -238,6 +319,7 @@ namespace CE
 		float m_axisValue = 0.0f;
 	};
 
+
 	// Going to use a global here for now, glfw seems to require some way of accessing which engine it is referring to when using the input functions.
 	// Not a fan of this, but I can't think of a better way at the moment
 	class InputSystem;
@@ -252,15 +334,16 @@ namespace CE
 		void PollInput();
 		void ProcessKeyStateChange(const KeyType key, const KeyState prevState, const KeyState newState);
 
+		
 		void RegisterAction(KeyType keyBinding, InputAction::Callback callback)
 		{
 			// Dynamic allocation here is not desirable. TODO allocation-free and handles
-			m_actions.push_back(std::make_unique<InputAction>(keyBinding, std::move(callback)));
+			//m_actions.push_back(std::make_unique<InputAction>(std::move(callback)));
 		}
 
 		void RegisterAxisAction(KeyType keyBinding, InputAxisAction::Callback callback)
 		{
-			m_axisActions.push_back(std::make_unique<InputAxisAction>(keyBinding, std::move(callback)));
+			//m_axisActions.push_back(std::make_unique<InputAxisAction>(keyBinding, std::move(callback)));
 		}
 
 	private:
@@ -272,19 +355,27 @@ namespace CE
 		void OnScroll(GLFWwindow* window, double xOffset, double yOffset);
 		void OnWindowClose(GLFWwindow* window);
 
-		KeyboardState m_keyboardState{};
-		KeyboardState m_prevKeyboardState{};
+		// Does this require thread mutex locks? input changes knowledge base while we're processing
+		InputKnowledge m_inputKnowledge;
+
+		const InputKnowledge& GetKnowledge()
+		{
+			return m_inputKnowledge;
+		}
 
 		void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset = ImVec2(0, 0), const ImVec2& size = ImVec2(0, 0)) const;
 
 		void UpdateKeyState(const KeyType key, const KeyState newState);
 
-		// Storage for our actions
-		std::vector<std::unique_ptr<InputAction>> m_actions;
-		std::vector<std::unique_ptr<InputAxisAction>> m_axisActions;
+		void QueueInputTriggerCallback(const GenericHandle actionHandle);
 
-		std::vector<InputAction> m_testActions;
-		ObjectPool<InputAction, GenericHandle, 100> m_actionPool;
+		// Storage for our actions
+		InputAction myAction;
+
+		//std::vector<std::unique_ptr<InputAction>> m_actions;
+		//std::vector<std::unique_ptr<InputAxisAction>> m_axisActions;
+
+		//ObjectPool<InputAction, GenericHandle, 100> m_actionPool;
 
 		// Queue for processing action input events
 		//std::queue<> need this eventually, not sure what type
