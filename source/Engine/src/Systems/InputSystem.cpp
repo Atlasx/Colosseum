@@ -71,11 +71,11 @@ namespace CE
 		//KeyTrigger trigger(prevState, newState);
 
 		// Check if we should fire any actions
-		//for (auto& action : m_actions)
+		for (auto& action : m_actions)
 		{
-			//if (action->IsBoundTo(key))
+			if (action->IsBoundTo(key))
 			{
-			//	action->Execute();
+				action->Update(GetKnowledge());
 			}
 		}
 

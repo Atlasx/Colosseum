@@ -255,41 +255,54 @@ namespace CE
 		InputKnowledge() : previousBoardState(), currentBoardState(), currentTime(0) {}
 	};
 
+	class IInputActionBase {
+	public:
+		virtual ~IInputActionBase() = default;
+		virtual void Execute() = 0;
+		virtual void Update(const InputKnowledge& knowledge) = 0;
+		virtual bool IsBoundTo(const KeyType key) const = 0;
+	};
+
 	template <typename _CallbackType = void>
-	class BaseInputAction
+	class InputActionBase : IInputActionBase
 	{
 	public:
 		using Callback = std::function<void(_CallbackType)>;
 
-		virtual ~BaseInputAction() = default;
-		virtual void Execute() = 0;
-		virtual void Update(const InputKnowledge& knowledge) = 0;
+		~InputActionBase() override = default;
+		void Execute() override = 0;
+		void Update(const InputKnowledge& knowledge) override = 0;
 
-		bool IsBoundTo(const KeyType key) 
+		bool IsBoundTo(const KeyType key) const override
 		{ 
-			// TODO fix with allow multiple bindings
 			return m_binding == key && key != KeyType::UNKNOWN;
 		}
 
-		void AddBinding(const KeyType key)
+		void SetBinding(const KeyType key)
 		{ 
-			//if (key != KeyType::UNKNOWN) m_bindings.insert(key);
+			if (key != KeyType::UNKNOWN) m_binding = key;
+		}
+
+		void SetCallback(Callback cb)
+		{
+			m_callback = cb;
 		}
 
 	protected:
 		Callback m_callback;
 		KeyType m_binding = KeyType::UNKNOWN; 
 
-		BaseInputAction(Callback callback) : m_callback(std::move(callback)), m_binding() {}
+		InputActionBase() : m_callback([](_CallbackType value = _CallbackType{}) {}) {}
+		InputActionBase(Callback callback) : m_callback(std::move(callback)), m_binding() {}
 	};
 
-	using FloatInputAction = BaseInputAction<float>;
+	using FloatInputAction = InputActionBase<float>;
 
-	class InputAction : public BaseInputAction<void>
+	class InputAction : public InputActionBase<void>
 	{
 	public:
-		InputAction() : BaseInputAction(nullptr) {}
-		InputAction(BaseInputAction::Callback cb) : BaseInputAction(std::move(cb)) {}
+		//InputAction() : InputActionBase([] {}) {}
+		InputAction(InputActionBase::Callback cb) : InputActionBase(std::move(cb)) {}
 
 		void Execute() override {
 			if (m_callback) {
@@ -301,8 +314,9 @@ namespace CE
 	class InputAxisAction : public FloatInputAction
 	{
 	public:
+		InputAxisAction() : FloatInputAction([](float) {}) {}
 		InputAxisAction(FloatInputAction::Callback callback)
-			: BaseInputAction(std::move(callback)) {}
+			: InputActionBase(std::move(callback)) {}
 
 		void Execute() override {
 			if (m_callback) {
@@ -315,7 +329,6 @@ namespace CE
 		}
 
 	private:
-		Callback m_callback;
 		float m_axisValue = 0.0f;
 	};
 
@@ -370,9 +383,7 @@ namespace CE
 		void QueueInputTriggerCallback(const GenericHandle actionHandle);
 
 		// Storage for our actions
-		InputAction myAction;
-
-		//std::vector<std::unique_ptr<InputAction>> m_actions;
+		std::vector<std::unique_ptr<IInputActionBase>> m_actions;
 		//std::vector<std::unique_ptr<InputAxisAction>> m_axisActions;
 
 		//ObjectPool<InputAction, GenericHandle, 100> m_actionPool;
