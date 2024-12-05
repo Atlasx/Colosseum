@@ -125,11 +125,11 @@ namespace CE
 			IS->RegisterAction(KeyType::T, []() 
 				{
 					std::cout << "Hey this action system works!" << std::endl;
-				});
+				}, KeyState::PRESSED, KeyState::RELEASED);
 			IS->RegisterAction(KeyType::B, []()
 				{
 					std::cout << "This one also works, not a fluke!" << std::endl;
-				});
+				}, KeyState::RELEASED, KeyState::PRESSED | KeyState::HELD);
 		}
 	}
 #endif

@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <iostream>
 #include <functional>
-#include <array>
+#include <queue>
 
 class GLFWwindow;
 
@@ -80,10 +80,16 @@ namespace CE
 	};
 
 	enum class KeyState : unsigned char {
-		RELEASED,
-		PRESSED,
-		HELD,
+		UNKNOWN = 0,
+		RELEASED = 1 << 0,
+		PRESSED = 1 << 1,
+		HELD = 1 << 2
 	};
+
+	constexpr KeyState operator|(KeyState lhs, KeyState rhs)
+	{
+		return static_cast<KeyState>(static_cast<unsigned char>(lhs) | static_cast<unsigned char>(rhs));
+	}
 
 	namespace InputUtilities 
 	{
@@ -186,69 +192,13 @@ namespace CE
 	* 
 	*/
 
-	// This class is meant to remove triggering logic from the InputAction
-	/*
-	class IInputTrigger
-	{
-	public:
-		virtual ~IInputTrigger() = delete;
-		virtual void UpdateTime(float deltaTime) {}
-		virtual void StateChanged(const KeyState prevState, const KeyState nextState) {}
-		virtual bool IsTriggered() { }
-	private:
-		bool bIsTriggered = false;
-	};
-
-	struct StateTransitionUpdate
-	{
-		KeyState from;
-		KeyState to;
-	};
-
-	struct StateHeldUpdate
-	{
-		KeyState state;
-		float deltaTime;
-	};
-
-	template<typename StateUpdateStruct>
-	class InputTrigger
-	{
-	public:
-		bool Update(StateUpdateStruct update)
-		{
-			return false;
-		}
-	};
-
-
-	// Matches a key state transition to a provided transition
-	class InputStateTrigger : public IInputTrigger
-	{
-	public:
-		InputStateTrigger(const KeyState prev, const KeyState next) : m_prev(prev), m_next(next) {}
-
-		void StateChanged(const KeyState prev, const KeyState next)
-		{
-			if (m_prev == prev && m_next == next)
-			{
-				// Fired
-			}
-		}
-
-	private:
-		const KeyState m_prev;
-		const KeyState m_next;
-	};
-	*/
-
 	struct InputKnowledge
 	{
 		KeyboardState previousBoardState;
 		KeyboardState currentBoardState;
 
 		KeyType lastKey = KeyType::UNKNOWN;
-		KeyState lastKeyState = KeyState::RELEASED;
+		KeyState lastKeyState = KeyState::UNKNOWN;
 
 		unsigned long long currentTime;
 
@@ -260,9 +210,11 @@ namespace CE
 		virtual ~IInputActionBase() = default;
 		virtual void Execute() = 0;
 		virtual void Update(const InputKnowledge& knowledge) = 0;
+		virtual bool TryConsumeTrigger() = 0;
 		virtual bool IsBoundTo(const KeyType key) const = 0;
 	};
 
+	/*
 	template <typename _CallbackType = void>
 	class InputActionBase : IInputActionBase
 	{
@@ -270,8 +222,9 @@ namespace CE
 		using Callback = std::function<void(_CallbackType)>;
 
 		~InputActionBase() override = default;
-		void Execute() override = 0;
-		void Update(const InputKnowledge& knowledge) override = 0;
+		void Execute() override {}
+
+		void Update(const InputKnowledge& knowledge) override {}
 
 		bool IsBoundTo(const KeyType key) const override
 		{ 
@@ -288,35 +241,115 @@ namespace CE
 			m_callback = cb;
 		}
 
-	protected:
-		Callback m_callback;
-		KeyType m_binding = KeyType::UNKNOWN; 
+		bool IsTriggered() const override
+		{
+			return bIsTriggered;
+		}
 
+
+
+	protected:
 		InputActionBase() : m_callback([](_CallbackType value = _CallbackType{}) {}) {}
-		InputActionBase(Callback callback) : m_callback(std::move(callback)), m_binding() {}
+		InputActionBase(Callback callback) : m_callback(std::move(callback)) {}
+		
+		Callback m_callback;
+		KeyType m_binding = KeyType::UNKNOWN;
+		bool bIsTriggered = false;
 	};
 
 	using FloatInputAction = InputActionBase<float>;
-
-	class InputAction : public InputActionBase<void>
+	using BasicInputAction = InputActionBase<void>;
+	*/
+	/*
+	class InputAction : public BasicInputAction
 	{
 	public:
-		//InputAction() : InputActionBase([] {}) {}
-		InputAction(InputActionBase::Callback cb) : InputActionBase(std::move(cb)) {}
+		InputAction(InputActionBase::Callback cb) : BasicInputAction(std::move(cb)) {}
 
-		void Execute() override {
-			if (m_callback) {
-				m_callback();
+		void Update(const InputKnowledge& knowledge)
+		{
+			if (knowledge.lastKey != m_binding)
+			{
+				return;
+			}
+
+			if (knowledge.lastKeyState == toState
+				&& knowledge.previousBoardState.GetKey(knowledge.lastKey) == fromState)
+			{
+				bIsTriggered = true;
 			}
 		}
+	private:
+		KeyState fromState = KeyState::UNKNOWN;
+		KeyState toState = KeyState::UNKNOWN;
+	};
+	*/
+
+	class InputAction : public IInputActionBase
+	{
+	public:
+		using Callback = std::function<void()>;
+
+		InputAction() : m_callback([] {}) {}
+		InputAction(KeyType binding, Callback cb, KeyState to, KeyState from) :
+			m_binding(binding),
+			m_callback(std::move(cb)),
+			m_toState(to),
+			m_fromState(from)
+		{}
+
+		void Execute() override 
+		{
+			m_callback();
+			m_bIsTriggered = false;
+		}
+
+		bool TryConsumeTrigger() override
+		{
+			if (m_bIsTriggered)
+			{
+				m_bIsTriggered = false;
+				return true;
+			}
+			return false;
+		}
+
+		bool IsBoundTo(const KeyType key) const override
+		{
+			return key == m_binding;
+		}
+
+		void Update(const InputKnowledge& knowledge) override
+		{
+			if (knowledge.lastKey != m_binding)
+			{
+				return;
+			}
+
+			if (knowledge.lastKeyState == m_toState
+				&& knowledge.previousBoardState.GetKey(knowledge.lastKey) == m_fromState)
+			{
+				m_bIsTriggered = true;
+			}
+			else
+			{
+				m_bIsTriggered = false;
+			}
+		}
+	private:
+		bool m_bIsTriggered = false;
+		Callback m_callback;
+		KeyType m_binding = KeyType::UNKNOWN;
+		KeyState m_fromState = KeyState::UNKNOWN;
+		KeyState m_toState = KeyState::UNKNOWN;
 	};
 
+	/*
 	class InputAxisAction : public FloatInputAction
 	{
 	public:
-		InputAxisAction() : FloatInputAction([](float) {}) {}
 		InputAxisAction(FloatInputAction::Callback callback)
-			: InputActionBase(std::move(callback)) {}
+			: FloatInputAction(std::move(callback)) {}
 
 		void Execute() override {
 			if (m_callback) {
@@ -331,6 +364,151 @@ namespace CE
 	private:
 		float m_axisValue = 0.0f;
 	};
+	*/
+
+	class InputAxisAction : public IInputActionBase
+	{
+	public:
+		using Callback = std::function<void(float)>;
+
+		InputAxisAction() : m_callback([](float) {}) {}
+		InputAxisAction(KeyType binding, Callback callback)
+			: m_binding(binding), m_callback(std::move(callback)) {}
+
+		bool TryConsumeTrigger() override
+		{
+			if (m_bIsTriggered)
+			{
+				m_bIsTriggered = false;
+				return true;
+			}
+			return false;
+		}
+
+		bool IsBoundTo(const KeyType key) const override
+		{
+			return key == m_binding;
+		}
+
+		void Execute() override
+		{
+			m_callback(m_axisValue);
+		}
+
+		void Update(const InputKnowledge& knowledge) override
+		{
+			if (knowledge.lastKey == m_binding)
+			{
+				if (knowledge.lastKeyState == KeyState::PRESSED || knowledge.lastKeyState == KeyState::HELD)
+				{
+					m_axisValue += 0.05f;
+				}
+			}
+		}
+
+		void SetAxisValue(float value)
+		{
+			m_axisValue = value;
+		}
+
+	private:
+		float m_axisValue = 0.0f;
+		bool m_bIsTriggered = false;
+		Callback m_callback;
+		KeyType m_binding = KeyType::UNKNOWN;
+	};
+
+	// A fun idea! Essentially a wrapper for any derived class of BaseInputAction that uses the IInputAction
+	// interface. But now with contiguous storage! List of InputActionWrappers can be created and stored sequentially (this assumes all derived input actions are roughly of similar size).
+	// A macro here could help automate updating this class... might do that later
+	/*
+	class InputActionWrapper
+	{
+	private:
+		union Storage
+		{
+			// Add new action types here
+			InputAction u_action;
+			InputAxisAction u_axisAction;
+
+			Storage() {}
+			~Storage() {}
+		} m_storage;
+
+		enum class ActionType
+		{
+			None,
+			// Add new action types here
+			InputAction,
+			InputAxisAction
+		} m_actionType;
+
+	public:
+		InputActionWrapper() : m_actionType(ActionType::None) {}
+		~InputActionWrapper() 
+		{
+			switch (m_actionType)
+			{
+			case ActionType::InputAction:
+				m_storage.u_action.~InputAction(); break;
+			case ActionType::InputAxisAction:
+				m_storage.u_axisAction.~InputAxisAction(); break;
+			default:
+				// nothing in m_storage, all good
+				break;
+			}
+		}
+
+		template<typename DerivedType, typename... Args>
+		static InputActionWrapper Create(Args&&... args)
+		{
+			InputActionWrapper wrapper;
+			if constexpr (std::is_same_v<DerivedType, InputAction>)
+			{
+				new (&wrapper.m_storage.u_action) InputAction(std::forward<Args>(args)...);
+				wrapper.m_actionType = ActionType::InputAction;
+			}
+			else if constexpr (std::is_same_v<DerivedType, InputAxisAction>)
+			{
+				new (&wrapper.m_storage.u_axisAction) InputAxisAction(std::forward<Args>(args)...);
+				wrapper.m_actionType = ActionType::InputAxisAction;
+			}
+			return wrapper;
+		}
+
+		IInputActionBase& GetAction()
+		{
+			switch (m_actionType)
+			{
+			case ActionType::InputAction:
+				return m_storage.u_action;
+			case ActionType::InputAxisAction:
+				return m_storage.u_axisAction;
+			default:
+				// uh oh
+				break;
+			}
+		}
+
+		const IInputActionBase& GetAction() const
+		{
+			switch (m_actionType)
+			{
+			case ActionType::InputAction:
+				return m_storage.u_action;
+			case ActionType::InputAxisAction:
+				return m_storage.u_axisAction;
+			default:
+				break;
+			}
+		}
+
+		void Execute() { GetAction().Execute(); }
+		void Update(const InputKnowledge& knowledge) { GetAction().Update(knowledge); }
+		bool IsTriggered() const { return GetAction().IsTriggered(); };
+		bool IsBoundTo(const KeyType key) const { return GetAction().IsBoundTo(key); }
+	};
+	*/
 
 
 	// Going to use a global here for now, glfw seems to require some way of accessing which engine it is referring to when using the input functions.
@@ -341,17 +519,15 @@ namespace CE
 	class InputSystem : public EngineSystem
 	{
 		
-		using AxisActionCallback = std::function<void(float)>;
+		using InputActionHandle = GenericHandle;
+		
 
 	public:
 		void PollInput();
-		void ProcessKeyStateChange(const KeyType key, const KeyState prevState, const KeyState newState);
-
 		
-		void RegisterAction(KeyType keyBinding, InputAction::Callback callback)
+		void RegisterAction(KeyType keyBinding, InputAction::Callback callback, KeyState to, KeyState from)
 		{
-			// Dynamic allocation here is not desirable. TODO allocation-free and handles
-			//m_actions.push_back(std::make_unique<InputAction>(std::move(callback)));
+			m_actions.push_back(std::make_shared<InputAction>(keyBinding, std::move(callback), to, from));
 		}
 
 		void RegisterAxisAction(KeyType keyBinding, InputAxisAction::Callback callback)
@@ -379,17 +555,17 @@ namespace CE
 		void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset = ImVec2(0, 0), const ImVec2& size = ImVec2(0, 0)) const;
 
 		void UpdateKeyState(const KeyType key, const KeyState newState);
+		void ProcessActions();
+		void ProcessCallbacks();
 
-		void QueueInputTriggerCallback(const GenericHandle actionHandle);
+		// Polymorphic storage option for our actions. Undesirable for cache coherency
+		std::vector<std::shared_ptr<IInputActionBase>> m_actions;
 
-		// Storage for our actions
-		std::vector<std::unique_ptr<IInputActionBase>> m_actions;
-		//std::vector<std::unique_ptr<InputAxisAction>> m_axisActions;
-
-		//ObjectPool<InputAction, GenericHandle, 100> m_actionPool;
+		// This was a test of a allocation free InputAction setup, seemed like overkill for only a few actions
+		//ObjectPool<InputActionWrapper, InputActionHandle, 100> m_actions;
 
 		// Queue for processing action input events
-		//std::queue<> need this eventually, not sure what type
+		std::queue<std::weak_ptr<IInputActionBase>> m_triggeredActions;
 
 	public:
 

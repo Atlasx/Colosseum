@@ -64,17 +64,16 @@ struct Handle
 		return !(*this == other);
 	}
 
-	//static const Handle INVALID;
+	static const Handle INVALID;
 };
 
 // This was confusing, defining a templated version of invalid handle so any created handle type has
 // a corresponding Invalid. 
 // These should only be accessed with type aliases for the Handle ie ObjectHandle::INVALID
 // instead of a massive Handle<blah, blah, blah>
-/*
 template <UnsignedIntegral _T, std::size_t _Idx, std::size_t _Gen>
 const Handle<_T, _Idx, _Gen> Handle<_T, _Idx, _Gen>::INVALID{_IndexMask, 0};
-*/
+
 
 // Finally! Handle type declarations! Systems can create their own too
 using ObjectHandle = Handle<std::uint32_t, 20, 12>;

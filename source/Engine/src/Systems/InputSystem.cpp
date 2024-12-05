@@ -35,6 +35,9 @@ namespace CE
 	void InputSystem::PollInput()
 	{
 		glfwPollEvents();
+
+		ProcessActions();
+		ProcessCallbacks();
 	}
 
 	/*
@@ -53,39 +56,38 @@ namespace CE
 		m_inputKnowledge.lastKeyState = newState;
 
 		// Check all actions 
-		const InputKnowledge& knowledge = GetKnowledge();
-		bool bAnyActionTriggered = false;
-		//for (auto& action : m_actions)
+		ProcessActions();
+		// Do not process callbacks until frame?
+
+		// Reset transitory input data fields
+		m_inputKnowledge.lastKey = KeyType::UNKNOWN;
+		m_inputKnowledge.lastKeyState = KeyState::UNKNOWN;
+	}
+
+	void InputSystem::ProcessActions()
+	{
+		for (auto action : m_actions)
 		{
-			//action->Update(knowledge);
+			action->Update(GetKnowledge());
+			if (action->TryConsumeTrigger())
+			{
+				m_triggeredActions.push(action);
+			}
 		}
 	}
 
-	void InputSystem::QueueInputTriggerCallback(const GenericHandle actionHandle)
+	void InputSystem::ProcessCallbacks()
 	{
-
-	}
-
-	void InputSystem::ProcessKeyStateChange(const KeyType key, const KeyState prevState, const KeyState newState)
-	{
-		//KeyTrigger trigger(prevState, newState);
-
-		// Check if we should fire any actions
-		for (auto& action : m_actions)
+		while (!m_triggeredActions.empty())
 		{
-			if (action->IsBoundTo(key))
+			auto weakAction = m_triggeredActions.front();
+			m_triggeredActions.pop();
+
+			if (auto action = weakAction.lock())
 			{
-				action->Update(GetKnowledge());
+				action->Execute();
 			}
 		}
-
-		/*for (auto& axisAction : m_axisActions)
-		{
-			if (axisAction->IsBoundTo(key))
-			{
-
-			}
-		}*/
 	}
 
 	void InputSystem::OnCursorMoved(GLFWwindow* window, double xPos, double yPos)
@@ -147,6 +149,7 @@ namespace CE
 		static const ImVec2 s_maxSize(719.f, 295.f);
 		static ImColor s_inactiveColor = ImGui::GetColorU32(ImGuiCol_FrameBg);
 		static ImColor s_activeColor = ImGui::GetColorU32(ImGuiCol_FrameBgHovered);
+		static ImColor s_heldColor = ImGui::GetColorU32(ImGuiCol_FrameBgActive);
 		static float s_keyWidth = 45.f;
 		static float s_keyHeight = 45.f;
 		static float s_keyPadding = 3.f;
@@ -178,6 +181,19 @@ namespace CE
 			{KeyType::RIGHT_CTRL, 10.f}
 		};
 
+		static auto GetKeyStateColor = [](KeyState state) -> ImColor
+			{
+				switch (state)
+				{
+				case KeyState::PRESSED:
+					return s_activeColor;
+				case KeyState::HELD:
+					return s_heldColor;
+				case KeyState::RELEASED:
+				default:
+					return s_inactiveColor;
+				}
+			};
 
 
 		bool bSizeProvided = !(size.x == 0 || size.y == 0);
@@ -210,8 +226,7 @@ namespace CE
 				width += s_keyData.contains(key) ? s_keyData[key] : 0.f;
 				float height = s_keyHeight + rowExtraHeight;
 
-				ImColor keyColor = state.GetKey(key) == KeyState::PRESSED ? s_activeColor : s_inactiveColor;
-		
+				ImColor keyColor = GetKeyStateColor(state.GetKey(key));
 				maxPos.x += width;
 				maxPos.y += height;
 				drawList->AddRectFilled(minPos, maxPos, keyColor);
@@ -306,7 +321,17 @@ namespace CE
 
 		KeyState GLFWActionToKeyState(int action)
 		{
-			return static_cast<KeyState>(action);
+			switch (action)
+			{
+			case 0:
+				return KeyState::RELEASED;
+			case 1:
+				return KeyState::PRESSED;
+			case 2:
+				return KeyState::HELD;
+			default:
+				return KeyState::UNKNOWN;
+			}
 		}
 
 		const char* GetKeyName(const KeyType key)
