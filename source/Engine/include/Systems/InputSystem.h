@@ -214,77 +214,6 @@ namespace CE
 		virtual bool IsBoundTo(const KeyType key) const = 0;
 	};
 
-	/*
-	template <typename _CallbackType = void>
-	class InputActionBase : IInputActionBase
-	{
-	public:
-		using Callback = std::function<void(_CallbackType)>;
-
-		~InputActionBase() override = default;
-		void Execute() override {}
-
-		void Update(const InputKnowledge& knowledge) override {}
-
-		bool IsBoundTo(const KeyType key) const override
-		{ 
-			return m_binding == key && key != KeyType::UNKNOWN;
-		}
-
-		void SetBinding(const KeyType key)
-		{ 
-			if (key != KeyType::UNKNOWN) m_binding = key;
-		}
-
-		void SetCallback(Callback cb)
-		{
-			m_callback = cb;
-		}
-
-		bool IsTriggered() const override
-		{
-			return bIsTriggered;
-		}
-
-
-
-	protected:
-		InputActionBase() : m_callback([](_CallbackType value = _CallbackType{}) {}) {}
-		InputActionBase(Callback callback) : m_callback(std::move(callback)) {}
-		
-		Callback m_callback;
-		KeyType m_binding = KeyType::UNKNOWN;
-		bool bIsTriggered = false;
-	};
-
-	using FloatInputAction = InputActionBase<float>;
-	using BasicInputAction = InputActionBase<void>;
-	*/
-	/*
-	class InputAction : public BasicInputAction
-	{
-	public:
-		InputAction(InputActionBase::Callback cb) : BasicInputAction(std::move(cb)) {}
-
-		void Update(const InputKnowledge& knowledge)
-		{
-			if (knowledge.lastKey != m_binding)
-			{
-				return;
-			}
-
-			if (knowledge.lastKeyState == toState
-				&& knowledge.previousBoardState.GetKey(knowledge.lastKey) == fromState)
-			{
-				bIsTriggered = true;
-			}
-		}
-	private:
-		KeyState fromState = KeyState::UNKNOWN;
-		KeyState toState = KeyState::UNKNOWN;
-	};
-	*/
-
 	class InputAction : public IInputActionBase
 	{
 	public:
@@ -343,28 +272,6 @@ namespace CE
 		KeyState m_fromState = KeyState::UNKNOWN;
 		KeyState m_toState = KeyState::UNKNOWN;
 	};
-
-	/*
-	class InputAxisAction : public FloatInputAction
-	{
-	public:
-		InputAxisAction(FloatInputAction::Callback callback)
-			: FloatInputAction(std::move(callback)) {}
-
-		void Execute() override {
-			if (m_callback) {
-				m_callback(m_axisValue);
-			}
-		}
-
-		void SetAxisValue(float value) {
-			m_axisValue = value;
-		}
-
-	private:
-		float m_axisValue = 0.0f;
-	};
-	*/
 
 	class InputAxisAction : public IInputActionBase
 	{
@@ -552,7 +459,6 @@ namespace CE
 			return m_inputKnowledge;
 		}
 
-		void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset = ImVec2(0, 0), const ImVec2& size = ImVec2(0, 0)) const;
 
 		void UpdateKeyState(const KeyType key, const KeyState newState);
 		void ProcessActions();

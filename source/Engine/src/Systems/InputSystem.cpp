@@ -124,26 +124,8 @@ namespace CE
 		m_engine->Stop();
 	}
 	
-	void InputSystem::DrawGUI()
-	{
-		if (m_showDebug)
-		{
-			ImGui::Begin("Input System Debug", &m_showDebug);
-			ImGui::Text("Mouse Input");
-			ImGui::Text("TODO mouse input");
 
-			static bool bShowKeyboard = false;
-			ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
-			if (bShowKeyboard) {
-				ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-				DrawKeyboardState(GetKnowledge().currentBoardState);
-				ImGui::End();
-			}
-			ImGui::End();
-		}
-	}
-
-	void InputSystem::DrawKeyboardState(const KeyboardState& state, const ImVec2& offset, const ImVec2& size) const
+	static void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset, const ImVec2& size)
 	{
 		// This assumes we will use the qwerty layout, magic number essentially
 		static const ImVec2 s_maxSize(719.f, 295.f);
@@ -198,7 +180,7 @@ namespace CE
 
 		bool bSizeProvided = !(size.x == 0 || size.y == 0);
 
-		ImGui::PushID(state.keys);
+		ImGui::PushID(0);
 		ImGui::BeginChild("keyboard", bSizeProvided ? size : s_maxSize);
 
 		ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -252,6 +234,25 @@ namespace CE
 
 		ImGui::EndChild();
 		ImGui::PopID();
+	}
+
+	void InputSystem::DrawGUI()
+	{
+		if (m_showDebug)
+		{
+			ImGui::Begin("Input System Debug", &m_showDebug);
+			ImGui::Text("Mouse Input");
+			ImGui::Text("TODO mouse input");
+
+			static bool bShowKeyboard = false;
+			ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
+			if (bShowKeyboard) {
+				ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+				DrawKeyboardState(GetKnowledge().currentBoardState, ImVec2(), ImVec2());
+				ImGui::End();
+			}
+			ImGui::End();
+		}
 	}
 
 	namespace InputUtilities
