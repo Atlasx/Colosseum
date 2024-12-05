@@ -210,9 +210,11 @@ namespace CE
 	class IInputActionBase {
 	public:
 		virtual ~IInputActionBase() = default;
+		virtual std::string GetName() = 0;
 		virtual void Execute() = 0;
 		virtual void Update(const InputKnowledge& knowledge) = 0;
 		virtual bool TryConsumeTrigger() = 0;
+		virtual void Trigger() = 0;
 		virtual bool IsBoundTo(const KeyType key) const = 0;
 		virtual KeyType GetBinding() const = 0;
 	};
@@ -222,18 +224,29 @@ namespace CE
 	public:
 		using Callback = std::function<void()>;
 
-		InputAction() : m_callback([] {}) {}
-		InputAction(KeyType binding, Callback cb, KeyState to, KeyState from) :
+		InputAction() : m_callback([] {}), m_name() {}
+		InputAction(std::string name, KeyType binding, Callback cb, KeyState to, KeyState from) :
+			m_name(name),
 			m_binding(binding),
 			m_callback(std::move(cb)),
 			m_toState(to),
 			m_fromState(from)
 		{}
 
+		std::string GetName() override
+		{
+			return m_name;
+		}
+
 		void Execute() override 
 		{
 			m_callback();
 			m_bIsTriggered = false;
+		}
+
+		void Trigger() override
+		{
+			m_bIsTriggered = true;
 		}
 
 		bool TryConsumeTrigger() override
@@ -279,6 +292,7 @@ namespace CE
 		KeyType m_binding = KeyType::UNKNOWN;
 		KeyState m_fromState = KeyState::UNKNOWN;
 		KeyState m_toState = KeyState::UNKNOWN;
+		std::string m_name;
 	};
 
 	class InputAxisAction : public IInputActionBase
@@ -440,9 +454,9 @@ namespace CE
 	public:
 		void PollInput();
 		
-		void RegisterAction(KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::RELEASED)
+		void RegisterAction(std::string actionName, KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::RELEASED)
 		{
-			m_actions.push_back(std::make_shared<InputAction>(keyBinding, std::move(callback), to, from));
+			m_actions.push_back(std::make_shared<InputAction>(actionName, keyBinding, std::move(callback), to, from));
 		}
 
 		void RegisterAxisAction(KeyType keyBinding, InputAxisAction::Callback callback)

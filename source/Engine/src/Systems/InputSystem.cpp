@@ -143,12 +143,18 @@ namespace CE
 
 	static void DrawInputAction(std::shared_ptr<IInputActionBase> action)
 	{
-		ImGui::BeginChild("Test");
+		std::string actionName = action->GetName();
+		ImGui::PushID(action.get());
+		ImGui::BeginChild("action", ImVec2(ImGui::GetContentRegionAvail().x, 60.f), true);
 
 		const char* bindingName = InputUtilities::GetKeyName(action->GetBinding());
 		ImGui::Text("Key Binding: %s", bindingName);
-
+		if (ImGui::Button("Fire"))
+		{
+			action->Trigger();
+		}
 		ImGui::EndChild();
+		ImGui::PopID();
 	}
 
 	static void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset, const ImVec2& size)
@@ -266,27 +272,34 @@ namespace CE
 	{
 		if (m_showDebug)
 		{
+			ImGui::SetNextWindowSize(ImVec2(200.f, 500.f), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSizeConstraints(ImVec2(50.f, 50.f), ImVec2(FLT_MAX, FLT_MAX));
 			ImGui::Begin("Input System Debug", &m_showDebug);
-			ImGui::Text("Mouse Input");
-			ImGui::Text("TODO mouse input");
-
-			static bool bShowKeyboard = false;
-			ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
-			if (bShowKeyboard) {
-				ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-				DrawKeyboardState(GetKnowledge().currentBoardState, ImVec2(), ImVec2());
-				ImGui::End();
+			if (ImGui::CollapsingHeader("Mouse"))
+			{
+				ImGui::Text("Mouse Input");
 			}
 
-			ImGui::Text("Begin Next Section");
-			for (auto action : m_actions)
+			if (ImGui::CollapsingHeader("Actions"))
 			{
-				if (action)
+				ImGui::BeginChild("Actions", ImVec2(0,0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
+				for (auto action : m_actions)
 				{
 					DrawInputAction(action);
 				}
+				ImGui::EndChild();
 			}
 
+			if (ImGui::CollapsingHeader("Keyboard"))
+			{
+				static bool bShowKeyboard = false;
+				ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
+				if (bShowKeyboard) {
+					ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+					DrawKeyboardState(GetKnowledge().currentBoardState, ImVec2(), ImVec2());
+					ImGui::End();
+				}
+			}
 			ImGui::End();
 		}
 	}

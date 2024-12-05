@@ -124,15 +124,15 @@ namespace CE
 		auto IS = GetSystem<InputSystem>();
 		if (IS)
 		{
-			IS->RegisterAction(KeyType::T, []() 
+			IS->RegisterAction("TestAction One", KeyType::T, []()
 				{
 					std::cout << "Hey this action system works!" << std::endl;
 				});
-			IS->RegisterAction(KeyType::B, []()
+			IS->RegisterAction("TestAction Two", KeyType::B, []()
 				{
 					std::cout << "This one also works, not a fluke!" << std::endl;
 				}, KeyState::RELEASED, KeyState::PRESSED);
-			IS->RegisterAction(KeyType::N, [IS]()
+			IS->RegisterAction("Add Action", KeyType::N, [IS]()
 				{
 					std::cout << "Creating new keybinding!" << std::endl;
 
@@ -141,13 +141,13 @@ namespace CE
 					std::uniform_int_distribution<int> dist(static_cast<int>(KeyType::A), static_cast<int>(KeyType::Z));
 					KeyType randBinding = static_cast<KeyType>(dist(gen));
 
-					std::cout << "This is a random binding" << InputUtilities::GetKeyName(randBinding) << std::endl;
+					std::cout << "This is a random binding: " << InputUtilities::GetKeyName(randBinding) << std::endl;
 					auto randBindingLambda = []
 						{
 							std::cout << "Random binding pressed!" << std::endl;
 						};
 
-					IS->RegisterAction(randBinding, randBindingLambda);
+					IS->RegisterAction("Random Action", randBinding, randBindingLambda);
 				});
 		}
 	}
