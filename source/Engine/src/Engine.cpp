@@ -5,6 +5,8 @@
 #include "Systems/EventSystem.h"
 #include "Systems/RenderSystem.h"
 
+#include <random>
+
 namespace CE
 {
 	Engine::Engine() :
@@ -125,11 +127,28 @@ namespace CE
 			IS->RegisterAction(KeyType::T, []() 
 				{
 					std::cout << "Hey this action system works!" << std::endl;
-				}, KeyState::PRESSED, KeyState::RELEASED);
+				});
 			IS->RegisterAction(KeyType::B, []()
 				{
 					std::cout << "This one also works, not a fluke!" << std::endl;
-				}, KeyState::RELEASED, KeyState::PRESSED | KeyState::HELD);
+				}, KeyState::RELEASED, KeyState::PRESSED);
+			IS->RegisterAction(KeyType::N, [IS]()
+				{
+					std::cout << "Creating new keybinding!" << std::endl;
+
+					std::random_device rd;
+					std::mt19937 gen(rd());
+					std::uniform_int_distribution<int> dist(static_cast<int>(KeyType::A), static_cast<int>(KeyType::Z));
+					KeyType randBinding = static_cast<KeyType>(dist(gen));
+
+					std::cout << "This is a random binding" << InputUtilities::GetKeyName(randBinding) << std::endl;
+					auto randBindingLambda = []
+						{
+							std::cout << "Random binding pressed!" << std::endl;
+						};
+
+					IS->RegisterAction(randBinding, randBindingLambda);
+				});
 		}
 	}
 #endif

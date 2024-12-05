@@ -10,6 +10,7 @@
 #include <iostream>
 #include <functional>
 #include <queue>
+#include <iterator>
 
 class GLFWwindow;
 
@@ -18,7 +19,7 @@ namespace CE
 	enum class KeyType : std::uint8_t
 	{
 		// WARNING if this enum changes, be sure to audit translation function for GLFW!
-		UNKNOWN,
+		UNKNOWN = 0,
 
 		// Numbers
 		NUMBER_KEYS,
@@ -86,13 +87,13 @@ namespace CE
 		HELD = 1 << 2
 	};
 
-	constexpr KeyState operator|(KeyState lhs, KeyState rhs)
-	{
-		return static_cast<KeyState>(static_cast<unsigned char>(lhs) | static_cast<unsigned char>(rhs));
-	}
-
 	namespace InputUtilities 
-	{
+	{	
+		constexpr KeyState operator|(KeyState lhs, KeyState rhs)
+		{
+			return static_cast<KeyState>(static_cast<unsigned char>(lhs) | static_cast<unsigned char>(rhs));
+		}
+
 		constexpr KeyType operator+(KeyType key, int offset)
 		{
 			using Underlying = std::underlying_type_t<KeyType>;
@@ -201,6 +202,7 @@ namespace CE
 		KeyState lastKeyState = KeyState::UNKNOWN;
 
 		unsigned long long currentTime;
+		bool bNeedsUpdate = true;
 
 		InputKnowledge() : previousBoardState(), currentBoardState(), currentTime(0) {}
 	};
@@ -212,6 +214,7 @@ namespace CE
 		virtual void Update(const InputKnowledge& knowledge) = 0;
 		virtual bool TryConsumeTrigger() = 0;
 		virtual bool IsBoundTo(const KeyType key) const = 0;
+		virtual KeyType GetBinding() const = 0;
 	};
 
 	class InputAction : public IInputActionBase
@@ -246,6 +249,11 @@ namespace CE
 		bool IsBoundTo(const KeyType key) const override
 		{
 			return key == m_binding;
+		}
+
+		KeyType GetBinding() const override
+		{
+			return m_binding;
 		}
 
 		void Update(const InputKnowledge& knowledge) override
@@ -432,7 +440,7 @@ namespace CE
 	public:
 		void PollInput();
 		
-		void RegisterAction(KeyType keyBinding, InputAction::Callback callback, KeyState to, KeyState from)
+		void RegisterAction(KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::RELEASED)
 		{
 			m_actions.push_back(std::make_shared<InputAction>(keyBinding, std::move(callback), to, from));
 		}
@@ -459,9 +467,16 @@ namespace CE
 			return m_inputKnowledge;
 		}
 
+		// Manually updates our input knowledge state, used only on startup
+		void UpdateInputKnowledge();
 
+		// Update input knowledge for a KeyType key at a particular KeyState
 		void UpdateKeyState(const KeyType key, const KeyState newState);
+		
+		// Iterates through actions and updates
 		void ProcessActions();
+
+		// Iterates through triggered actions and fires callbacks
 		void ProcessCallbacks();
 
 		// Polymorphic storage option for our actions. Undesirable for cache coherency

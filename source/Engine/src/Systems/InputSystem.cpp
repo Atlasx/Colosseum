@@ -34,6 +34,11 @@ namespace CE
 
 	void InputSystem::PollInput()
 	{
+		if (m_inputKnowledge.bNeedsUpdate)
+		{
+			UpdateInputKnowledge();
+		}
+
 		glfwPollEvents();
 
 		ProcessActions();
@@ -62,6 +67,18 @@ namespace CE
 		// Reset transitory input data fields
 		m_inputKnowledge.lastKey = KeyType::UNKNOWN;
 		m_inputKnowledge.lastKeyState = KeyState::UNKNOWN;
+	}
+
+	void InputSystem::UpdateInputKnowledge()
+	{
+		for (int i = 0; i < static_cast<int>(KeyType::KEYS_MAX); i++)
+		{
+			KeyType key = static_cast<KeyType>(i);
+
+			// A little translation weirdness
+			int glfwKeyAction = glfwGetKey(m_window, InputUtilities::KeyTypeToGLFWKey(key));
+			UpdateKeyState(key, InputUtilities::GLFWActionToKeyState(glfwKeyAction));
+		}
 	}
 
 	void InputSystem::ProcessActions()
@@ -123,7 +140,16 @@ namespace CE
 
 		m_engine->Stop();
 	}
-	
+
+	static void DrawInputAction(std::shared_ptr<IInputActionBase> action)
+	{
+		ImGui::BeginChild("Test");
+
+		const char* bindingName = InputUtilities::GetKeyName(action->GetBinding());
+		ImGui::Text("Key Binding: %s", bindingName);
+
+		ImGui::EndChild();
+	}
 
 	static void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset, const ImVec2& size)
 	{
@@ -251,6 +277,16 @@ namespace CE
 				DrawKeyboardState(GetKnowledge().currentBoardState, ImVec2(), ImVec2());
 				ImGui::End();
 			}
+
+			ImGui::Text("Begin Next Section");
+			for (auto action : m_actions)
+			{
+				if (action)
+				{
+					DrawInputAction(action);
+				}
+			}
+
 			ImGui::End();
 		}
 	}
