@@ -454,12 +454,17 @@ namespace CE
 	public:
 		void PollInput();
 		
-		void RegisterAction(std::string actionName, KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::RELEASED)
+		GenericHandle RegisterAction(std::string actionName, KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::RELEASED)
 		{
-			m_actions.push_back(std::make_shared<InputAction>(actionName, keyBinding, std::move(callback), to, from));
+			/*auto action = std::make_shared<InputAction>(actionName, keyBinding, std::move(callback), to, from);
+			std::weak_ptr<InputAction> retAction = action;
+			m_actions.push_back(std::move(action));
+			return retAction;*/
+			return m_actions.Create(actionName, keyBinding, std::move(callback), to, from);
+
 		}
 
-		void RegisterAxisAction(KeyType keyBinding, InputAxisAction::Callback callback)
+		std::weak_ptr<InputAxisAction> RegisterAxisAction(KeyType keyBinding, InputAxisAction::Callback callback)
 		{
 			//m_axisActions.push_back(std::make_unique<InputAxisAction>(keyBinding, std::move(callback)));
 		}
@@ -494,7 +499,9 @@ namespace CE
 		void ProcessCallbacks();
 
 		// Polymorphic storage option for our actions. Undesirable for cache coherency
-		std::vector<std::shared_ptr<IInputActionBase>> m_actions;
+		//std::vector<std::shared_ptr<IInputActionBase>> m_actions;
+
+		ObjectPool<InputAction, 20> m_actions;
 
 		// This was a test of a allocation free InputAction setup, seemed like overkill for only a few actions
 		//ObjectPool<InputActionWrapper, InputActionHandle, 100> m_actions;
