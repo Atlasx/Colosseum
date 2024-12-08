@@ -83,6 +83,7 @@ namespace CE
 
 	void InputSystem::ProcessActions()
 	{
+		/*
 		for (auto action : m_actions)
 		{
 			action->Update(GetKnowledge());
@@ -91,6 +92,7 @@ namespace CE
 				m_triggeredActions.push(action);
 			}
 		}
+		*/
 	}
 
 	void InputSystem::ProcessCallbacks()
@@ -141,17 +143,17 @@ namespace CE
 		m_engine->Stop();
 	}
 
-	static void DrawInputAction(std::shared_ptr<IInputActionBase> action)
+	static void DrawInputAction(GenericHandle handle, InputAction& action)
 	{
-		std::string actionName = action->GetName();
-		ImGui::PushID(action.get());
+		std::string actionName = action.GetName();
+		ImGui::PushID(handle.GetIndex());
 		ImGui::BeginChild("action", ImVec2(ImGui::GetContentRegionAvail().x, 60.f), true);
 
-		const char* bindingName = InputUtilities::GetKeyName(action->GetBinding());
+		const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
 		ImGui::Text("Key Binding: %s", bindingName);
 		if (ImGui::Button("Fire"))
 		{
-			action->Trigger();
+			action.Trigger();
 		}
 		ImGui::EndChild();
 		ImGui::PopID();

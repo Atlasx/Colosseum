@@ -6,6 +6,8 @@
 #include <cassert>
 #include <limits>
 #include <concepts>
+#include <array>
+#include <iostream>
 
 template <typename T>
 concept UnsignedIntegral = std::is_unsigned_v<T>;
@@ -26,13 +28,13 @@ struct Handle
 {
 	using UnderlyingType = _Type;
 
-	static constexpr std::size_t _TotalBits = sizeof(_Type) * 8;
-	static_assert(_IndexBits + _GenerationBits == _TotalBits, "Check expected size of handle!");
-	static_assert(_IndexBits >= 4 && _GenerationBits >= 4, "Too few bits!");
-
 	static constexpr std::size_t ActiveBits = 1;
 	static constexpr std::size_t IndexBits = _IndexBits;
 	static constexpr std::size_t GenerationBits = _GenerationBits;
+
+	static constexpr std::size_t TotalBits = sizeof(_Type) * 8;
+	static_assert(IndexBits + GenerationBits + ActiveBits == TotalBits, "Check expected size of handle!");
+	static_assert(IndexBits >= 4 && GenerationBits >= 4, "Too few bits!");
 
 	// Post-shift bit mask for each section of the handle (need to shift before applying mask)
 	static constexpr _Type ActiveMask = (1ULL << (IndexBits + GenerationBits));
@@ -41,7 +43,8 @@ struct Handle
 	
 	_Type m_value;
 
-	Handle(_Type idx = IndexMask, _Type gen = 0, bool active) : m_value((idx & IndexMask) | ((gen & GenerationMask) << _IndexBits) | (active ? ActiveMask : 0)) {}
+	Handle() : m_value(INVALID.m_value) {}
+	Handle(_Type idx = IndexMask, _Type gen = 0, bool active = false) : m_value((idx & IndexMask) | ((gen & GenerationMask) << _IndexBits) | (active ? ActiveMask : 0)) {}
 
 	static Handle Generate(_Type index, _Type generation, bool active)
 	{
@@ -53,12 +56,12 @@ struct Handle
 
 	_Type GetIndex() const
 	{
-		return m_value & _IndexMask;
+		return m_value & IndexMask;
 	}
 
 	_Type GetGeneration() const
 	{ // Shift and mask to get leading bits
-		return (m_value >> _IndexBits) & _GenerationMask;
+		return (m_value >> IndexBits) & GenerationMask;
 	}
 
 	bool IsActive() const
@@ -68,7 +71,7 @@ struct Handle
 
 	bool IsValid() const
 	{
-		return GetIndex() != _IndexMask;
+		return GetIndex() != IndexMask;
 	}
 
 	bool operator==(const Handle& other) const
@@ -89,7 +92,7 @@ struct Handle
 // These should only be accessed with type aliases for the Handle ie ObjectHandle::INVALID
 // instead of a massive Handle<blah, blah, blah>
 template <UnsignedIntegral _T, std::size_t _Idx, std::size_t _Gen>
-const Handle<_T, _Idx, _Gen> Handle<_T, _Idx, _Gen>::INVALID{_IndexMask, 0};
+const Handle<_T, _Idx, _Gen> Handle<_T, _Idx, _Gen>::INVALID{Handle<_T, _Idx, _Gen>::IndexMask, 0, false};
 
 
 // Finally! Handle type declarations! Systems can create their own too
@@ -110,13 +113,23 @@ class ObjectPool
 public:
 	using HandleType = _HandleType;
 	using ObjectType = _ObjectType;
-
-	ObjectPool() : m_objects(_MaxItems), m_freelistHead(0) 
+	using UnderlyingHandleType = HandleType::UnderlyingType;
+	
+	struct PoolEntry
 	{
+		HandleType handle;
+		ObjectType object;
+	};
+
+	ObjectPool() : m_freelistHead(0) 
+	{
+		// Allocate our pool, don't bother clearing data
+		m_objects = new PoolEntry[_MaxItems];
+
 		// Iterate populate freelist handles, m_objects invalid initialized
 		for (std::size_t i = 0; i < _MaxItems - 1; i++)
 		{
-			HandleType::UnderlyingType nextIndex = i + 1;
+			UnderlyingHandleType nextIndex = i + 1;
 			m_objects[i].handle = HandleType(nextIndex, 0, false);
 		}
 
@@ -124,25 +137,35 @@ public:
 		m_objects[_MaxItems - 1].handle = HandleType::INVALID;
 	}
 
-	template<typename... args>
+	~ObjectPool()
+	{
+		if (m_objects != nullptr)
+		{
+			free(m_objects);
+		}
+	}
+
+	template<typename... Args>
 	HandleType Create(Args&&... args)
 	{
 		if (m_objects.size() == _MaxItems)
 		{
 			// Hit max: throw? allocate more space?
+			std::cout << "Failed to create new object, out of space!" << std::endl;
+			return HandleType::INVALID;
 		}
 
 		// Get index/generation from freelistHead
 		auto& freePool = m_objects[m_freelistHead];
-		HandleType::UnderlyingType index = m_freelistHead;
-		HandleType::UnderlyingType generation = freePool.handle.GetGeneration();
+		UnderlyingHandleType index = m_freelistHead;
+		UnderlyingHandleType generation = freePool.handle.GetGeneration();
 
 		// Update freelistHead with previous in chain
 		m_freelistHead = freePool.handle.GetIndex();
 
 		// Create handle, stow object
 		HandleType handle = HandleType::Generate(index, generation + 1, true);
-		m_objects[m_freelistHead] = std::pair<HandleType{}, ObjectType{std::forward<Args>(args)...}>;
+		m_objects[index] = PoolEntry(handle, ObjectType{ std::forward<Args>(args)... });
 
 		return handle;
 	}
@@ -153,6 +176,7 @@ public:
 		if (!IsHandleValid(handle))
 		{
 			// Old handle: not sure what to return here, maybe throw?
+
 		}
 		return m_objects[handle.GetIndex()];
 	}
@@ -163,25 +187,129 @@ public:
 		if (!IsHandleValid(handle)) return;
 
 		// TODO set pool entry handle to invalid, update freelist
-
+		UnderlyingHandleType currentIndex = handle.GetIndex();
+		UnderlyingHandleType currentGen = handle.GetGeneration();
+		auto& entry = m_objects[currentIndex];
+		entry.handle = HandleType::Generate(m_freelistHead, currentGen, false);
+		m_freelistHead = currentIndex;
 	}
 
 private:
-	struct PoolEntry {
-		HandleType handle;
-		ObjectType object;
-	};
 
-	std::array<PoolEntry, _MaxItems> m_objects;
-	HandleType::UnderlyingType m_freelistHead;
+	PoolEntry* m_objects;
+	UnderlyingHandleType m_freelistHead;
 
 	bool IsHandleValid(const HandleType& handle) const
 	{
-		std::size_t index = handle.GetIndex();
-
-		if (index < 0 || index >= _MaxItems || !handle.IsActive()) {
+		if (handle == HandleType::INVALID)
+		{
 			return false;
 		}
+
+		// Index Bounds Checks
+		UnderlyingHandleType index = handle.GetIndex();
+		if (index < 0 || index >= _MaxItems)
+		{
+			return false;
+		}
+
+		// Handle is being used a freelist entry
+		if (!handle.IsActive())
+		{
+			return false;
+		}
+
+		// Handle generation is outdated
+		UnderlyingHandleType gen = handle.GetGeneration();
+		auto& entry = m_objects[index];
+		UnderlyingHandleType currentGen = entry.handle.GetGeneration();
+
+		if (gen != currentGen)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	struct ObjectPoolEntryIterator
+	{
+	public:
+		using Category = std::forward_iterator_tag;
+		using Distance = std::ptrdiff_t;
+
+		using Value = PoolEntry;
+		using Pointer = PoolEntry*;
+		using Reference = PoolEntry&;
+
+
+		using PoolEntryType = typename PoolEntry;
+
+		ObjectPoolEntryIterator(Pointer ptr)
+			: m_ptr(ptr) {}
+
+		bool operator!=(const ObjectPoolIterator& other) const
+		{
+			return m_index != other.m_index;
+		}
+
+		ObjectPoolEntryIterator& operator++()
+		{
+			++m_index;
+			return *this;
+		}
+
+		typename ObjectPool::ObjectType& operator*() const
+		{
+			return m_pool.m_objects[m_index].object;
+		}
+
+	private:
+		void Advance()
+		{
+			while (m_index < m_pool.m_objects.size())
+			{
+				++m_index;
+			}
+		}
+
+		ObjectPool& m_pool;
+		Pointer m_ptr;
+	};
+
+public:
+
+	ObjectPoolEntryIterator begin()
+	{
+		return ObjectPoolEntryIterator();
+	}
+
+	ObjectPoolEntryIterator end()
+	{
+		return ObjectPoolEntryIterator()
+	}
+};
+
+// Some templating fun here. Essentially we have a couple of ways to iterate over
+// our object pool, over all valid (default) or all entries including freelist
+// this is also a way to learn more about templating and iterators :D
+template <typename PoolEntryType>
+struct ActiveOnlyPolicy
+{
+	bool ShouldInclude(const PoolEntryType& entry) const
+	{
+		return entry.handle.IsActive();
+	}
+};
+
+template <typename PoolEntryType>
+struct AllEntriesPolicy
+{
+	bool ShouldInclude(const PoolEntryType& entry) const
+	{
 		return true;
 	}
 };
+
+// = ActiveOnlyPolicy<typename ObjectPoolType::PoolEntry>
+//template <typename ObjectPoolType, typename IterationPolicyType>
