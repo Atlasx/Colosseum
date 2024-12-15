@@ -44,7 +44,7 @@ struct Handle
 	_Type m_value;
 
 	Handle() : m_value(INVALID.m_value) {}
-	Handle(_Type idx = IndexMask, _Type gen = 0, bool active = false) : m_value((idx & IndexMask) | ((gen & GenerationMask) << _IndexBits) | (active ? ActiveMask : 0)) {}
+	Handle(_Type idx, _Type gen, bool active = false) : m_value((idx & IndexMask) | ((gen & GenerationMask) << _IndexBits) | (active ? ActiveMask : 0)) {}
 
 	static Handle Generate(_Type index, _Type generation, bool active)
 	{
@@ -102,12 +102,12 @@ using GenericHandle = Handle<std::uint32_t, 20, 11>;
 
 template <typename _HT>
 concept ValidHandleType = requires {
-	{ _HT::IndexBits } -> std::integral;
-	{ _HT::GenerationBits } -> std::integral;
+	{ _HT::IndexBits } -> std::unsigned_integral;
+	{ _HT::GenerationBits } -> std::unsigned_integral;
 };
 
 template<typename _ObjectType, std::size_t _MaxItems = 1024ULL, typename _HandleType = GenericHandle>
-//requires ValidHandleType<_HandleType>
+requires ValidHandleType<_HandleType>
 class ObjectPool
 {
 public:
@@ -119,6 +119,14 @@ public:
 	{
 		HandleType handle;
 		ObjectType object;
+
+		PoolEntry() 
+		{
+			handle = HandleType::INVALID;
+		}
+		PoolEntry(HandleType h, ObjectType obj) : handle(h), object(obj) {}
+
+		~PoolEntry() {}
 	};
 
 	ObjectPool() : m_freelistHead(0) 
@@ -148,7 +156,7 @@ public:
 	template<typename... Args>
 	HandleType Create(Args&&... args)
 	{
-		if (m_objects.size() == _MaxItems)
+		if (m_count >= _MaxItems)
 		{
 			// Hit max: throw? allocate more space?
 			std::cout << "Failed to create new object, out of space!" << std::endl;
@@ -166,6 +174,7 @@ public:
 		// Create handle, stow object
 		HandleType handle = HandleType::Generate(index, generation + 1, true);
 		m_objects[index] = PoolEntry(handle, ObjectType{ std::forward<Args>(args)... });
+		m_count++;
 
 		return handle;
 	}
@@ -192,11 +201,13 @@ public:
 		auto& entry = m_objects[currentIndex];
 		entry.handle = HandleType::Generate(m_freelistHead, currentGen, false);
 		m_freelistHead = currentIndex;
+		m_count--;
 	}
 
 private:
 
 	PoolEntry* m_objects;
+	std::size_t m_count = 0;
 	UnderlyingHandleType m_freelistHead;
 
 	bool IsHandleValid(const HandleType& handle) const
@@ -232,7 +243,7 @@ private:
 		return true;
 	}
 
-	struct ObjectPoolEntryIterator
+	/*struct ObjectPoolEntryIterator
 	{
 	public:
 		using Category = std::forward_iterator_tag;
@@ -248,30 +259,23 @@ private:
 		ObjectPoolEntryIterator(Pointer ptr)
 			: m_ptr(ptr) {}
 
-		bool operator!=(const ObjectPoolIterator& other) const
+		bool operator!=(const ObjectPoolEntryIterator& other) const
 		{
-			return m_index != other.m_index;
+			return m_ptr != other.m_ptr;
 		}
 
 		ObjectPoolEntryIterator& operator++()
 		{
-			++m_index;
+			++m_ptr;
 			return *this;
 		}
 
 		typename ObjectPool::ObjectType& operator*() const
 		{
-			return m_pool.m_objects[m_index].object;
+			return m_pool.m_objects[m_ptr].object;
 		}
 
 	private:
-		void Advance()
-		{
-			while (m_index < m_pool.m_objects.size())
-			{
-				++m_index;
-			}
-		}
 
 		ObjectPool& m_pool;
 		Pointer m_ptr;
@@ -286,8 +290,9 @@ public:
 
 	ObjectPoolEntryIterator end()
 	{
-		return ObjectPoolEntryIterator()
+		return ObjectPoolEntryIterator();
 	}
+	*/
 };
 
 // Some templating fun here. Essentially we have a couple of ways to iterate over

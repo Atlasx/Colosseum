@@ -285,10 +285,10 @@ namespace CE
 			if (ImGui::CollapsingHeader("Actions"))
 			{
 				ImGui::BeginChild("Actions", ImVec2(0,0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
-				for (auto action : m_actions)
+				/*for (auto entry : m_actions)
 				{
-					DrawInputAction(action);
-				}
+					DrawInputAction();
+				}*/
 				ImGui::EndChild();
 			}
 
