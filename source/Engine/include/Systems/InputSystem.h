@@ -276,15 +276,18 @@ namespace CE
 				return;
 			}
 
-			if (knowledge.lastKeyState == m_toState
-				&& knowledge.previousBoardState.GetKey(knowledge.lastKey) == m_fromState)
+			bool bShouldTrigger = true;
+
+			// To State Condition
+			bShouldTrigger |= knowledge.lastKeyState == m_toState;
+			
+			// From State Condition
+			if (m_fromState != KeyState::UNKNOWN)
 			{
-				m_bIsTriggered = true;
+				bShouldTrigger |= knowledge.previousBoardState.GetKey(knowledge.lastKey) == m_fromState;
 			}
-			else
-			{
-				m_bIsTriggered = false;
-			}
+			
+			m_bIsTriggered = bShouldTrigger;
 		}
 	private:
 		bool m_bIsTriggered = false;
@@ -347,101 +350,6 @@ namespace CE
 		KeyType m_binding = KeyType::UNKNOWN;
 	};
 
-	// A fun idea! Essentially a wrapper for any derived class of BaseInputAction that uses the IInputAction
-	// interface. But now with contiguous storage! List of InputActionWrappers can be created and stored sequentially (this assumes all derived input actions are roughly of similar size).
-	// A macro here could help automate updating this class... might do that later
-	/*
-	class InputActionWrapper
-	{
-	private:
-		union Storage
-		{
-			// Add new action types here
-			InputAction u_action;
-			InputAxisAction u_axisAction;
-
-			Storage() {}
-			~Storage() {}
-		} m_storage;
-
-		enum class ActionType
-		{
-			None,
-			// Add new action types here
-			InputAction,
-			InputAxisAction
-		} m_actionType;
-
-	public:
-		InputActionWrapper() : m_actionType(ActionType::None) {}
-		~InputActionWrapper() 
-		{
-			switch (m_actionType)
-			{
-			case ActionType::InputAction:
-				m_storage.u_action.~InputAction(); break;
-			case ActionType::InputAxisAction:
-				m_storage.u_axisAction.~InputAxisAction(); break;
-			default:
-				// nothing in m_storage, all good
-				break;
-			}
-		}
-
-		template<typename DerivedType, typename... Args>
-		static InputActionWrapper Create(Args&&... args)
-		{
-			InputActionWrapper wrapper;
-			if constexpr (std::is_same_v<DerivedType, InputAction>)
-			{
-				new (&wrapper.m_storage.u_action) InputAction(std::forward<Args>(args)...);
-				wrapper.m_actionType = ActionType::InputAction;
-			}
-			else if constexpr (std::is_same_v<DerivedType, InputAxisAction>)
-			{
-				new (&wrapper.m_storage.u_axisAction) InputAxisAction(std::forward<Args>(args)...);
-				wrapper.m_actionType = ActionType::InputAxisAction;
-			}
-			return wrapper;
-		}
-
-		IInputActionBase& GetAction()
-		{
-			switch (m_actionType)
-			{
-			case ActionType::InputAction:
-				return m_storage.u_action;
-			case ActionType::InputAxisAction:
-				return m_storage.u_axisAction;
-			default:
-				// uh oh
-				break;
-			}
-		}
-
-		const IInputActionBase& GetAction() const
-		{
-			switch (m_actionType)
-			{
-			case ActionType::InputAction:
-				return m_storage.u_action;
-			case ActionType::InputAxisAction:
-				return m_storage.u_axisAction;
-			default:
-				break;
-			}
-		}
-
-		void Execute() { GetAction().Execute(); }
-		void Update(const InputKnowledge& knowledge) { GetAction().Update(knowledge); }
-		bool IsTriggered() const { return GetAction().IsTriggered(); };
-		bool IsBoundTo(const KeyType key) const { return GetAction().IsBoundTo(key); }
-	};
-	*/
-
-
-	// Going to use a global here for now, glfw seems to require some way of accessing which engine it is referring to when using the input functions.
-	// Not a fan of this, but I can't think of a better way at the moment
 	class InputSystem;
 	static InputSystem* g_input = nullptr;
 
@@ -454,20 +362,13 @@ namespace CE
 	public:
 		void PollInput();
 		
-		GenericHandle RegisterAction(std::string actionName, KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::RELEASED)
+		GenericHandle RegisterAction(std::string actionName, KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::UNKNOWN)
 		{
-			/*auto action = std::make_shared<InputAction>(actionName, keyBinding, std::move(callback), to, from);
-			std::weak_ptr<InputAction> retAction = action;
-			m_actions.push_back(std::move(action));
-			return retAction;*/
 			return m_actions.Create(actionName, keyBinding, std::move(callback), to, from);
-
 		}
 
-		std::weak_ptr<InputAxisAction> RegisterAxisAction(KeyType keyBinding, InputAxisAction::Callback callback)
-		{
-			//m_axisActions.push_back(std::make_unique<InputAxisAction>(keyBinding, std::move(callback)));
-		}
+		bool RemoveAction(GenericHandle actionHandle);
+		bool RemoveAction(std::string_view actionName);
 
 	private:
 		GLFWwindow* m_window = nullptr;
@@ -498,16 +399,13 @@ namespace CE
 		// Iterates through triggered actions and fires callbacks
 		void ProcessCallbacks();
 
-		// Polymorphic storage option for our actions. Undesirable for cache coherency
+		// Polymorphic storage option for our actions
 		//std::vector<std::shared_ptr<IInputActionBase>> m_actions;
+		// Queue for processing action input events
+		//std::queue<std::weak_ptr<IInputActionBase>> m_triggeredActions;
 
 		ObjectPool<InputAction, 20> m_actions;
-
-		// This was a test of a allocation free InputAction setup, seemed like overkill for only a few actions
-		//ObjectPool<InputActionWrapper, InputActionHandle, 100> m_actions;
-
-		// Queue for processing action input events
-		std::queue<std::weak_ptr<IInputActionBase>> m_triggeredActions;
+		std::queue<GenericHandle> m_triggeredActions;
 
 	public:
 

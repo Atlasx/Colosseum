@@ -83,30 +83,41 @@ namespace CE
 
 	void InputSystem::ProcessActions()
 	{
-		/*
-		for (auto action : m_actions)
+		for (auto& entry : m_actions)
 		{
-			action->Update(GetKnowledge());
-			if (action->TryConsumeTrigger())
+			entry.object.Update(GetKnowledge());
+			if (entry.object.TryConsumeTrigger())
 			{
-				m_triggeredActions.push(action);
+				m_triggeredActions.push(entry.handle);
 			}
 		}
-		*/
 	}
 
 	void InputSystem::ProcessCallbacks()
 	{
 		while (!m_triggeredActions.empty())
 		{
-			auto weakAction = m_triggeredActions.front();
+			auto actionHandle = m_triggeredActions.front();
 			m_triggeredActions.pop();
 
-			if (auto action = weakAction.lock())
-			{
-				action->Execute();
-			}
+			auto& action = m_actions.Get(actionHandle);
+			action.Execute();
 		}
+	}
+
+	bool InputSystem::RemoveAction(GenericHandle actionHandle)
+	{
+		if (actionHandle == GenericHandle::INVALID)
+			return false;
+
+		m_actions.Destroy(actionHandle);
+		return true;	
+	}
+
+	bool InputSystem::RemoveAction(std::string_view actionName)
+	{
+		// TODO check for action by name and remove it
+		return false;
 	}
 
 	void InputSystem::OnCursorMoved(GLFWwindow* window, double xPos, double yPos)
@@ -141,22 +152,6 @@ namespace CE
 		if (window != m_window) return;
 
 		m_engine->Stop();
-	}
-
-	static void DrawInputAction(GenericHandle handle, InputAction& action)
-	{
-		std::string actionName = action.GetName();
-		ImGui::PushID(handle.GetIndex());
-		ImGui::BeginChild("action", ImVec2(ImGui::GetContentRegionAvail().x, 60.f), true);
-
-		const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
-		ImGui::Text("Key Binding: %s", bindingName);
-		if (ImGui::Button("Fire"))
-		{
-			action.Trigger();
-		}
-		ImGui::EndChild();
-		ImGui::PopID();
 	}
 
 	static void DrawKeyboardState(const KeyboardState& state, const ImVec2& offset, const ImVec2& size)
@@ -285,10 +280,31 @@ namespace CE
 			if (ImGui::CollapsingHeader("Actions"))
 			{
 				ImGui::BeginChild("Actions", ImVec2(0,0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
-				/*for (auto entry : m_actions)
+
+				for (auto& entry : m_actions)
 				{
-					DrawInputAction();
-				}*/
+					InputAction& action = entry.object;
+					GenericHandle handle = entry.handle;
+					
+					std::string actionName = action.GetName();
+					ImGui::PushID(handle.GetIndex());
+					ImGui::BeginChild("action", ImVec2(ImGui::GetContentRegionAvail().x, 70.f), true);
+
+					const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
+					ImGui::Text("Action: 0x%X", handle);
+					ImGui::Text("Key Binding: %s", bindingName);
+					if (ImGui::Button("Fire"))
+					{
+						action.Trigger();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Remove"))
+					{
+						RemoveAction(handle);
+					}
+					ImGui::EndChild();
+					ImGui::PopID();
+				}
 				ImGui::EndChild();
 			}
 

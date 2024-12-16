@@ -102,8 +102,8 @@ using GenericHandle = Handle<std::uint32_t, 20, 11>;
 
 template <typename _HT>
 concept ValidHandleType = requires {
-	{ _HT::IndexBits } -> std::unsigned_integral;
-	{ _HT::GenerationBits } -> std::unsigned_integral;
+	requires std::unsigned_integral<decltype(_HT::IndexBits)>;
+	requires std::unsigned_integral<decltype(_HT::GenerationBits)>;
 };
 
 template<typename _ObjectType, std::size_t _MaxItems = 1024ULL, typename _HandleType = GenericHandle>
@@ -149,7 +149,7 @@ public:
 	{
 		if (m_objects != nullptr)
 		{
-			free(m_objects);
+			delete m_objects;
 		}
 	}
 
@@ -179,30 +179,41 @@ public:
 		return handle;
 	}
 
+	void Destroy(const HandleType& handle)
+	{
+		// validate and remove object from list, update freelist
+		if (!IsHandleValid(handle)) return;
+
+		UnderlyingHandleType currentIndex = handle.GetIndex();
+		UnderlyingHandleType currentGen = handle.GetGeneration();
+
+		auto& entry = m_objects[currentIndex];
+		entry.handle = HandleType::Generate(m_freelistHead, currentGen, false);
+		m_freelistHead = currentIndex;
+		m_count--;
+	}
+
+	ObjectType& operator[](const HandleType& handle)
+	{
+		return Get(handle);
+	}
+
 	ObjectType& Get(const HandleType& handle)
 	{
 		// Validate handle id and gen
 		if (!IsHandleValid(handle))
 		{
 			// Old handle: not sure what to return here, maybe throw?
-
 		}
-		return m_objects[handle.GetIndex()];
+
+		return m_objects[handle.GetIndex()].object;
 	}
 
-	void Destroy(const HandleType& handle)
+	std::size_t Capacity()
 	{
-		// validate and remove object from list update freelist
-		if (!IsHandleValid(handle)) return;
-
-		// TODO set pool entry handle to invalid, update freelist
-		UnderlyingHandleType currentIndex = handle.GetIndex();
-		UnderlyingHandleType currentGen = handle.GetGeneration();
-		auto& entry = m_objects[currentIndex];
-		entry.handle = HandleType::Generate(m_freelistHead, currentGen, false);
-		m_freelistHead = currentIndex;
-		m_count--;
+		return _MaxItems;
 	}
+
 
 private:
 
@@ -243,7 +254,7 @@ private:
 		return true;
 	}
 
-	/*struct ObjectPoolEntryIterator
+	struct Iterator
 	{
 	public:
 		using Category = std::forward_iterator_tag;
@@ -253,68 +264,59 @@ private:
 		using Pointer = PoolEntry*;
 		using Reference = PoolEntry&;
 
+		Iterator(Pointer ptr) : m_ptr(ptr) {}
 
-		using PoolEntryType = typename PoolEntry;
-
-		ObjectPoolEntryIterator(Pointer ptr)
-			: m_ptr(ptr) {}
-
-		bool operator!=(const ObjectPoolEntryIterator& other) const
+		Reference operator*() const
 		{
-			return m_ptr != other.m_ptr;
+			return *m_ptr;
 		}
 
-		ObjectPoolEntryIterator& operator++()
+		Pointer operator->()
 		{
-			++m_ptr;
+			return m_ptr;
+		}
+
+		Iterator& operator++()
+		{
+			do
+			{
+				++(m_ptr);
+			}
+			while ((*m_ptr).handle.IsActive() == false);
 			return *this;
 		}
 
-		typename ObjectPool::ObjectType& operator*() const
+		Iterator operator++(int)
 		{
-			return m_pool.m_objects[m_ptr].object;
+			Iterator tmp = *this;
+			++(*this);
+			return tmp;
+		}
+
+		bool operator==(const Iterator& other) const
+		{
+			return m_ptr == other.m_ptr;
+		}
+
+		bool operator!=(const Iterator& other) const
+		{
+			return !(*this == other);
 		}
 
 	private:
 
-		ObjectPool& m_pool;
 		Pointer m_ptr;
 	};
 
 public:
 
-	ObjectPoolEntryIterator begin()
+	Iterator begin()
 	{
-		return ObjectPoolEntryIterator();
+		return Iterator(&m_objects[0]);
 	}
 
-	ObjectPoolEntryIterator end()
+	Iterator end()
 	{
-		return ObjectPoolEntryIterator();
-	}
-	*/
-};
-
-// Some templating fun here. Essentially we have a couple of ways to iterate over
-// our object pool, over all valid (default) or all entries including freelist
-// this is also a way to learn more about templating and iterators :D
-template <typename PoolEntryType>
-struct ActiveOnlyPolicy
-{
-	bool ShouldInclude(const PoolEntryType& entry) const
-	{
-		return entry.handle.IsActive();
+		return Iterator(&m_objects[_MaxItems]);
 	}
 };
-
-template <typename PoolEntryType>
-struct AllEntriesPolicy
-{
-	bool ShouldInclude(const PoolEntryType& entry) const
-	{
-		return true;
-	}
-};
-
-// = ActiveOnlyPolicy<typename ObjectPoolType::PoolEntry>
-//template <typename ObjectPoolType, typename IterationPolicyType>
