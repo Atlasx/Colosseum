@@ -127,7 +127,7 @@ namespace CE
 			IS->RegisterAction("TestAction One", KeyType::T, []()
 				{
 					std::cout << "Hey this action system works!" << std::endl;
-				});
+				}, KeyState::PRESSED);
 			IS->RegisterAction("TestAction Two", KeyType::B, []()
 				{
 					std::cout << "This one also works, not a fluke!" << std::endl;
@@ -148,7 +148,7 @@ namespace CE
 						};
 
 					IS->RegisterAction("Random Action", randBinding, randBindingLambda);
-				});
+				}, KeyState::PRESSED, KeyState::RELEASED);
 		}
 	}
 #endif

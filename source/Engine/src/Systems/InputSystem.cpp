@@ -69,6 +69,20 @@ namespace CE
 		m_inputKnowledge.lastKeyState = KeyState::UNKNOWN;
 	}
 
+	void InputSystem::UpdateMouseButtonState(const MouseButtonType button, const KeyState newState)
+	{
+		const KeyState prevState = m_inputKnowledge.currentMouseState.GetButton(button);
+		m_inputKnowledge.currentMouseState.SetButton(button, newState);
+		m_inputKnowledge.previousMouseState.SetButton(button, prevState);
+		m_inputKnowledge.lastButton = button;
+		m_inputKnowledge.lastButtonState = newState;
+
+		ProcessActions();
+
+		m_inputKnowledge.lastButton = MouseButtonType::UNKNOWN;
+		m_inputKnowledge.lastButtonState = KeyState::UNKNOWN;
+	}
+
 	void InputSystem::UpdateInputKnowledge()
 	{
 		for (int i = 0; i < static_cast<int>(KeyType::KEYS_MAX); i++)
@@ -79,16 +93,24 @@ namespace CE
 			int glfwKeyAction = glfwGetKey(m_window, InputUtilities::KeyTypeToGLFWKey(key));
 			UpdateKeyState(key, InputUtilities::GLFWActionToKeyState(glfwKeyAction));
 		}
+
+		for (uint8_t i = 0; i < static_cast<uint8_t>(MouseButtonType::BUTTONS_MAX); i++)
+		{
+			MouseButtonType button = static_cast<MouseButtonType>(i);
+			int glfwButtonAction = glfwGetMouseButton(m_window, InputUtilities::MouseButtonTypeToGLFWMouseButton(button));
+			UpdateMouseButtonState(button, InputUtilities::GLFWActionToKeyState(glfwButtonAction));
+		}
 	}
 
 	void InputSystem::ProcessActions()
 	{
-		for (auto& entry : m_actions)
+		// Side note on object pool iterators, not a fan of order specific deduction
+		for (auto& [handle, action] : m_actions)
 		{
-			entry.object.Update(GetKnowledge());
-			if (entry.object.TryConsumeTrigger())
+			action.Update(GetKnowledge());
+			if (action.TryConsumeTrigger())
 			{
-				m_triggeredActions.push(entry.handle);
+				m_triggeredActions.push(handle);
 			}
 		}
 	}
@@ -105,19 +127,13 @@ namespace CE
 		}
 	}
 
-	bool InputSystem::RemoveAction(GenericHandle actionHandle)
+	bool InputSystem::RemoveAction(InputActionHandle handle)
 	{
-		if (actionHandle == GenericHandle::INVALID)
+		if (handle == InputActionHandle::INVALID)
 			return false;
 
-		m_actions.Destroy(actionHandle);
+		m_actions.Destroy(handle);
 		return true;	
-	}
-
-	bool InputSystem::RemoveAction(std::string_view actionName)
-	{
-		// TODO check for action by name and remove it
-		return false;
 	}
 
 	void InputSystem::OnCursorMoved(GLFWwindow* window, double xPos, double yPos)
@@ -140,6 +156,11 @@ namespace CE
 	void InputSystem::OnMouseButton(GLFWwindow* window, int button, int action, int mods)
 	{
 		if (window != m_window) return;
+
+		const MouseButtonType buttonT = InputUtilities::GLFWMouseButtonToMouseButtonType(button);
+		const KeyState buttonS = InputUtilities::GLFWActionToKeyState(action);
+
+		UpdateMouseButtonState(buttonT, buttonS);
 	}
 
 	void InputSystem::OnScroll(GLFWwindow* window, double xOffset, double yOffset)
@@ -270,22 +291,15 @@ namespace CE
 		if (m_showDebug)
 		{
 			ImGui::SetNextWindowSize(ImVec2(200.f, 500.f), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowPos(ImVec2(10.f, 30.f), ImGuiCond_Appearing);
 			ImGui::SetNextWindowSizeConstraints(ImVec2(50.f, 50.f), ImVec2(FLT_MAX, FLT_MAX));
 			ImGui::Begin("Input System Debug", &m_showDebug);
-			if (ImGui::CollapsingHeader("Mouse"))
-			{
-				ImGui::Text("Mouse Input");
-			}
-
 			if (ImGui::CollapsingHeader("Actions"))
 			{
 				ImGui::BeginChild("Actions", ImVec2(0,0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
 
-				for (auto& entry : m_actions)
-				{
-					InputAction& action = entry.object;
-					GenericHandle handle = entry.handle;
-					
+				for (auto& [handle, action] : m_actions)
+				{	
 					std::string actionName = action.GetName();
 					ImGui::PushID(handle.GetIndex());
 					ImGui::BeginChild("action", ImVec2(ImGui::GetContentRegionAvail().x, 70.f), true);
@@ -305,6 +319,26 @@ namespace CE
 					ImGui::EndChild();
 					ImGui::PopID();
 				}
+				ImGui::EndChild();
+			}
+
+			if (ImGui::CollapsingHeader("Mouse"))
+			{
+				ImGui::Text("Mouse Input");
+				ImGui::BeginChild("MouseInput", ImVec2(0, 0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
+
+				auto& knowledge = GetKnowledge();
+				for (uint8_t i = 0; i < 8; i++)
+				{
+					MouseButtonType button = static_cast<MouseButtonType>(i);
+					KeyState state = knowledge.currentMouseState.GetButton(button);
+					ImGui::Text("%s: %s",
+						InputUtilities::GetMouseButtonName(button),
+						InputUtilities::GetKeyStateName(state)
+					);
+				}
+
+
 				ImGui::EndChild();
 			}
 
@@ -387,6 +421,17 @@ namespace CE
 			return g_keyTypeToGLFWKey[static_cast<std::underlying_type_t<KeyType>>(key)];
 		}
 
+		MouseButtonType GLFWMouseButtonToMouseButtonType(int button)
+		{
+			// Off by one due to zero index with GLFW and my Unknown button type
+			return static_cast<MouseButtonType>(button + 1);
+		}
+
+		int MouseButtonTypeToGLFWMouseButton(const MouseButtonType button)
+		{
+			return static_cast<int>(button) - 1;
+		}
+
 		KeyState GLFWActionToKeyState(int action)
 		{
 			switch (action)
@@ -399,6 +444,34 @@ namespace CE
 				return KeyState::HELD;
 			default:
 				return KeyState::UNKNOWN;
+			}
+		}
+
+		const char* GetKeyStateName(const KeyState state)
+		{
+			switch (state)
+			{
+			case KeyState::ANY: return "Any";
+			case KeyState::PRESSED: return "Pressed";
+			case KeyState::RELEASED: return "Released";
+			case KeyState::HELD: return "Held";
+			default: return "UNK";
+			}
+		}
+
+		const char* GetMouseButtonName(const MouseButtonType button)
+		{
+			switch (button)
+			{
+			case MouseButtonType::MOUSE_BUTTON_1: return "Mouse Button 1";
+			case MouseButtonType::MOUSE_BUTTON_2: return "Mouse Button 2";
+			case MouseButtonType::MOUSE_BUTTON_3: return "Mouse Button 3";
+			case MouseButtonType::MOUSE_BUTTON_4: return "Mouse Button 4";
+			case MouseButtonType::MOUSE_BUTTON_5: return "Mouse Button 5";
+			case MouseButtonType::MOUSE_BUTTON_6: return "Mouse Button 6";
+			case MouseButtonType::MOUSE_BUTTON_7: return "Mouse Button 7";
+			case MouseButtonType::MOUSE_BUTTON_8: return "Mouse Button 8";
+			default: return "UNK";
 			}
 		}
 

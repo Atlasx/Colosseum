@@ -81,10 +81,25 @@ namespace CE
 	};
 
 	enum class KeyState : unsigned char {
+		UNKNOWN		= 0,
+		RELEASED	= 1 << 0,
+		PRESSED		= 1 << 1,
+		HELD		= 1 << 2,
+		ANY			= 1 << 3
+	};
+
+	enum class MouseButtonType : std::uint8_t
+	{
 		UNKNOWN = 0,
-		RELEASED = 1 << 0,
-		PRESSED = 1 << 1,
-		HELD = 1 << 2
+		MOUSE_BUTTON_1,
+		MOUSE_BUTTON_2,
+		MOUSE_BUTTON_3,
+		MOUSE_BUTTON_4,
+		MOUSE_BUTTON_5,
+		MOUSE_BUTTON_6,
+		MOUSE_BUTTON_7,
+		MOUSE_BUTTON_8,
+		BUTTONS_MAX
 	};
 
 	namespace InputUtilities 
@@ -119,9 +134,14 @@ namespace CE
 		KeyType GLFWKeyToKeyType(int key);
 		int KeyTypeToGLFWKey(const KeyType key);
 
+		MouseButtonType GLFWMouseButtonToMouseButtonType(int button);
+		int MouseButtonTypeToGLFWMouseButton(const MouseButtonType button);
+
 		KeyState GLFWActionToKeyState(int action);
 
+		const char* GetKeyStateName(const KeyState state);
 		const char* GetKeyName(const KeyType key);
+		const char* GetMouseButtonName(const MouseButtonType button);
 	}
 
 	struct KeyboardState
@@ -138,14 +158,35 @@ namespace CE
 		}
 
 	private:
-		constexpr static unsigned int KEYBOARD_MAX = static_cast<unsigned int>(KeyType::KEYS_MAX);
+		constexpr static unsigned int KEYBOARD_MAX = static_cast<unsigned int>(KeyType::KEYS_MAX) - 1;
 		
 		inline void SetKey(const KeyType key, const KeyState state)
 		{
 			keys[static_cast<std::underlying_type_t<KeyType>>(key)] = state;
 		}
 
-		KeyState keys[KEYBOARD_MAX];
+		KeyState keys[KEYBOARD_MAX] = {};
+
+		friend class InputSystem;
+	};
+
+	struct MouseState
+	{
+	public:
+		KeyState GetButton(const MouseButtonType button) const
+		{
+			return buttons[static_cast<std::underlying_type_t<MouseButtonType>>(button)];
+		}
+
+	private:
+		constexpr static unsigned int MOUSE_BUTTON_MAX = static_cast<unsigned int>(MouseButtonType::BUTTONS_MAX) - 1;
+
+		KeyState buttons[MOUSE_BUTTON_MAX] = {};
+
+		inline void SetButton(const MouseButtonType button, const KeyState state)
+		{
+			buttons[static_cast<std::underlying_type_t<MouseButtonType>>(button)] = state;
+		}
 
 		friend class InputSystem;
 	};
@@ -201,10 +242,22 @@ namespace CE
 		KeyType lastKey = KeyType::UNKNOWN;
 		KeyState lastKeyState = KeyState::UNKNOWN;
 
+		MouseState currentMouseState;
+		MouseState previousMouseState;
+
+		MouseButtonType lastButton = MouseButtonType::UNKNOWN;
+		KeyState lastButtonState = KeyState::UNKNOWN;
+
 		unsigned long long currentTime;
 		bool bNeedsUpdate = true;
 
-		InputKnowledge() : previousBoardState(), currentBoardState(), currentTime(0) {}
+		InputKnowledge() :
+			previousBoardState(),
+			currentBoardState(),
+			previousMouseState(),
+			currentMouseState(),
+			currentTime(0)
+		{}
 	};
 
 	class IInputActionBase {
@@ -279,12 +332,12 @@ namespace CE
 			bool bShouldTrigger = true;
 
 			// To State Condition
-			bShouldTrigger |= knowledge.lastKeyState == m_toState;
+			bShouldTrigger &= knowledge.lastKeyState == m_toState;
 			
 			// From State Condition
 			if (m_fromState != KeyState::UNKNOWN)
 			{
-				bShouldTrigger |= knowledge.previousBoardState.GetKey(knowledge.lastKey) == m_fromState;
+				bShouldTrigger &= knowledge.previousBoardState.GetKey(knowledge.lastKey) == m_fromState;
 			}
 			
 			m_bIsTriggered = bShouldTrigger;
@@ -362,13 +415,12 @@ namespace CE
 	public:
 		void PollInput();
 		
-		GenericHandle RegisterAction(std::string actionName, KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::UNKNOWN)
+		InputActionHandle RegisterAction(std::string actionName, KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::RELEASED)
 		{
 			return m_actions.Create(actionName, keyBinding, std::move(callback), to, from);
 		}
 
-		bool RemoveAction(GenericHandle actionHandle);
-		bool RemoveAction(std::string_view actionName);
+		bool RemoveAction(InputActionHandle actionHandle);
 
 	private:
 		GLFWwindow* m_window = nullptr;
@@ -393,6 +445,9 @@ namespace CE
 		// Update input knowledge for a KeyType key at a particular KeyState
 		void UpdateKeyState(const KeyType key, const KeyState newState);
 		
+		// Update input knowledge for a mouse button with a keystate
+		void UpdateMouseButtonState(const MouseButtonType button, const KeyState newState);
+
 		// Iterates through actions and updates
 		void ProcessActions();
 
@@ -405,7 +460,7 @@ namespace CE
 		//std::queue<std::weak_ptr<IInputActionBase>> m_triggeredActions;
 
 		ObjectPool<InputAction, 20> m_actions;
-		std::queue<GenericHandle> m_triggeredActions;
+		std::queue<InputActionHandle> m_triggeredActions;
 
 	public:
 
