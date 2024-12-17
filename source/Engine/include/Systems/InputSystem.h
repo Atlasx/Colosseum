@@ -420,6 +420,13 @@ namespace CE
 			return m_actions.Create(actionName, keyBinding, std::move(callback), to, from);
 		}
 
+		/* Removing Mouse Input Actions for now, TODO mouse input implementation
+		InputActionHandle RegisterAction(std::string actionName, MouseButtonType mouseBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from KeyState::RELEASED)
+		{
+			return m_actions.Create(actionName, mouseBinding, std::move(callback), to, from);
+		}
+		*/
+
 		bool RemoveAction(InputActionHandle actionHandle);
 
 	private:
