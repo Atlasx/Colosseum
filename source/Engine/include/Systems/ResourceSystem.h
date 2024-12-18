@@ -66,7 +66,7 @@ namespace CE
 	//		3. Resource use count decrement
 	//		4. Unused resources are freed
 	//
-	class ResourceSystem : public EngineSystem
+	class ResourceSystem final : public EngineSystem
 	{
 		// More friendship to allow Engine to access protected functions on derived class pointers
 		friend class Engine;
@@ -108,8 +108,8 @@ namespace CE
 
 	public:
 		/* EngineSystem Interface */
-		std::string Name() const override { return "Resource System"; }
-		void DrawGUI() override { return; }
+		virtual std::string Name() const override { return "Resource System"; }
+		virtual void DrawGUI() override { return; }
 
 		ResourceSystem(Engine* engine) : EngineSystem(engine) {};
 	
@@ -117,8 +117,8 @@ namespace CE
 		void RunTests();
 #endif
 
-	protected:
-		void Startup() override;
-		void Shutdown() override;
+	private:
+		virtual void Startup() override;
+		virtual void Shutdown() override;
 	};
 }

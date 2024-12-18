@@ -13,6 +13,8 @@ set(SOURCES
 	src/Systems/InputSystem.cpp
 	src/Systems/EventSystem.cpp
 	src/Systems/RenderSystem.cpp
+	src/Systems/ObjectSystem.cpp
+	src/Systems/LogSystem.cpp
 )
 
 set(INCLUDES
@@ -24,6 +26,8 @@ set(INCLUDES
 	include/Systems/InputSystem.h
 	include/Systems/EventSystem.h
 	include/Systems/RenderSystem.h
+	include/Systems/ObjectSystem.h
+	include/Systems/LogSystem.h
 
 	#Editor
 	include/GUI/Editor.h

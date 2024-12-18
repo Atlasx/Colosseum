@@ -406,7 +406,7 @@ namespace CE
 	class InputSystem;
 	static InputSystem* g_input = nullptr;
 
-	class InputSystem : public EngineSystem
+	class InputSystem final : public EngineSystem
 	{
 		
 		using InputActionHandle = GenericHandle;
@@ -472,8 +472,8 @@ namespace CE
 	public:
 
 		/* CEngineSystem Interface */
-		std::string Name() const override { return "Input System"; }
-		void DrawGUI() override;
+		virtual std::string Name() const override { return "Input System"; }
+		virtual void DrawGUI() override;
 
 		InputSystem(Engine* engine) : EngineSystem(engine)
 		{
@@ -482,8 +482,8 @@ namespace CE
 
 	protected:
 
-		void Startup() override;
-		void Shutdown() override;
+		virtual void Startup() override;
+		virtual void Shutdown() override;
 		
 		// More friendship to allow Engine to access protected functions on derived class pointers
 		friend class Engine;

@@ -6,7 +6,7 @@ struct GLFWwindow;
 
 namespace CE 
 {
-	class RenderSystem : public EngineSystem
+	class RenderSystem final : public EngineSystem
 	{
 	public:
 		void Render();
@@ -17,8 +17,8 @@ namespace CE
 
 		/* EngineSystem Interface */
 	public:
-		std::string Name() const override { return "Render System"; }
-		void DrawGUI() override { return; }
+		virtual std::string Name() const override { return "Render System"; }
+		virtual void DrawGUI() override { return; }
 
 		RenderSystem(Engine* engine) :
 			EngineSystem(engine)
@@ -26,8 +26,8 @@ namespace CE
 
 	protected:
 
-		void Startup() override;
-		void Shutdown() override;
+		virtual void Startup() override;
+		virtual void Shutdown() override;
 
 		friend class Engine;
 	};

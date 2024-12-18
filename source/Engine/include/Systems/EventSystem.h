@@ -7,6 +7,8 @@
 
 namespace CE
 {
+
+
 	/*
 	* Event System Notes
 	* 
@@ -14,13 +16,23 @@ namespace CE
 	*  - Declare new events (dynamic or static?) (variable expected params?)
 	*  - Register listener for global events
 	*  - Register listener for targeted events (subset of global with ptr param?)
-	*  - Trigger events (multithreaded triggers?)
+	*  - Trigger events
 	*  - Process all triggered events (stores event data until firing callback?)
 	*  - Remove event listeners (handle for tracking? find by object and type?)
 	*  - Pass values or arbitrary struct data through events (maximums?)
 	*  - Prerequisite tags checked on listener or before fire?
+	* 
+	* 
+	* Ideal Event Invocation:
+	* 
+	* SomeEventName event;
+	* event.floatValue = 5.f;
+	* event.otherData = someObjectHandle;
+	* event.moreData = "You died!";
+	* PostEvent(event); // Base Object Class inherited method?
+	* 
 	*/
-	class EventSystem : public EngineSystem
+	class EventSystem final : public EngineSystem
 	{
 	public:
 
@@ -31,14 +43,14 @@ namespace CE
 	public:
 		/* EngineSystem Interface */
 
-		std::string Name() const override { return "Event System"; }
-		void DrawGUI() override { return; }
+		virtual std::string Name() const override { return "Event System"; }
+		virtual void DrawGUI() override { return; }
 
 		EventSystem(Engine* engine) : EngineSystem(engine) {};
 
 	protected:
 
-		void Startup() override;
-		void Shutdown() override;
+		virtual void Startup() override;
+		virtual void Shutdown() override;
 	};
 }

@@ -4,6 +4,7 @@
 #include "Systems/InputSystem.h"
 #include "Systems/EventSystem.h"
 #include "Systems/RenderSystem.h"
+#include "Systems/ObjectSystem.h"
 
 #include <random>
 
@@ -58,7 +59,7 @@ namespace CE
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Use the core profile
 
-		m_window = glfwCreateWindow(1280, 720, "Render Window", nullptr, nullptr);
+		m_window = glfwCreateWindow(1920, 1080, "Render Window", nullptr, nullptr);
 		if (m_window == nullptr) {
 			std::cerr << "Failed to create a GLFW window" << std::endl;
 			glfwTerminate();
@@ -101,11 +102,15 @@ namespace CE
 		m_systems[typeid(InputSystem)] = std::make_unique<InputSystem>(this);
 		m_systems[typeid(EventSystem)] = std::make_unique<EventSystem>(this);
 		m_systems[typeid(RenderSystem)] = std::make_unique<RenderSystem>(this);
+		m_systems[typeid(ObjectSystem)] = std::make_unique<ObjectSystem>(this);
+		m_systems[typeid(LogSystem)] = std::make_unique<LogSystem>(this);
 	}
 
 	void Engine::InitSystems()
 	{
 		// Manual Order
+		GetSystem<LogSystem>()->Startup();
+		
 		GetSystem<ResourceSystem>()->Startup();
 
 		GetSystem<RenderSystem>()->Startup();
@@ -113,6 +118,8 @@ namespace CE
 		GetSystem<EventSystem>()->Startup();
 
 		GetSystem<InputSystem>()->Startup();
+
+		GetSystem<ObjectSystem>()->Startup();
 	}
 
 #ifdef CDEBUG
