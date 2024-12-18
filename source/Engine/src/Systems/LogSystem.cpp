@@ -5,6 +5,11 @@
 
 namespace CE
 {
+	void LogSystem::Log(LogLevel level, std::string channel, std::string message)
+	{
+
+	}
+
 	void LogSystem::Startup()
 	{
 		std::cout << "LogSystem Startup" << std::endl;
