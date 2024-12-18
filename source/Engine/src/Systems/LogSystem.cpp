@@ -5,19 +5,25 @@
 
 namespace CE
 {
-	void LogSystem::Log(LogLevel level, std::string channel, std::string message)
+	void LogSystem::Log(LogLevel level, LogChannel channel, std::string message)
 	{
-
+		std::cout << "[" << GetLogLevelName(level) << "]";
+		std::cout << "[" << GetLogChannelName(channel) << "]";
+		std::cout << message << std::endl;
 	}
 
 	void LogSystem::Startup()
 	{
-		std::cout << "LogSystem Startup" << std::endl;
+		g_log = this;
+
+		LogInfo(LogChannel::LOG_SYSTEM, "Startup");
 	}
 
 	void LogSystem::Shutdown()
 	{
-		std::cout << "LogSystem Shutdown" << std::endl;
+		LogInfo(LogChannel::LOG_SYSTEM, "Shutdown");
+
+		g_log = nullptr;
 	}
 
 	void LogSystem::DrawGUI()

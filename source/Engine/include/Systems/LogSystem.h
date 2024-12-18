@@ -4,39 +4,80 @@
 
 namespace CE
 {
+	enum LogLevel : std::uint8_t
+	{
+		INFO,
+		WARNING,
+		ERROR
+	};
+
+	enum LogChannel : std::uint8_t
+	{
+		ENGINE,
+		LOG_SYSTEM,
+		INPUT_SYSTEM,
+		EVENT_SYSTEM
+	};
+
+	class LogSystem;
+	static LogSystem* g_log;
+
 	class LogSystem final : public EngineSystem
 	{
 	public:
 
-		enum class LogLevel : std::uint8_t
-		{
-			INFO,
-			WARNING,
-			ERROR
-		};
 
-		void Log(LogLevel level, std::string channel, std::string message);
+		void Log(LogLevel level, LogChannel channel, std::string message);
 
-		void LogInfo(std::string channel, std::string message)
+		static void LogInfo(LogChannel channel, std::string message)
 		{
-			Log(LogLevel::INFO, channel, message);
+			if (g_log == nullptr)
+				return;
+
+			g_log->Log(LogLevel::INFO, channel, message);
 		}
 
-		void LogWarning(std::string channel, std::string message)
+		static void LogWarning(LogChannel channel, std::string message)
 		{
-			Log(LogLevel::WARNING, channel, message);
+			if (g_log == nullptr)
+				return;
+
+			g_log->Log(LogLevel::WARNING, channel, message);
 		}
 
-		void LogError(std::string channel, std::string message)
+		static void LogError(LogChannel channel, std::string message)
 		{
-			Log(LogLevel::ERROR, channel, message);
+			if (g_log == nullptr)
+				return;
+
+			g_log->Log(LogLevel::ERROR, channel, message);
 		}
 
-		void DeclareChannel(std::string name);
 
 	private:
 
-		
+		constexpr const char* GetLogLevelName(LogLevel lvl)
+		{
+			switch (lvl)
+			{
+			case LogLevel::INFO: return "INFO";
+			case LogLevel::WARNING: return "WARNING";
+			case LogLevel::ERROR: return "ERROR";
+			default: return "";
+			}
+		}
+
+		constexpr const char* GetLogChannelName(LogChannel ch)
+		{
+			switch (ch)
+			{
+			case LogChannel::ENGINE: return "Engine";
+			case LogChannel::LOG_SYSTEM: return "LogSystem";
+			case LogChannel::INPUT_SYSTEM: return "InputSystem";
+			case LogChannel::EVENT_SYSTEM: return "EventSystem";
+			default: return "";
+			}
+		}
 
 		/* EngineSystem Interface */
 	public:

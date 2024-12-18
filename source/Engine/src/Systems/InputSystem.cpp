@@ -9,10 +9,14 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 
+#include "Systems/LogSystem.h"
+
 namespace CE
 {
 	void InputSystem::Startup()
 	{
+		LogSystem::LogInfo(LogSystem::LogChannel::INPUT_SYSTEM, "Startup");
+
 		m_window = m_engine->GetWindow();
 		assert(m_window);
 
@@ -29,6 +33,8 @@ namespace CE
 
 	void InputSystem::Shutdown()
 	{
+		LogSystem::LogInfo(LogSystem::LogChannel::INPUT_SYSTEM, "Shutdown");
+
 		g_input = nullptr;
 	}
 
