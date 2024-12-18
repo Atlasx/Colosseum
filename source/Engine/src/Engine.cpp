@@ -5,6 +5,7 @@
 #include "Systems/EventSystem.h"
 #include "Systems/RenderSystem.h"
 #include "Systems/ObjectSystem.h"
+#include "Systems/LogSystem.h"
 
 #include <random>
 

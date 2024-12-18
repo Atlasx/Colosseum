@@ -14,7 +14,7 @@ namespace CE
 		/* EngineSystem Interface */
 	public:
 		virtual std::string Name() const override { return "Log System"; }
-		virtual void DrawGUI() override { return; }
+		virtual void DrawGUI() override;
 
 		LogSystem(Engine* engine) : EngineSystem(engine) {};
 

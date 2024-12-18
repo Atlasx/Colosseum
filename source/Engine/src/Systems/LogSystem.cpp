@@ -1,5 +1,6 @@
 #include "Systems/LogSystem.h"
 
+#include "imgui.h"
 #include <iostream>
 
 namespace CE
@@ -12,5 +13,18 @@ namespace CE
 	void LogSystem::Shutdown()
 	{
 		std::cout << "LogSystem Shutdown" << std::endl;
+	}
+
+	void LogSystem::DrawGUI()
+	{
+		if (!m_showDebug)
+			return;
+
+		ImGui::SetNextWindowSize(ImVec2(700.f, 400.f), ImGuiCond_Appearing);
+		ImGui::Begin("Log");
+
+		ImGui::Text("This is where the logging system will go");
+
+		ImGui::End();
 	}
 }
