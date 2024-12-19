@@ -15,7 +15,7 @@ namespace CE
 {
 	void InputSystem::Startup()
 	{
-		LogSystem::LogInfo(LogSystem::LogChannel::INPUT_SYSTEM, "Startup");
+		LOG_INFO(INPUT_SYSTEM, "Startup");
 
 		m_window = m_engine->GetWindow();
 		assert(m_window);
@@ -33,7 +33,7 @@ namespace CE
 
 	void InputSystem::Shutdown()
 	{
-		LogSystem::LogInfo(LogSystem::LogChannel::INPUT_SYSTEM, "Shutdown");
+		LOG_INFO(INPUT_SYSTEM, "Shutdown");
 
 		g_input = nullptr;
 	}

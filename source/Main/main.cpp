@@ -1,18 +1,14 @@
 
 #include "Engine.h"
 
-#include <iostream>
-
 //#define STB_IMAGE_IMPLEMENTATION
 //#include "stb_image.h"
 
-//void processInput(GLFWwindow* window);
-
-int main() {
-	std::cout << "Hello Main!" << std::endl;
-
+int main()
+{
 	CE::Engine my_engine;
 	my_engine.Start();
+}
 
 	//// GLFW Setup
 	//if (!glfwInit()) {
@@ -213,13 +209,3 @@ int main() {
 	//glfwTerminate();
 
 	*/
-}
-
-/*
-void processInput(GLFWwindow* window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, true);
-	}
-}
-*/
