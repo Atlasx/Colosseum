@@ -126,7 +126,13 @@ namespace CE
 #ifdef CDEBUG
 	void Engine::TestSystems()
 	{
-		// Run some tests on systems like loading specific files etc
+		// Some logging tests
+		LOG(ENGINE, "asdf", "asfd");
+		LOG_INFO(ENGINE, "Another test");
+		LOG_INFO(ENGINE, "Formatting {} {}", "test", 15);
+		LOG_WARN(ENGINE, "Warning! {}", "Exceeded something!");
+		LOG_ERROR(ENGINE, "This is a big bad error!", "asdf");
+
 		GetSystem<ResourceSystem>()->RunTests();
 
 		auto IS = GetSystem<InputSystem>();
@@ -231,9 +237,14 @@ namespace CE
 
 	void Engine::ShutdownSystems()
 	{
-		for (auto& [key, system] : m_systems)
-		{
-			system->Shutdown();
-		}
+		// Manual order once again
+		GetSystem<ObjectSystem>()->Shutdown();
+		
+		GetSystem<EventSystem>()->Shutdown();
+		GetSystem<InputSystem>()->Shutdown();
+		GetSystem<RenderSystem>()->Shutdown();
+		GetSystem<ResourceSystem>()->Shutdown();
+
+		GetSystem<LogSystem>()->Shutdown();
 	}
 }

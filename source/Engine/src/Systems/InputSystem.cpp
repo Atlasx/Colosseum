@@ -13,9 +13,11 @@
 
 namespace CE
 {
+	InputSystem* g_input = nullptr;
+
 	void InputSystem::Startup()
 	{
-		LOG_INFO(INPUT_SYSTEM, "Startup");
+		LOG_INFO(INPUT, "Startup");
 
 		m_window = m_engine->GetWindow();
 		assert(m_window);
@@ -33,7 +35,7 @@ namespace CE
 
 	void InputSystem::Shutdown()
 	{
-		LOG_INFO(INPUT_SYSTEM, "Shutdown");
+		LOG_INFO(INPUT, "Shutdown");
 
 		g_input = nullptr;
 	}
@@ -157,6 +159,8 @@ namespace CE
 		const KeyState keyS = InputUtilities::GLFWActionToKeyState(action);
 
 		UpdateKeyState(keyT, keyS);
+
+		LOG_INFO(INPUT, "Key Pressed! {}", InputUtilities::GetKeyName(keyT));
 	}
 
 	void InputSystem::OnMouseButton(GLFWwindow* window, int button, int action, int mods)

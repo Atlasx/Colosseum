@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Engine.h"
+#include "Systems/LogSystem.h"
 
 namespace CE
 {
@@ -15,6 +16,8 @@ namespace CE
 
 	void RenderSystem::Startup()
 	{
+		LOG(RENDER, "Startup");
+
 		// Most of this moved back out to the engine
 		m_window = m_engine->GetWindow();
 		assert(m_window != nullptr);
@@ -22,6 +25,7 @@ namespace CE
 
 	void RenderSystem::Shutdown()
 	{
+		LOG(RENDER, "Shutdown");
 		// Most of this moved back up to engine
 	}
 }

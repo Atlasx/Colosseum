@@ -404,7 +404,7 @@ namespace CE
 	};
 
 	class InputSystem;
-	static InputSystem* g_input = nullptr;
+	extern InputSystem* g_input;
 
 	class InputSystem final : public EngineSystem
 	{

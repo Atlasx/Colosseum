@@ -1,17 +1,18 @@
 
 #include "Systems/ResourceSystem.h"
 #include "Systems/InputSystem.h"
+#include "Systems/LogSystem.h"
 
 namespace CE
 {
 	void ResourceSystem::Startup()
 	{
-
+		LOG(RESOURCES, "Startup");
 	}
 
 	void ResourceSystem::Shutdown()
 	{
-
+		LOG(RESOURCES, "Shutdown");
 	}
 
 	bool ResourceSystem::IsValidResourcePath(const std::filesystem::path& rPath)
