@@ -84,6 +84,8 @@ namespace CE
 		bool m_bLogToCout = true;
 		bool m_bLogToLog = true;
 
+		bool m_bBreakOnErrorLog = false;
+
 	private:
 
 		struct LogElement

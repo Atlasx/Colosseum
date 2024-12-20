@@ -14,6 +14,17 @@ namespace CE
 {
 	LogSystem* g_log = nullptr;
 
+	void DebugBreakOnError()
+	{
+#if defined(_MSC_VER)
+		__debugbreak();
+#elif defined(__GNUC__) || defined(__clang__)
+		std::raise(SIGTRAP);
+#else
+		std::abort(); // Fallback if platform doesn't support debug break
+#endif
+	}
+
 	void LogSystem::LogImpl(LogLevel level, LogChannel channel, std::string_view msg)
 	{
 		std::string message;
@@ -57,8 +68,20 @@ namespace CE
 
 		if (m_bLogToLog)
 		{
+			// Reset log every x msgs TODO: store to file here or something reasonable
+			if (m_log.size() >= 1000)
+			{
+				m_log.clear();
+				LOG_WARN(INPUT, "Exceeded Log Storage! Clearing.");
+			}
+
 			LogElement elem(level, channel, message);
 			m_log.push_back(elem);
+		}
+
+		if (m_bBreakOnErrorLog && level == LogLevel::ERROR)
+		{
+			DebugBreakOnError();
 		}
 	}
 
@@ -110,7 +133,7 @@ namespace CE
 			}
 		}
 
-		if (ImGui::BeginCombo("Log Channels", currentSelection.c_str()))
+		if (ImGui::BeginCombo("Channel Filter", currentSelection.c_str()))
 		{
 			for (int i = 0; i < static_cast<int>(LogChannel::MAX); i++)
 			{
@@ -136,29 +159,54 @@ namespace CE
 		if (!m_showDebug)
 			return;
 		
-		ImGui::SetNextWindowSize(ImVec2(700.f, 400.f), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSize(ImVec2(800.f, 400.f), ImGuiCond_Appearing);
 		ImGui::Begin("Log");
 
+		// Making right-aligned things in ImGui not the best...
+		// Somehow lost 13 pixels to something?
+		float availableRoom = ImGui::GetContentRegionAvail().x;
+		float spacing = 5.f;
+		float buttonWidths = 13.f + spacing + ImGui::CalcTextSize("Channel Filter").x + spacing + ImGui::CalcTextSize("Select All").x + spacing + ImGui::CalcTextSize("Clear").x;
+		float selectorWidth = availableRoom - buttonWidths;
+
+		ImGui::SetNextItemWidth(selectorWidth);
 		DrawChannelSelector(selectedChannels);
 
-		ImGui::SameLine();
+		ImGui::SameLine(0.f, spacing);
 		if (ImGui::Button("Select All"))
 		{
 			selectedChannels.set();
 		}
-		ImGui::SameLine();
+		ImGui::SameLine(0.f, spacing);
 		if (ImGui::Button("Clear"))
 		{
 			selectedChannels.reset();
 		}
+
+		ImGui::Text("Level Filter:");
+		ImGui::SameLine();
 
 		ImGui::Checkbox("Info", &s_bLogInfo);
 		ImGui::SameLine();
 		ImGui::Checkbox("Warnings", &s_bLogWarning);
 		ImGui::SameLine();
 		ImGui::Checkbox("Errors", &s_bLogError);
+		
+		ImGui::SameLine(ImGui::GetContentRegionAvail().x - 90.f);
+		ImGui::SetNextItemWidth(100.f);
+		if (ImGui::BeginCombo("##dropdown", "Settings"))
+		{			
+			ImGui::SeparatorText("Tag Settings");
+			ImGui::Checkbox("Error Level Tag", &m_bShowLevel);
+			ImGui::Checkbox("Channel Tag", &m_bShowChannel);
+			ImGui::Checkbox("Timestamp Tag", &m_bShowTimestamp);
+			ImGui::SeparatorText("Other");
+			ImGui::Checkbox("Debug Break", &m_bBreakOnErrorLog);
+			ImGui::EndCombo();
+		}
 
-		ImGui::BeginChild("Log");
+		ImGui::SeparatorText("Log");
+		ImGui::BeginChild("Log", ImVec2(0,0), true);
 
 		for (LogElement elem : m_log)
 		{

@@ -198,8 +198,6 @@ namespace CE
 		ImGui::NewFrame();
 
 		GetSystem<RenderSystem>()->Render();
-
-		m_debugMenu.ShowMenuItems();
 		
 		// Main Menu
 		if (ImGui::BeginMainMenuBar())
