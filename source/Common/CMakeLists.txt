@@ -7,6 +7,7 @@ set(SOURCES
 
 set(INCLUDES 
 	include/Array.h
+	include/ObjectPool.h
 )
 
 source_group("Source Files" FILES ${SOURCES})
