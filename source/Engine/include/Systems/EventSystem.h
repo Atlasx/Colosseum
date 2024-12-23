@@ -55,15 +55,11 @@ namespace CE
 	template<typename EventType>
 	concept ValidEventType = std::is_base_of_v<BaseEvent, EventType>;
 
-	template<typename T>
-	concept ValidClass = std::is_class_v<T>;
-
 	struct TestEvent : BaseEvent
 	{
 		float someData;
 		char name[10] = "TestEvent";
 	};
-
 
 	template <typename Derived, ValidEventType EventType>
 	struct BaseListener
@@ -137,6 +133,46 @@ namespace CE
 		MemberCallback m_callback;
 	};
 
+	template <ValidEventType EventType>
+	struct ErasedListener
+	{
+		using Callback = std::function<void(const EventType&)>;
+
+		ErasedListener(Callback cb) : m_callback(std::move(cb)) {}
+
+		void HandleEvent(const EventType& e) const
+		{
+			if (m_callback) m_callback(e);
+		}
+
+	private:
+		Callback m_callback;
+	};
+
+	template <ValidEventType EventType>
+	ErasedListener<EventType> MakeGlobalListener(std::function<void(const EventType&)> cb)
+	{
+		return ErasedListener<EventType>(std::move(cb));
+	}
+
+	template <ValidEventType EventType>
+	ErasedListener<EventType> MakeObjectListener(ObjectHandle target, std::function<void(ObjectHandle, const EventType&)> cb)
+	{
+		return ErasedListener<EventType>([cb = std::move(cb), target, p_objSystem](const EventType& e) {
+			if (auto* obj = p_objSystem->GetObject(target)) // Lookup the object by handle
+			{
+				obj->cb();
+			}
+			});
+	}
+
+	template <typename T, ValidEventType EventType>
+	ErasedListener<EventType> MakeMemberListener(T* instance, void (T::* cb)(const EventType&))
+	{
+		return ErasedListener<EventType>([instance, cb](const EventType& e) {
+			(instance->*cb)(e);
+			});
+	}
 
 	class ObjectSystem;
 
@@ -153,7 +189,7 @@ namespace CE
 			// TODO store the listener
 		}
 
-		template<ValidClass T, ValidEventType EventType>
+		template<typename T, ValidEventType EventType>
 		void RegisterListener(T* instance, void (T::* memberFunc)(const EventType&))
 		{
 			using Listener = MemberListener<T, EventType>;
@@ -175,8 +211,12 @@ namespace CE
 		void OnTestEvent(const TestEvent& e);
 		
 
+		std::unordered_map<std::type_info, std::vector<ErasedListener>> m_eventListeners;
+
+		//ObjectPool<ErasedListener, 1024, ListenerHandle> m_listeners;
+
 		// Store reference to object system for handle lookup on targeted events
-		ObjectSystem* p_ObjSystem = nullptr;
+		ObjectSystem* p_objSystem = nullptr;
 
 		// More friendship to allow Engine to access protected functions on derived class pointers
 		friend class Engine;
