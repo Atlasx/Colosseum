@@ -53,22 +53,24 @@ namespace CE
 
 	// Use this concept to provide compiler errors if user code tries to use a bad type
 	template<typename EventType>
-	concept ValidEventType = std::is_base_of_v<EventType, BaseEvent>;
+	concept ValidEventType = std::is_base_of_v<BaseEvent, EventType>;
+
+	template<typename T>
+	concept ValidClass = std::is_class_v<T>;
 
 	struct TestEvent : BaseEvent
 	{
 		float someData;
+		char name[10] = "TestEvent";
 	};
 
 
-	// CRTP for unified handling of events either global or targeted
-	// Also templated for varying event types
 	template <typename Derived, ValidEventType EventType>
 	struct BaseListener
 	{
-		void handleEvent(const EventType& e)
+		void HandleEvent(const EventType& e)
 		{
-			static_cast<const Derived*>(this)->handleEventImpl(e);
+			static_cast<const Derived*>(this)->HandleEventImpl(e);
 		}
 	};
 
@@ -79,7 +81,7 @@ namespace CE
 
 		GlobalListener(Callback cb) : m_callback(std::move(cb)) {}
 
-		void handleEventImpl(const EventType& e)
+		void HandleEventImpl(const EventType& e)
 		{
 			if (m_callback) m_callback(e);
 		}
@@ -93,12 +95,12 @@ namespace CE
 	{
 		using Callback = std::function<void(ObjectHandle, const EventType&)>;
 
-		ObjectListener(Callback cb, ObjectHandle target) :
+		ObjectListener(ObjectHandle target, Callback cb) :
 			m_callback(std::move(cb)),
 			m_target(target)
 		{}
 
-		void handleEventImpl(const EventType& e)
+		void HandleEventImpl(const EventType& e)
 		{
 			if (m_callback)
 			{
@@ -111,7 +113,31 @@ namespace CE
 		Callback m_callback;
 		ObjectHandle m_target;
 	};
-		
+
+	template <typename T, ValidEventType EventType>
+	struct MemberListener : BaseListener<MemberListener<T, EventType>, EventType>
+	{
+		using MemberCallback = void (T::*)(const EventType&);
+
+		MemberListener(T* instance, MemberCallback cb) :
+			m_instance(instance),
+			m_callback(cb)
+		{}
+
+		void HandleEventImpl(const EventType& e)
+		{
+			if (m_instance != nullptr)
+			{
+				m_instance->*m_callback(e);
+			}
+		}
+
+	private:
+		T* m_instance;
+		MemberCallback m_callback;
+	};
+
+
 	class ObjectSystem;
 
 	class EventSystem final : public EngineSystem
@@ -124,17 +150,29 @@ namespace CE
 			using Listener = GlobalListener<EventType>;
 			// Create a global listener, listening to an event with a callback func
 			Listener listener(cb);
-			auto& baseListen = static_cast<BaseListener<Listener, EventType>>(listener);
+			// TODO store the listener
+		}
+
+		template<ValidClass T, ValidEventType EventType>
+		void RegisterListener(T* instance, void (T::* memberFunc)(const EventType&))
+		{
+			using Listener = MemberListener<T, EventType>;
+
+			Listener listener(instance, memberFunc);
 		}
 		 
-		template<typename EventType>
+		template<ValidEventType EventType>
 		void FireEvent(EventType e)
 		{
 			// Lookup listeners
 			// Fire callback on each listener
+			LOG(EVENTS, "Firing Event!");
 		}
 
 	private:
+
+		// Test member function for event callback
+		void OnTestEvent(const TestEvent& e);
 		
 
 		// Store reference to object system for handle lookup on targeted events
@@ -149,16 +187,7 @@ namespace CE
 		virtual std::string Name() const override { return "Event System"; }
 		virtual void DrawGUI() override { return; }
 
-		EventSystem(Engine* engine) : EngineSystem(engine) 
-		{
-			RegisterListener<TestEvent>([](const TestEvent& e) {
-				LOG(EVENTS, "Test Event Fired!");
-			});
-
-			TestEvent testE;
-			testE.someData = 5.f;
-			FireEvent(testE); // preferred syntax (auto event type)
-		};
+		EventSystem(Engine* engine) : EngineSystem(engine) {}
 
 	protected:
 
