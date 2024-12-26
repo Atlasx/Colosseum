@@ -35,6 +35,8 @@
 #include <chrono>
 #include <functional>
 #include <type_traits>
+#include <unordered_map>
+#include <typeindex>
 
 #include "Systems/EngineSystem.h"
 #include "Systems/LogSystem.h"
@@ -61,118 +63,114 @@ namespace CE
 		char name[10] = "TestEvent";
 	};
 
-	template <typename Derived, ValidEventType EventType>
-	struct BaseListener
+	template<typename Derived>
+	class BaseListener
 	{
-		void HandleEvent(const EventType& e)
+	protected:
+		~BaseListener() = default;
+	public:
+
+		template <typename... Args>
+		void HandleEvent(Args&&... args)
 		{
-			static_cast<const Derived*>(this)->HandleEventImpl(e);
+			static_cast<Derived*>(this)->HandleEventImpl(std::forward<Args>(args)...);
 		}
 	};
 
-	template <ValidEventType EventType>
-	struct GlobalListener : BaseListener<GlobalListener<EventType>, EventType>
+	template<ValidEventType _ET>
+	class GlobalListener : public BaseListener<GlobalListener<_ET>>
 	{
+	public:
+		using EventType = _ET;
 		using Callback = std::function<void(const EventType&)>;
 
-		GlobalListener(Callback cb) : m_callback(std::move(cb)) {}
+		explicit GlobalListener(Callback cb) : m_callback(cb) {}
+		~GlobalListener() = default;
 
-		void HandleEventImpl(const EventType& e)
+		void HandleEventImpl(const EventType& event)
 		{
-			if (m_callback) m_callback(e);
+			m_callback(event);
 		}
 
 	private:
 		Callback m_callback;
 	};
 
-	template <ValidEventType EventType>
-	struct ObjectListener : BaseListener<ObjectListener<EventType>, EventType>
+	template<ValidEventType _ET, typename _T>
+	class MemberFuncListener : public BaseListener<MemberFuncListener<_ET, _T>>
 	{
-		using Callback = std::function<void(ObjectHandle, const EventType&)>;
+	public:
+		using InstanceType = _T;
+		using EventType = _ET;
+		using Callback = void (InstanceType::*)(const EventType&);
 
-		ObjectListener(ObjectHandle target, Callback cb) :
-			m_callback(std::move(cb)),
-			m_target(target)
-		{}
+		MemberFuncListener(InstanceType* instance, Callback cb)
+			: m_instance(instance), m_callback(cb) {}
 
-		void HandleEventImpl(const EventType& e)
+		~MemberFuncListener() = default;
+
+		void HandleEventImpl(const EventType& event)
 		{
-			if (m_callback)
-			{
-				// TODO Get pointer to target
-				m_callback(e);
-			}
+			(m_instance->*m_callback)(event);
 		}
 
 	private:
-		Callback m_callback;
-		ObjectHandle m_target;
-	};
-
-	template <typename T, ValidEventType EventType>
-	struct MemberListener : BaseListener<MemberListener<T, EventType>, EventType>
-	{
-		using MemberCallback = void (T::*)(const EventType&);
-
-		MemberListener(T* instance, MemberCallback cb) :
-			m_instance(instance),
-			m_callback(cb)
-		{}
-
-		void HandleEventImpl(const EventType& e)
-		{
-			if (m_instance != nullptr)
-			{
-				m_instance->*m_callback(e);
-			}
-		}
-
-	private:
-		T* m_instance;
-		MemberCallback m_callback;
-	};
-
-	template <ValidEventType EventType>
-	struct ErasedListener
-	{
-		using Callback = std::function<void(const EventType&)>;
-
-		ErasedListener(Callback cb) : m_callback(std::move(cb)) {}
-
-		void HandleEvent(const EventType& e) const
-		{
-			if (m_callback) m_callback(e);
-		}
-
-	private:
+		InstanceType* m_instance;
 		Callback m_callback;
 	};
-
-	template <ValidEventType EventType>
-	ErasedListener<EventType> MakeGlobalListener(std::function<void(const EventType&)> cb)
+	
+	class ListenerWrapper
 	{
-		return ErasedListener<EventType>(std::move(cb));
-	}
+	public:
+		template <typename ListenerType>
+		ListenerWrapper(ListenerType listener)
+			: m_listener(std::make_shared<ListenerType>(std::move(listener))),
+			m_typeInfo(typeid(ListenerType)) {}
 
-	template <ValidEventType EventType>
-	ErasedListener<EventType> MakeObjectListener(ObjectHandle target, std::function<void(ObjectHandle, const EventType&)> cb)
-	{
-		return ErasedListener<EventType>([cb = std::move(cb), target, p_objSystem](const EventType& e) {
-			if (auto* obj = p_objSystem->GetObject(target)) // Lookup the object by handle
-			{
-				obj->cb();
-			}
-			});
-	}
+		template <typename... Args>
+		void HandleEvent(Args&&... args)
+		{
+			// Dispatch to the listener's HandleEvent function
+			// The correct HandleEventImpl will be invoked for the specific listener type
+			m_listener->HandleEvent(std::forward<Args>(args)...);
+		}
 
-	template <typename T, ValidEventType EventType>
-	ErasedListener<EventType> MakeMemberListener(T* instance, void (T::* cb)(const EventType&))
+		const std::type_info& GetTypeInfo() const { return m_typeInfo; }
+
+	private:
+		std::shared_ptr<void> m_listener;
+		const std::type_info& m_typeInfo;
+	};
+
+	// ListenerRegistry for storing and dispatching events
+	class ListenerRegistry
 	{
-		return ErasedListener<EventType>([instance, cb](const EventType& e) {
-			(instance->*cb)(e);
-			});
-	}
+	public:
+		template <typename EventType, typename CallbackType>
+		void RegisterListener(CallbackType callback)
+		{
+			auto listener = GlobalListener<EventType>(std::move(callback));
+			auto wrapper = ListenerWrapper(std::move(listener));
+			m_listeners[typeid(EventType)].push_back(std::move(wrapper));
+		}
+
+		template <typename EventType, typename ObjectType, typename MemberFunc>
+		void RegisterMemberListener(ObjectType* obj, MemberFunc func)
+		{
+			auto listener = MemberFuncListener<EventType, ObjectType, MemberFunc>(obj, func);
+			auto wrapper = ListenerWrapper(std::move(listener));
+			m_listeners[typeid(EventType)].push_back(std::move(wrapper));
+		}
+
+		template <typename EventType>
+		std::vector<ListenerWrapper>& GetListeners()
+		{
+			return m_listeners[typeid(EventType)];
+		}
+
+	private:
+		std::unordered_map<std::type_index, std::vector<ListenerWrapper>> m_listeners;
+	};
 
 	class ObjectSystem;
 
@@ -180,40 +178,40 @@ namespace CE
 	{
 	public:
 		
-		template<ValidEventType EventType>
-		void RegisterListener(std::function<void(const EventType&)> cb)
+		template <typename EventType>
+		void DispatchEvent(const EventType& event)
 		{
-			using Listener = GlobalListener<EventType>;
-			// Create a global listener, listening to an event with a callback func
-			Listener listener(cb);
-			// TODO store the listener
+			auto& listeners = m_registry.GetListeners<EventType>();
+
+			for (auto& listener : listeners)
+			{
+				listener.HandleEvent(event);
+			}
 		}
 
-		template<typename T, ValidEventType EventType>
-		void RegisterListener(T* instance, void (T::* memberFunc)(const EventType&))
+		// Delegate listener registration to ListenerRegistry
+		template <typename EventType, typename CallbackType>
+		void RegisterListener(CallbackType callback)
 		{
-			using Listener = MemberListener<T, EventType>;
+			m_registry.RegisterListener<EventType>(std::move(callback));
+		}
 
-			Listener listener(instance, memberFunc);
-		}
-		 
-		template<ValidEventType EventType>
-		void FireEvent(EventType e)
+		// Delegate member listener registration to ListenerRegistry
+		template <typename EventType, typename ObjectType, typename MemberFunc>
+		void RegisterMemberListener(ObjectType* obj, MemberFunc func)
 		{
-			// Lookup listeners
-			// Fire callback on each listener
-			LOG(EVENTS, "Firing Event!");
+			m_registry.RegisterMemberListener<EventType>(obj, func);
 		}
+
+	private:
+		ListenerRegistry m_registry;
 
 	private:
 
 		// Test member function for event callback
 		void OnTestEvent(const TestEvent& e);
 		
-
-		std::unordered_map<std::type_info, std::vector<ErasedListener>> m_eventListeners;
-
-		//ObjectPool<ErasedListener, 1024, ListenerHandle> m_listeners;
+		//ObjectPool<GlobalListener, 1024, ListenerHandle> m_listeners;
 
 		// Store reference to object system for handle lookup on targeted events
 		ObjectSystem* p_objSystem = nullptr;

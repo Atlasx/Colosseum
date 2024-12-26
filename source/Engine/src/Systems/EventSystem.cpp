@@ -8,11 +8,11 @@ namespace CE
 			LOG(EVENTS, "Lambda Listener Works! {}", e.name);
 		});
 
-		RegisterListener(this, &EventSystem::OnTestEvent);
+		//RegisterListener(this, &EventSystem::OnTestEvent);
 
 		TestEvent testE;
 		testE.someData = 5.f;
-		FireEvent(testE); // preferred syntax (auto event type)
+		DispatchEvent(testE); // preferred syntax (auto event type)
 	}
 
 	void EventSystem::Shutdown()
