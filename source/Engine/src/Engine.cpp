@@ -182,6 +182,8 @@ namespace CE
 		//std::cout << "Updating!" << std::endl;
 
 		// TODO Calculate delta time
+
+		GetSystem<EventSystem>()->ProcessEvents();
 	}
 	
 	void Engine::Render()

@@ -154,7 +154,7 @@ namespace CE
 		static bool s_bLogWarning = true;
 		static bool s_bLogError = true;
 		
-		static std::bitset<static_cast<size_t>(LogChannel::MAX)> selectedChannels = {1};
+		static std::bitset<static_cast<size_t>(LogChannel::MAX)> selectedChannels = {17};
 		
 		if (!m_showDebug)
 			return;

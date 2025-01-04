@@ -43,14 +43,11 @@ namespace CE
 		// Allows for a "singleton-like" design where anyone can query the engine's systems by type given an engine
 		//
 		template<typename System>
-		std::shared_ptr<System> GetSystem() {
-			auto iter = m_systems.find(typeid(System));
-			if (iter != m_systems.end()) {
-				// Dyn cast here to translate from the polymorphic map to the requested system type
-#ifdef CDEBUG
-				assert(iter->second);
-#endif
-				return std::dynamic_pointer_cast<System>(iter->second);
+		std::shared_ptr<System> GetSystem()
+		{
+			if (m_systems.contains(typeid(System)))
+			{
+				return std::dynamic_pointer_cast<System>(m_systems[typeid(System)]);
 			}
 #ifdef CDEBUG
 			assert(false);
