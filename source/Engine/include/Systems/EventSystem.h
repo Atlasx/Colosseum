@@ -44,6 +44,17 @@
 
 namespace CE
 {
+	/*
+	* 
+	* Some thoughts on this event system:
+	* 
+	* Not a fan of the discrete event type enum, this makes the code for the users of the
+	* event system ugly. Now we need to check against event type when firing in the
+	* listener. I wanted this setup to be simple for the user, just define a new event
+	* type or macro and have the function signature match. Couldn't get it figured out and
+	* I want to continue working on other parts of the codebase. Might revisit this later.
+	* 
+	*/
 	enum class EventType
 	{
 		ET_Default = 0,
