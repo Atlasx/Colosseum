@@ -44,88 +44,51 @@
 
 namespace CE
 {
-	// All events must inherit from this to pass checks in event listener
-	// We don't want instantiation or deletion from outside derived classes
-	struct BaseEvent
+	enum class EventType
 	{
-	protected:
-		BaseEvent() = default;
-		~BaseEvent() = default;
+		ET_Default = 0,
+		ET_Test,
+		ET_EventA
 	};
 
-	// All valid events must inherit from BaseEvent
-	template<typename EventType>
-	concept ValidEventType = std::is_base_of_v<BaseEvent, EventType>;
-
-	struct TestEvent : BaseEvent
+	struct Event
 	{
-		float someData;
-		std::string someString;
+		Event() : m_type(EventType::ET_Test), m_data(nullptr) {}
+
+		EventType m_type;
+		void* m_data;
 	};
-	
-	struct EventA : BaseEvent
-	{
-		int x, y;
-	};
-
-	struct EventB : BaseEvent
-	{
-		float x;
-	};
-
-	struct EventWrapper
-	{
-		std::vector<std::byte> data;
-		std::type_index type;
-
-		template <typename T>
-		EventWrapper(const T& event) : data(sizeof(T)), type(typeid(T))
-		{
-			std::memcpy(data.data(), &event, sizeof(T));
-		}
-
-		template <typename T>
-		T Get() const
-		{
-			if (type != typeid(T))
-			{
-				throw std::bad_cast();
-			}
-			T event;
-			std::memcpy(&event, data.data(), sizeof(T));
-			return event;
-		}
-	};
-
 
 	class Listener
 	{
 	public:
-		using Callback = std::function<void(const EventWrapper&)>;
+		using Callback = std::function<void(const Event&)>;
 
-		template <typename T, typename F>
-		requires ValidEventType<T>
-		void Bind(F&& func)
+		Listener() : m_callback(nullptr), m_type() {}
+
+		template <typename F>
+		void Bind(EventType et, F&& func)
 		{
-			m_callback = [func = std::forward<F>(func)](const EventWrapper& e)
+			m_type = et;
+			m_callback = [func](const Event& e)
 				{
-					func(e.Get<T>());
+					func(e);
 				};
 		}
 
-		template <typename T, typename C>
-		requires ValidEventType<T>
-		void Bind(C* instance, void (C::* method)(const T&))
+		template <typename C>
+		void Bind(EventType et, C* instance, void (C::* method)(const Event&))
 		{
-			m_callback = [instance, method](const EventWrapper& e)
+			m_type = et;
+			m_callback = [instance, method](const Event& e)
 				{
-					(instance->*method)(e.Get<T>());
+					(instance->*method)(e);
 				};
 		}
 
-		void operator()(const EventWrapper& e) const
+		void operator()(const Event& e) const
 		{
-			if (m_callback)
+			if (m_callback && e.m_type == m_type)
 			{
 				m_callback(e);
 			}
@@ -133,6 +96,7 @@ namespace CE
 
 	private:
 		Callback m_callback;
+		EventType m_type;
 	};
 
 	class ObjectSystem;
@@ -140,33 +104,29 @@ namespace CE
 	class EventSystem final : public EngineSystem
 	{
 	private:
-		std::vector<EventWrapper> m_eventQueue;
-		std::unordered_map<std::type_index, std::vector<Listener>> m_listeners;
+		std::vector<Event> m_eventQueue;
+		std::vector<Listener> m_listeners;
 
 	public:
-		template <typename T>
-		requires ValidEventType<T>
-		void FireEvent(const T& event)
+		void FireEvent(const Event& e)
 		{
-			m_eventQueue.emplace_back(event);
+			m_eventQueue.emplace_back(e);
 		}
 
-		template <typename T, typename F>
-		requires ValidEventType<T>
-		void RegisterListener(F&& func)
+		template <typename F>
+		void RegisterListener(EventType et, F&& func)
 		{
 			Listener listener;
-			listener.Bind<T>(std::forward<F>(func));
-			m_listeners[typeid(T)].emplace_back(std::move(listener));
+			listener.Bind(et, std::forward<F>(func));
+			m_listeners.emplace_back(std::move(listener));
 		}
 
-		template <typename T, typename C>
-		requires ValidEventType<T>
-		void RegisterMemberListener(C* instance, void (C::* method)(const T&))
+		template <typename C>
+		void RegisterMemberListener(EventType et, C* instance, void (C::* method)(const Event&))
 		{
 			Listener listener;
-			listener.Bind<T>(instance, method);
-			m_listeners[typeid(T)].emplace_back(std::move(listener));
+			listener.Bind(et, instance, method);
+			m_listeners.emplace_back(std::move(listener));
 		}
 
 		void ProcessEvents();
@@ -174,7 +134,7 @@ namespace CE
 	private:
 
 		// Test member function for event callback
-		void OnTestEvent(const TestEvent& e);
+		void OnTestEvent(const Event& e);
 
 		// Store reference to object system for handle lookup on targeted events
 		ObjectSystem* p_objSystem = nullptr;

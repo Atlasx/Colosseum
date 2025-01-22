@@ -4,31 +4,27 @@ namespace CE
 {
 	void EventSystem::Startup()
 	{
-		RegisterListener<TestEvent>([](const TestEvent& e) {
-			LOG(EVENTS, "Lambda Listener Works! {}", e.someString);
+		RegisterListener(EventType::ET_Test, [](const Event& e) {
+			LOG(EVENTS, "Lambda Listener Works!");
 		});
 
-		RegisterMemberListener(this, &EventSystem::OnTestEvent);
+		RegisterMemberListener(EventType::ET_Test, this, &EventSystem::OnTestEvent);
 
-		TestEvent testE;
-		testE.someData = 5.f;
-		FireEvent(testE); // preferred syntax (auto event type)
-
-		testE.someString = "CHANGE";
+		Event testE;
+		testE.m_type = EventType::ET_Test;
 		FireEvent(testE);
 
-		EventA testA;
-		testA.x = 5;
-		testA.y = 10;
+		FireEvent(testE);
+
+		Event testA;
+		testA.m_type = EventType::ET_EventA;
 		FireEvent(testA);
 
-		RegisterListener<EventA>([](const EventA& e) {
+		RegisterListener(EventType::ET_EventA, [](const Event& e) {
 			LOG(EVENTS, "EventA Listener Works!");
 			});
 
-		EventB testB;
-		testB.x = 10.f;
-		FireEvent(testB);
+		FireEvent(testA);
 	}
 
 	void EventSystem::Shutdown()
@@ -40,24 +36,16 @@ namespace CE
 	{
 		for (auto& e : m_eventQueue)
 		{
-			auto it = m_listeners.find(e.type);
-			if (it != m_listeners.end()) {
-				for (auto& listener : it->second)
-				{
-					listener(e);  // Call all registered listeners
-				}
-			}
-			else {
-				// Debating on if this should even be a problem, many events might
-				// just not have any listeners
-				LOG_WARN(EVENTS, "No listener found for event! {}", e.type.name());
+			for (auto& listener : m_listeners)
+			{
+				listener(e);  // Call all registered listeners
 			}
 		}
 		m_eventQueue.clear();
 	}
 
-	void EventSystem::OnTestEvent(const TestEvent& e)
+	void EventSystem::OnTestEvent(const Event& e)
 	{
-		LOG(EVENTS, "Member Listener Works! {}", e.someString);
+		LOG(EVENTS, "Member Listener Works!");
 	}
 }
