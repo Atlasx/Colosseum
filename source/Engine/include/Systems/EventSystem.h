@@ -31,6 +31,7 @@
 #pragma once
 
 #include <vector>
+#include <any>
 #include <string>
 #include <chrono>
 #include <functional>
@@ -45,11 +46,11 @@
 namespace CE
 {
 	
-	struct Event
-	{
-	public:
-		Event() = default;
-	};
+	// Used for compile-time assurance of events
+	struct Event { };
+
+	template <typename T>
+	concept IsEvent = std::is_base_of_v<Event, T>;
 
 	struct TestEvent : public Event
 	{
@@ -59,85 +60,67 @@ namespace CE
 		TestEvent() : someData(10), moreData(2.f) {}
 	};
 
-	struct AnotherTestEvent
+	template <IsEvent EType>
+	class Listener
 	{
-		int otherData;
-		std::string_view someString;
+	public:
+		void Setup(std::function<void(EType)> callable)
+		{
+			m_callable = callable;
+		}
 
-		AnotherTestEvent() : otherData(0), someString("A Literal") {}
+		void Fire(EType e)
+		{
+			if (m_callable)
+			{
+				m_callable(e);
+			}
+		}
+
+		std::function<void(EType)> m_callable;
 	};
-
-	namespace EventUtil
-	{
-		namespace Constants
-		{
-			static const std::size_t EVENT_DATA_MAX = 64;
-		}
-
-		enum class EventType
-		{
-			ET_Base = 0,
-			ET_TestEvent,
-			ET_AnotherTestEvent
-		};
-
-		template<typename EType>
-		constexpr EventType GetTypeOfEvent()
-		{
-			if constexpr (std::is_same_v<EType, Event>) { return EventType::ET_Base; }
-			if constexpr (std::is_same_v<EType, TestEvent>) { return EventType::ET_TestEvent; }
-			if constexpr (std::is_same_v<EType, AnotherTestEvent>) { return EventType::ET_AnotherTestEvent; }
-		}
-
-		class EventWrapper
-		{
-			std::byte m_data[Constants::EVENT_DATA_MAX];
-			std::size_t m_dataSize;
-
-			EventType m_type;
-
-			template <typename EType>
-			auto Get() -> EType
-			{
-				assert(GetTypeOfEvent<EType>() == m_type); // need to do a runtime assert
-				return *reinterpret_cast<EType*>(m_data); // trust me bro lol
-			}
-
-			EventWrapper() : m_type(EventType::ET_Base), m_dataSize(Constants::EVENT_DATA_MAX)
-			{
-				// May not need this as we should overwrite any needed data
-				memset(m_data, 0, sizeof(m_data));
-			}
-		};
-
-		template <typename EType>
-		EventWrapper MakeWrapper(EType event)
-		{
-			static_assert(sizeof(EType) <= Constants::EVENT_DATA_MAX);
-	
-			EventWrapper wrapper;
-			wrapper.m_type = GetTypeOfEvent<EType>();
-			wrapper.m_dataSize = sizeof(EType);
-
-			memcpy(wrapper.m_data, &event, sizeof(EType));
-			return wrapper;
-		}
-
-		class Listener
-		{
-			// TODO
-		};
-	}
 
 	class EventSystem final : public EngineSystem
 	{
 	public:
 		
-		template <typename EType>
+		template <IsEvent EType>
 		void PostEvent(EType event)
 		{
 			// Copy event to local storage
+			const std::type_index eventIndex = typeid(EType);
+			auto listeners = m_listenerStorage[eventIndex];
+			if (listeners.size() > 0)
+			{
+				for (auto listener : listeners)
+				{
+					auto l = static_cast<Listener<EType>*>(listener);
+					if (l != nullptr)
+					{
+						l->Fire(event);
+					}
+				}
+			}
 		}
+
+		template <IsEvent EType>
+		void RegisterListener(std::function<void(EType)> callback)
+		{
+			auto eventListener = new Listener<EType>();
+			eventListener->Setup(std::move(callback));
+
+			const std::type_index eventIndex = typeid(EType);
+			if (m_listenerStorage.find(eventIndex) != m_listenerStorage.end())
+			{
+				m_listenerStorage[eventIndex].emplace_back(eventListener);
+			}
+			else
+			{
+				m_listenerStorage[eventIndex].emplace_back(eventListener);
+			}
+		}
+
+		std::unordered_map<std::type_index, std::vector<void*>> m_listenerStorage;
 
 		void ProcessEvents();
 		void OnTestEvent(const Event& e);

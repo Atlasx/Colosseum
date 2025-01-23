@@ -4,14 +4,17 @@ namespace CE
 {
 	void EventSystem::Startup()
 	{
+
 		TestEvent testA;
-		testA.moreData = 10.f;
+		testA.someData = 5;
 
-		EventUtil::EventWrapper wrappedTestA = EventUtil::MakeWrapper(testA);
+		RegisterListener<TestEvent>([](TestEvent e) {
+			LOG(EVENTS, "Listener works!");
+		});
 
-		TestEvent testB = wrappedTestA.Get<TestEvent>();
+		PostEvent(testA);
 
-		AnotherTestEvent testC = wrappedTestA.Get<AnotherTestEvent>();
+		//AnotherTestEvent testC = wrappedTestA.Get<AnotherTestEvent>();
 
 		/*
 		RegisterListener(EventType::ET_Test, [](const Event& e) {

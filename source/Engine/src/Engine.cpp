@@ -127,6 +127,7 @@ namespace CE
 	void Engine::TestSystems()
 	{
 		// Some logging tests
+		LOG(ENGINE, "Running Tests!");
 		LOG(ENGINE, "asdf", "asfd");
 		LOG_INFO(ENGINE, "Another test");
 		LOG_INFO(ENGINE, "Formatting {} {}", "test", 15);
