@@ -4,6 +4,16 @@ namespace CE
 {
 	void EventSystem::Startup()
 	{
+		TestEvent testA;
+		testA.moreData = 10.f;
+
+		EventUtil::EventWrapper wrappedTestA = EventUtil::MakeWrapper(testA);
+
+		TestEvent testB = wrappedTestA.Get<TestEvent>();
+
+		AnotherTestEvent testC = wrappedTestA.Get<AnotherTestEvent>();
+
+		/*
 		RegisterListener(EventType::ET_Test, [](const Event& e) {
 			LOG(EVENTS, "Lambda Listener Works!");
 		});
@@ -25,6 +35,7 @@ namespace CE
 			});
 
 		FireEvent(testA);
+		*/
 	}
 
 	void EventSystem::Shutdown()
@@ -34,6 +45,7 @@ namespace CE
 
 	void EventSystem::ProcessEvents()
 	{
+		/*
 		for (auto& e : m_eventQueue)
 		{
 			for (auto& listener : m_listeners)
@@ -42,6 +54,7 @@ namespace CE
 			}
 		}
 		m_eventQueue.clear();
+		*/
 	}
 
 	void EventSystem::OnTestEvent(const Event& e)

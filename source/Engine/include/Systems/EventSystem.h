@@ -44,111 +44,97 @@
 
 namespace CE
 {
-	/*
-	* 
-	* Some thoughts on this event system:
-	* 
-	* Not a fan of the discrete event type enum, this makes the code for the users of the
-	* event system ugly. Now we need to check against event type when firing in the
-	* listener. I wanted this setup to be simple for the user, just define a new event
-	* type or macro and have the function signature match. Couldn't get it figured out and
-	* I want to continue working on other parts of the codebase. Might revisit this later.
-	* 
-	*/
-	enum class EventType
-	{
-		ET_Default = 0,
-		ET_Test,
-		ET_EventA
-	};
-
+	
 	struct Event
 	{
-		Event() : m_type(EventType::ET_Test), m_data(nullptr) {}
-
-		EventType m_type;
-		void* m_data;
-	};
-
-	class Listener
-	{
 	public:
-		using Callback = std::function<void(const Event&)>;
-
-		Listener() : m_callback(nullptr), m_type() {}
-
-		template <typename F>
-		void Bind(EventType et, F&& func)
-		{
-			m_type = et;
-			m_callback = [func](const Event& e)
-				{
-					func(e);
-				};
-		}
-
-		template <typename C>
-		void Bind(EventType et, C* instance, void (C::* method)(const Event&))
-		{
-			m_type = et;
-			m_callback = [instance, method](const Event& e)
-				{
-					(instance->*method)(e);
-				};
-		}
-
-		void operator()(const Event& e) const
-		{
-			if (m_callback && e.m_type == m_type)
-			{
-				m_callback(e);
-			}
-		}
-
-	private:
-		Callback m_callback;
-		EventType m_type;
+		Event() = default;
 	};
 
-	class ObjectSystem;
+	struct TestEvent : public Event
+	{
+		int someData;
+		float moreData;
+
+		TestEvent() : someData(10), moreData(2.f) {}
+	};
+
+	struct AnotherTestEvent
+	{
+		int otherData;
+		std::string_view someString;
+
+		AnotherTestEvent() : otherData(0), someString("A Literal") {}
+	};
+	namespace EventUtil
+	{
+		namespace Constants
+		{
+			static const std::size_t EVENT_DATA_MAX = 64;
+		}
+
+		enum class EventType
+		{
+			ET_Base = 0,
+			ET_TestEvent,
+			ET_AnotherTestEvent
+		};
+
+		template<typename EType>
+		constexpr EventType GetTypeOfEvent()
+		{
+			if constexpr (std::is_same_v<EType, Event>) { return EventType::ET_Base; }
+			if constexpr (std::is_same_v<EType, TestEvent>) { return EventType::ET_TestEvent; }
+			if constexpr (std::is_same_v<EType, AnotherTestEvent>) { return EventType::ET_AnotherTestEvent; }
+		}
+
+		struct EventWrapper
+		{
+			std::byte m_data[Constants::EVENT_DATA_MAX];
+			std::size_t m_dataSize;
+
+			EventType m_type;
+
+			template <typename EType>
+			auto Get() -> EType
+			{
+				assert(GetTypeOfEvent<EType>() == m_type); // need to do a runtime assert
+				return *reinterpret_cast<EType*>(m_data); // trust me bro lol
+			}
+
+			EventWrapper() : m_type(EventType::ET_Base), m_dataSize(Constants::EVENT_DATA_MAX)
+			{
+				// May not need this as we should overwrite any needed data
+				memset(m_data, 0, sizeof(m_data));
+			}
+		};
+
+		template <typename EType>
+		EventWrapper MakeWrapper(EType event)
+		{
+			static_assert(sizeof(EType) <= Constants::EVENT_DATA_MAX);
+	
+			EventWrapper wrapper;
+			wrapper.m_type = GetTypeOfEvent<EType>();
+			wrapper.m_dataSize = sizeof(EType);
+
+			memcpy(wrapper.m_data, &event, sizeof(EType));
+			return wrapper;
+		}
+	}
 
 	class EventSystem final : public EngineSystem
 	{
-	private:
-		std::vector<Event> m_eventQueue;
-		std::vector<Listener> m_listeners;
-
 	public:
-		void FireEvent(const Event& e)
+		
+		template <typename EType>
+		void PostEvent(EType event)
 		{
-			m_eventQueue.emplace_back(e);
-		}
-
-		template <typename F>
-		void RegisterListener(EventType et, F&& func)
-		{
-			Listener listener;
-			listener.Bind(et, std::forward<F>(func));
-			m_listeners.emplace_back(std::move(listener));
-		}
-
-		template <typename C>
-		void RegisterMemberListener(EventType et, C* instance, void (C::* method)(const Event&))
-		{
-			Listener listener;
-			listener.Bind(et, instance, method);
-			m_listeners.emplace_back(std::move(listener));
+			// Copy event to local storage
 		}
 
 		void ProcessEvents();
-
-	private:
-
-		// Test member function for event callback
 		void OnTestEvent(const Event& e);
-
-		// Store reference to object system for handle lookup on targeted events
-		ObjectSystem* p_objSystem = nullptr;
 
 		// More friendship to allow Engine to access protected functions on derived class pointers
 		friend class Engine;
