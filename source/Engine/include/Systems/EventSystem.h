@@ -66,6 +66,7 @@ namespace CE
 
 		AnotherTestEvent() : otherData(0), someString("A Literal") {}
 	};
+
 	namespace EventUtil
 	{
 		namespace Constants
@@ -88,7 +89,7 @@ namespace CE
 			if constexpr (std::is_same_v<EType, AnotherTestEvent>) { return EventType::ET_AnotherTestEvent; }
 		}
 
-		struct EventWrapper
+		class EventWrapper
 		{
 			std::byte m_data[Constants::EVENT_DATA_MAX];
 			std::size_t m_dataSize;
@@ -121,6 +122,11 @@ namespace CE
 			memcpy(wrapper.m_data, &event, sizeof(EType));
 			return wrapper;
 		}
+
+		class Listener
+		{
+			// TODO
+		};
 	}
 
 	class EventSystem final : public EngineSystem
