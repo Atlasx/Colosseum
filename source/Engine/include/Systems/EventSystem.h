@@ -53,7 +53,7 @@ namespace CE
 	template <typename T>
 	concept IsEvent = std::is_base_of_v<Event, T>;
 
-	struct TestEvent : public Event
+	struct TestEvent : Event
 	{
 		int someData;
 		float moreData;
