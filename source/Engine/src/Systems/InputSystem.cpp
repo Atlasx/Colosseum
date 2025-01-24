@@ -312,9 +312,10 @@ namespace CE
 				{	
 					std::string actionName = action.GetName();
 					ImGui::PushID(handle.GetIndex());
-					ImGui::BeginChild("action", ImVec2(ImGui::GetContentRegionAvail().x, 70.f), true);
+					ImGui::BeginChild("action", ImVec2(ImGui::GetContentRegionAvail().x, 90.f), true);
 
 					const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
+					ImGui::Text("Name: %s", actionName.c_str());
 					ImGui::Text("Action: 0x%X", handle);
 					ImGui::Text("Key Binding: %s", bindingName);
 					if (ImGui::Button("Fire"))

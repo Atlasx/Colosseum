@@ -42,12 +42,13 @@ namespace CE
 
 		PostEvent(testA);
 
+		// Register a lambda to post an event on input action
 		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
 		IS->RegisterAction("Event System Hook", KeyType::P, [this]() {
 			TestEvent inputActionEventTest;
 			inputActionEventTest.moreData = 5;
 			this->PostEvent(inputActionEventTest);
-			});
+		});
 	}
 
 	void EventSystem::OnTestEvent(TestEvent e)
