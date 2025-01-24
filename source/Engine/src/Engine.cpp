@@ -165,6 +165,8 @@ namespace CE
 					IS->RegisterAction("Random Action", randBinding, randBindingLambda);
 				}, KeyState::PRESSED, KeyState::RELEASED);
 		}
+
+		GetSystem<EventSystem>()->TestEventSystem();
 	}
 #endif
 

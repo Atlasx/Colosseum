@@ -64,10 +64,7 @@ namespace CE
 	class Listener
 	{
 	public:
-		void Setup(std::function<void(EType)> callable)
-		{
-			m_callable = callable;
-		}
+		Listener(std::function<void(EType)> callable) : m_callable(callable) {}
 
 		void Fire(EType e)
 		{
@@ -104,10 +101,9 @@ namespace CE
 		}
 
 		template <IsEvent EType>
-		void RegisterListener(std::function<void(EType)> callback)
+		void RegisterGlobalListener(std::function<void(EType)> callback)
 		{
-			auto eventListener = new Listener<EType>();
-			eventListener->Setup(std::move(callback));
+			auto eventListener = new Listener<EType>(std::move(callback));
 
 			const std::type_index eventIndex = typeid(EType);
 			if (m_listenerStorage.find(eventIndex) != m_listenerStorage.end())
@@ -120,13 +116,27 @@ namespace CE
 			}
 		}
 
+		template <IsEvent EType, typename Instance>
+		void RegisterGlobalListener(Instance* instance, void (Instance::*memberFunc)(EType))
+		{
+			RegisterGlobalListener<EType>([instance, memberFunc](EType e)
+				{
+					// Need to ensure our instance hasn't be destroyed
+					if (instance != nullptr && memberFunc != nullptr)
+					{
+						(instance->*memberFunc)(e);
+					}
+				});
+		}
+
 		std::unordered_map<std::type_index, std::vector<void*>> m_listenerStorage;
 
 		void ProcessEvents();
-		void OnTestEvent(const Event& e);
+		void TestEventSystem();
 
-		// More friendship to allow Engine to access protected functions on derived class pointers
-		friend class Engine;
+	private:
+		void OnTestEvent(TestEvent e);
+
 		
 	public:
 		/* EngineSystem Interface */
@@ -140,5 +150,8 @@ namespace CE
 
 		virtual void Startup() override;
 		virtual void Shutdown() override;
+		
+		// More friendship to allow Engine to access protected functions on derived class pointers
+		friend class Engine;
 	};
 }

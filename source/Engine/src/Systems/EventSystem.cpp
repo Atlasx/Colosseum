@@ -1,44 +1,13 @@
 #include "Systems/EventSystem.h"
 
+#include "Engine.h"
+#include "Systems/InputSystem.h"
+
 namespace CE
 {
 	void EventSystem::Startup()
 	{
 
-		TestEvent testA;
-		testA.someData = 5;
-
-		RegisterListener<TestEvent>([](TestEvent e) {
-			LOG(EVENTS, "Listener works!");
-		});
-
-		PostEvent(testA);
-
-		//AnotherTestEvent testC = wrappedTestA.Get<AnotherTestEvent>();
-
-		/*
-		RegisterListener(EventType::ET_Test, [](const Event& e) {
-			LOG(EVENTS, "Lambda Listener Works!");
-		});
-
-		RegisterMemberListener(EventType::ET_Test, this, &EventSystem::OnTestEvent);
-
-		Event testE;
-		testE.m_type = EventType::ET_Test;
-		FireEvent(testE);
-
-		FireEvent(testE);
-
-		Event testA;
-		testA.m_type = EventType::ET_EventA;
-		FireEvent(testA);
-
-		RegisterListener(EventType::ET_EventA, [](const Event& e) {
-			LOG(EVENTS, "EventA Listener Works!");
-			});
-
-		FireEvent(testA);
-		*/
 	}
 
 	void EventSystem::Shutdown()
@@ -60,7 +29,28 @@ namespace CE
 		*/
 	}
 
-	void EventSystem::OnTestEvent(const Event& e)
+	void EventSystem::TestEventSystem()
+	{
+		TestEvent testA;
+		testA.someData = 5;
+
+		RegisterGlobalListener<TestEvent>([](TestEvent e) {
+			LOG(EVENTS, "Listener works!");
+			});
+
+		RegisterGlobalListener<TestEvent, EventSystem>(this, &EventSystem::OnTestEvent);
+
+		PostEvent(testA);
+
+		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
+		IS->RegisterAction("Event System Hook", KeyType::P, [this]() {
+			TestEvent inputActionEventTest;
+			inputActionEventTest.moreData = 5;
+			this->PostEvent(inputActionEventTest);
+			});
+	}
+
+	void EventSystem::OnTestEvent(TestEvent e)
 	{
 		LOG(EVENTS, "Member Listener Works!");
 	}
