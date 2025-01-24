@@ -33,6 +33,7 @@
 #include <vector>
 #include <any>
 #include <string>
+#include <queue>
 #include <chrono>
 #include <functional>
 #include <type_traits>
@@ -56,17 +57,18 @@ namespace CE
 	{
 		int someData;
 		float moreData;
+		std::string someString;
 
-		TestEvent() : someData(10), moreData(2.f) {}
+		TestEvent() : someData(10), moreData(2.f), someString("Test") {}
 	};
 
 	template <IsEvent EType>
 	class Listener
 	{
 	public:
-		Listener(std::function<void(EType)> callable) : m_callable(callable) {}
+		Listener(std::function<void(const EType&)> callable) : m_callable(callable) {}
 
-		void Fire(EType e)
+		void Fire(const EType& e)
 		{
 			if (m_callable)
 			{
@@ -74,69 +76,132 @@ namespace CE
 			}
 		}
 
-		std::function<void(EType)> m_callable;
+		std::function<void(const EType& )> m_callable;
+	};
+
+	class IEventQueue
+	{
+	public:
+		virtual void Process() = 0;
+	};
+
+	template <IsEvent EType>
+	class EventQueue : public IEventQueue
+	{
+	public:
+
+		void PostEvent(EType event)
+		{
+			// Copy event into queue
+			m_queue.push(std::move(event));
+		}
+
+		void RegisterGlobalListener(std::function<void(const EType&)> callback)
+		{
+			// Create listener, return handle?
+			m_listeners.emplace_back(Listener<EType>(callback));
+		}
+
+		template <typename Instance>
+		void RegisterGlobalListener(Instance* instance, void (Instance::*memberFunc)(const EType&))
+		{
+			auto callback = [instance, memberFunc](const EType& event) {
+				(instance->*memberFunc)(event);
+				};
+			RegisterGlobalListener(callback);
+		}
+
+		void Process() override
+		{
+			while (!m_queue.empty())
+			{
+				auto top = m_queue.front();
+				m_queue.pop();
+
+				for (auto listener : m_listeners)
+				{
+					listener.Fire(top);
+				}
+			}
+		}
+
+	private:
+		std::queue<EType> m_queue;
+		std::vector<Listener<EType>> m_listeners;
 	};
 
 	class EventSystem final : public EngineSystem
 	{
 	public:
 		
-		template <IsEvent EType>
-		void PostEvent(EType event)
+		template <typename EType>
+		void AddQueue()
 		{
-			// Copy event to local storage
-			const std::type_index eventIndex = typeid(EType);
-			auto listeners = m_listenerStorage[eventIndex];
-			if (listeners.size() > 0)
-			{
-				for (auto listener : listeners)
-				{
-					auto l = static_cast<Listener<EType>*>(listener);
-					if (l != nullptr)
-					{
-						l->Fire(event);
-					}
-				}
-			}
+			auto typeIndex = std::type_index(typeid(EType));
+			m_queues[typeIndex] = new EventQueue<EType>();
 		}
 
-		template <IsEvent EType>
-		void RegisterGlobalListener(std::function<void(EType)> callback)
+		template <typename EType>
+		EventQueue<EType>* GetQueue()
 		{
-			auto eventListener = new Listener<EType>(std::move(callback));
-
-			const std::type_index eventIndex = typeid(EType);
-			if (m_listenerStorage.find(eventIndex) != m_listenerStorage.end())
+			auto typeIndex = std::type_index(typeid(EType));
+			auto it = m_queues.find(typeIndex);
+			if (it != m_queues.end())
 			{
-				m_listenerStorage[eventIndex].emplace_back(eventListener);
+				return static_cast<EventQueue<EType>*>(it->second);
+			}
+			return nullptr;
+		}
+
+		template <typename EType>
+		void PostEvent(const EType& event)
+		{
+			auto queue = GetQueue<EType>();
+			if (queue)
+			{
+				queue->PostEvent(event);
 			}
 			else
 			{
-				m_listenerStorage[eventIndex].emplace_back(eventListener);
+				throw std::runtime_error("No queue found for this event type.");
 			}
 		}
 
-		template <IsEvent EType, typename Instance>
-		void RegisterGlobalListener(Instance* instance, void (Instance::*memberFunc)(EType))
+		template <typename EType>
+		void RegisterGlobalListener(std::function<void(const EType&)> callback)
 		{
-			RegisterGlobalListener<EType>([instance, memberFunc](EType e)
-				{
-					// Need to ensure our instance hasn't be destroyed
-					if (instance != nullptr && memberFunc != nullptr)
-					{
-						(instance->*memberFunc)(e);
-					}
-				});
+			auto queue = GetQueue<EType>();
+			if (queue)
+			{
+				queue->RegisterGlobalListener(callback);
+			}
+			else
+			{
+				throw std::runtime_error("No queue found for this event type.");
+			}
 		}
 
-		std::unordered_map<std::type_index, std::vector<void*>> m_listenerStorage;
+		template <typename EType, typename Instance>
+		void RegisterGlobalListener(Instance* instance, void (Instance::* memberFunc)(const EType&))
+		{
+			auto queue = GetQueue<EType>();
+			if (queue)
+			{
+				queue->RegisterGlobalListener(instance, memberFunc);
+			}
+			else
+			{
+				throw std::runtime_error("No queue found for this event type.");
+			}
+		}
 
 		void ProcessEvents();
 		void TestEventSystem();
 
 	private:
-		void OnTestEvent(TestEvent e);
+		void OnTestEvent(const TestEvent& e);
 
+		std::unordered_map<std::type_index, IEventQueue*> m_queues;
 		
 	public:
 		/* EngineSystem Interface */

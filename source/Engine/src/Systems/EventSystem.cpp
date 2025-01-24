@@ -17,29 +17,36 @@ namespace CE
 
 	void EventSystem::ProcessEvents()
 	{
-		/*
-		for (auto& e : m_eventQueue)
+		for (auto& [typeIndex, queue] : m_queues)
 		{
-			for (auto& listener : m_listeners)
-			{
-				listener(e);  // Call all registered listeners
-			}
+			queue->Process();
 		}
-		m_eventQueue.clear();
-		*/
 	}
 
 	void EventSystem::TestEventSystem()
 	{
+		AddQueue<TestEvent>();
+
 		TestEvent testA;
 		testA.someData = 5;
+		testA.someString = "Test A";
+
+		TestEvent testB;
+		testB.someString = "Test B";
+
+		TestEvent testC;
+		testC.someString = "Test C";
 
 		RegisterGlobalListener<TestEvent>([](TestEvent e) {
-			LOG(EVENTS, "Listener works!");
+			LOG(EVENTS, "Listener works! {}", e.someString);
 			});
 
 		RegisterGlobalListener<TestEvent, EventSystem>(this, &EventSystem::OnTestEvent);
 
+		PostEvent(testA);
+		PostEvent(testB);
+		PostEvent(testC);
+		PostEvent(testB);
 		PostEvent(testA);
 
 		// Register a lambda to post an event on input action
@@ -47,12 +54,13 @@ namespace CE
 		IS->RegisterAction("Event System Hook", KeyType::P, [this]() {
 			TestEvent inputActionEventTest;
 			inputActionEventTest.moreData = 5;
-			this->PostEvent(inputActionEventTest);
+			inputActionEventTest.someString = "Input Hook";
+			PostEvent(inputActionEventTest);
 		});
 	}
 
-	void EventSystem::OnTestEvent(TestEvent e)
+	void EventSystem::OnTestEvent(const TestEvent& e)
 	{
-		LOG(EVENTS, "Member Listener Works!");
+		LOG(EVENTS, "Member Listener Works! {}", e.someString);
 	}
 }
