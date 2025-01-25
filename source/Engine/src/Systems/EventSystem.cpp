@@ -7,12 +7,15 @@ namespace CE
 {
 	void EventSystem::Startup()
 	{
-
+		AddQueue<GameplayEvent>();
 	}
 
 	void EventSystem::Shutdown()
 	{
-
+		for (auto [index, queue] : m_queues)
+		{
+			delete queue;
+		}
 	}
 
 	void EventSystem::ProcessEvents()

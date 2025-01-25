@@ -14,17 +14,6 @@ namespace CE
 {
 	LogSystem* g_log = nullptr;
 
-	void DebugBreakOnError()
-	{
-#if defined(_MSC_VER)
-		__debugbreak();
-#elif defined(__GNUC__) || defined(__clang__)
-		std::raise(SIGTRAP);
-#else
-		std::abort(); // Fallback if platform doesn't support debug break
-#endif
-	}
-
 	void LogSystem::LogImpl(LogLevel level, LogChannel channel, std::string_view msg)
 	{
 		std::string message;
@@ -77,11 +66,6 @@ namespace CE
 
 			LogElement elem(level, channel, message);
 			m_log.push_back(elem);
-		}
-
-		if (m_bBreakOnErrorLog && level == LogLevel::ERROR)
-		{
-			DebugBreakOnError();
 		}
 	}
 
@@ -201,7 +185,7 @@ namespace CE
 			ImGui::Checkbox("Channel Tag", &m_bShowChannel);
 			ImGui::Checkbox("Timestamp Tag", &m_bShowTimestamp);
 			ImGui::SeparatorText("Other");
-			ImGui::Checkbox("Debug Break", &m_bBreakOnErrorLog);
+			ImGui::Checkbox("Debug Break", &CE::Globals::bDebugBreakOnError);
 			ImGui::EndCombo();
 		}
 

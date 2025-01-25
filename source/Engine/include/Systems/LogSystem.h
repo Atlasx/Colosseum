@@ -1,9 +1,22 @@
 #pragma once
 
 #include "Systems/EngineSystem.h"
+#include "Globals.h"
 
 #include <format>
 #include <cassert>
+
+#define DEBUG_BREAK()			\
+	if (CE::Globals::bDebugBreakOnError) {	\
+		PLATFORM_BREAK();		\
+	}
+
+#if defined(_WIN32) || defined(_WIN64)
+	#include <intrin.h>
+	#define PLATFORM_BREAK() __debugbreak()
+#else
+	#define PLATFORM_BREAK() ((void)0)
+#endif
 
 #define LOG(systemName, message, ...) \
 	CE::LogSystem::Log(CE::LogLevel::INFO, CE::LogChannel::systemName, message, ##__VA_ARGS__);
@@ -14,12 +27,16 @@
 #define LOG_WARN(systemName, message, ...) \
 	CE::LogSystem::LogWarning(CE::LogChannel::systemName, message, ##__VA_ARGS__);
 
-#define LOG_ERROR(systemName, message, ...) \
-	CE::LogSystem::LogError(CE::LogChannel::systemName, message, ##__VA_ARGS__);
+#define LOG_ERROR(systemName, message, ...)						\
+    do {														\
+        CE::LogSystem::LogError(CE::LogChannel::systemName,		\
+			message, ##__VA_ARGS__);							\
+        DEBUG_BREAK();											\
+    } while (0)
+
 
 namespace CE
 {
-
 	enum LogLevel : std::uint8_t
 	{
 		INFO,
@@ -83,8 +100,6 @@ namespace CE
 
 		bool m_bLogToCout = true;
 		bool m_bLogToLog = true;
-
-		bool m_bBreakOnErrorLog = false;
 
 	private:
 

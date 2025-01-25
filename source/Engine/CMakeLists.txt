@@ -3,6 +3,7 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(SOURCES
 	src/Engine.cpp
+	src/Globals.cpp
 
 	# Editor
 	src/GUI/Editor.cpp
@@ -19,6 +20,7 @@ set(SOURCES
 
 set(INCLUDES
 	include/Engine.h
+	include/Globals.h
 
 	# Systems
 	include/Systems/EngineSystem.h

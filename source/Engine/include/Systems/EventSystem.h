@@ -62,6 +62,11 @@ namespace CE
 		TestEvent() : someData(10), moreData(2.f), someString("Test") {}
 	};
 
+	struct GameplayEvent : Event
+	{
+		int message;
+	};
+
 	template <IsEvent EType>
 	class Listener
 	{
@@ -125,6 +130,9 @@ namespace CE
 			}
 		}
 
+		EventQueue() : m_queue(), m_listeners() {}
+		~EventQueue() {}
+
 	private:
 		std::queue<EType> m_queue;
 		std::vector<Listener<EType>> m_listeners;
@@ -135,10 +143,17 @@ namespace CE
 	public:
 		
 		template <typename EType>
-		void AddQueue()
+		EventQueue<EType>* AddQueue()
 		{
 			auto typeIndex = std::type_index(typeid(EType));
-			m_queues[typeIndex] = new EventQueue<EType>();
+			
+			EventQueue<EType>* queue = GetQueue<EType>();
+			if (queue == nullptr)
+			{
+				queue = new EventQueue<EType>();
+				m_queues[typeIndex] = queue;
+			}
+			return queue;
 		}
 
 		template <typename EType>
@@ -150,6 +165,8 @@ namespace CE
 			{
 				return static_cast<EventQueue<EType>*>(it->second);
 			}
+
+			LOG_WARN(EVENTS, "Failed to GetQueue of type {}", typeid(EType).name());
 			return nullptr;
 		}
 
@@ -163,7 +180,10 @@ namespace CE
 			}
 			else
 			{
+				LOG_ERROR(EVENTS, "Failed to post event! Could not find Queue type.");
+#if CDEBUG
 				throw std::runtime_error("No queue found for this event type.");
+#endif
 			}
 		}
 
@@ -177,7 +197,10 @@ namespace CE
 			}
 			else
 			{
+				LOG_ERROR(EVENTS, "Failed to Register Listener! Could not find Queue type.");
+#if CDEBUG
 				throw std::runtime_error("No queue found for this event type.");
+#endif
 			}
 		}
 
@@ -191,7 +214,10 @@ namespace CE
 			}
 			else
 			{
+				LOG_ERROR(EVENTS, "Failed to Register Listener! Could not find Queue type.");
+#if CDEBUG
 				throw std::runtime_error("No queue found for this event type.");
+#endif
 			}
 		}
 

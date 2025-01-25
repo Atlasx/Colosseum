@@ -14,6 +14,8 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
+#include "Globals.h"
+
 #include "Systems/EngineSystem.h"
 
 #include "GUI/Editor.h"
