@@ -2,10 +2,7 @@
 
 #include "Systems/EngineSystem.h"
 
-#include <functional>
-#include <filesystem>
-#include <queue>
-#include <type_traits>
+#include "stdlibincl.h"
 
 namespace CE
 {

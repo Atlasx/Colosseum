@@ -1,6 +1,5 @@
-
 #include "Systems/ResourceSystem.h"
-#include "Systems/InputSystem.h"
+
 #include "Systems/LogSystem.h"
 
 namespace CE
@@ -51,8 +50,7 @@ namespace CE
 #ifdef CDEBUG
 	void ResourceSystem::RunTests()
 	{
-		/*auto ISPointer = Engine::GetSystem<InputSystem>();
-		ISPointer->Name();*/
+		
 	}
 #endif
 }

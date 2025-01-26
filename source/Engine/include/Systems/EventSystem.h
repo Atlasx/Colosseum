@@ -32,8 +32,8 @@
 
 #include "Systems/EngineSystem.h"
 #include "Systems/LogSystem.h"
-#include "ObjectPool.h"
 
+#include "ObjectPool.h"
 #include "stdlibincl.h"
 
 namespace CE
