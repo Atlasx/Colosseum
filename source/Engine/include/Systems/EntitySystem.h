@@ -5,7 +5,7 @@
 namespace CE
 {
 
-	class ObjectSystem final : public EngineSystem
+	class EntitySystem final : public EngineSystem
 	{
 	public:
 
@@ -14,10 +14,9 @@ namespace CE
 
 		/* EngineSystem Interface */
 	public:
-		virtual std::string Name() const override { return "Object System"; }
-		virtual void DrawGUI() override;
+		virtual std::string Name() const override { return "Entity System"; }
 
-		ObjectSystem(Engine* engine) : EngineSystem(engine) {};
+		EntitySystem(Engine* engine) : EngineSystem(engine) {};
 
 	private:
 		friend class Engine;

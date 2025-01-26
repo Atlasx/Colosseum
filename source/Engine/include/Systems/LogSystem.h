@@ -2,9 +2,9 @@
 
 #include "Systems/EngineSystem.h"
 #include "Globals.h"
+#include "GUI/DebugGUISubscriber.h"
 
-#include <format>
-#include <cassert>
+#include "stdlibincl.h"
 
 #define DEBUG_BREAK()			\
 	if (CE::Globals::bDebugBreakOnError) {	\
@@ -54,6 +54,7 @@ namespace CE
 		EVENTS,
 		RESOURCES,
 		GAMEPLAY,
+		ENTITY,
 		MAX
 	};
 
@@ -61,10 +62,26 @@ namespace CE
 	class LogSystem;
 	extern LogSystem* g_log;
 	
-	class LogSystem final : public EngineSystem
+	class LogSystem final : public EngineSystem, private IDebugGUISubscriber
 	{
+		/* EngineSystem Interface */
 	public:
+		virtual std::string Name() const override { return "Log System"; }
 
+		LogSystem(Engine* engine) :
+			EngineSystem(engine),
+			m_log() 
+		{
+			m_showDebug = true;
+		};
+
+	private:
+		friend class Engine;
+		virtual void Startup() override;
+		virtual void Shutdown() override;
+
+		/* Log System API */
+	public:
 		template<typename... Args>
 		static void Log(LogLevel level, LogChannel channel, std::string_view msg, Args&&... msgArgs)
 		{
@@ -118,22 +135,13 @@ namespace CE
 
 		void LogImpl(LogLevel level, LogChannel channel, std::string_view message);
 
-		/* EngineSystem Interface */
-	public:
-		virtual std::string Name() const override { return "Log System"; }
-		virtual void DrawGUI() override;
+		/* IDebugGUISubscriber Interface */
+		virtual void OnDrawGUI() override;
+		virtual std::string_view GetDebugMenuName() { return "Logging"; }
+		virtual bool IsDrawEnabled() override { return m_showDebug; }
+		virtual void SetDrawEnabled(bool bDraw) override { m_showDebug = bDraw; }
 
-		LogSystem(Engine* engine) :
-			EngineSystem(engine),
-			m_log() 
-		{
-			m_showDebug = true;
-		};
 
-	private:
-		friend class Engine;
-		virtual void Startup() override;
-		virtual void Shutdown() override;
 	};
 
 	constexpr const char* GetLogLevelName(LogLevel lvl)
@@ -158,6 +166,7 @@ namespace CE
 		case LogChannel::EVENTS: return "Events";
 		case LogChannel::RESOURCES: return "Resources";
 		case LogChannel::GAMEPLAY: return "Gameplay";
+		case LogChannel::ENTITY: return "Entity";
 		default: return "";
 		}
 	}

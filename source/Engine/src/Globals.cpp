@@ -2,5 +2,5 @@
 
 namespace CE::Globals
 {
-	bool bDebugBreakOnError = true;
+	bool bDebugBreakOnError = false;
 }

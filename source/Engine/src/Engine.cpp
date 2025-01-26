@@ -4,10 +4,9 @@
 #include "Systems/InputSystem.h"
 #include "Systems/EventSystem.h"
 #include "Systems/RenderSystem.h"
-#include "Systems/ObjectSystem.h"
+#include "Systems/EntitySystem.h"
 #include "Systems/LogSystem.h"
-
-#include <random>
+#include "GUI/Editor.h"
 
 namespace CE
 {
@@ -38,7 +37,7 @@ namespace CE
 		}
 
 		AddSystems();
-		InitSystems();
+		SystemInitialize();
 
 		PostSystemInitialize();
 
@@ -103,11 +102,13 @@ namespace CE
 		m_systems[typeid(InputSystem)] = std::make_unique<InputSystem>(this);
 		m_systems[typeid(EventSystem)] = std::make_unique<EventSystem>(this);
 		m_systems[typeid(RenderSystem)] = std::make_unique<RenderSystem>(this);
-		m_systems[typeid(ObjectSystem)] = std::make_unique<ObjectSystem>(this);
+		m_systems[typeid(EntitySystem)] = std::make_unique<EntitySystem>(this);
 		m_systems[typeid(LogSystem)] = std::make_unique<LogSystem>(this);
+
+		m_systems[typeid(DebugSystem)] = std::make_unique<DebugSystem>(this);
 	}
 
-	void Engine::InitSystems()
+	void Engine::SystemInitialize()
 	{
 		// Manual Order
 		GetSystem<LogSystem>()->Startup();
@@ -120,7 +121,9 @@ namespace CE
 
 		GetSystem<InputSystem>()->Startup();
 
-		GetSystem<ObjectSystem>()->Startup();
+		GetSystem<EntitySystem>()->Startup();
+
+		GetSystem<DebugSystem>()->Startup();
 	}
 
 #ifdef CDEBUG
@@ -191,45 +194,27 @@ namespace CE
 	
 	void Engine::Render()
 	{
-		// Just kind of throwing all rendering in here for now
-		// needs the window system?
-		// put this on a new thread?
-		// cache RS pointer
-
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
 		GetSystem<RenderSystem>()->Render();
+
+		/*
+		// BEGIN FRAME
+		NotifyOnBeginFrame();
+		ImGuiBeginFrame();
+
+
+		// DO FRAME
+		NotifyOnDoFrame();
+		DrawGUI();
+
+
+		// END FRAME
+		NotifyOnEndFrame();
+		ImGuiEndFrame();
 		
-		// Main Menu
-		if (ImGui::BeginMainMenuBar())
-		{
-			if (ImGui::BeginMenu("Debug"))
-			{
-				for (auto [key, system] : m_systems)
-				{
-					ImGui::MenuItem(system->Name().c_str(), NULL, &system->m_showDebug);
-				}
-				ImGui::EndMenu();
-			}
 
-			ImGui::EndMainMenuBar();
-		}
-		
-		// System Debug GUI
-		for (auto [key, system] : m_systems)
-		{
-			system->DrawGUI();
-		}
-
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+		// NOTHING ELSE PAST HERE
 		glfwSwapBuffers(m_window);
+		*/
 	}
 
 	void Engine::ProcessInput()
@@ -241,7 +226,9 @@ namespace CE
 	void Engine::ShutdownSystems()
 	{
 		// Manual order once again
-		GetSystem<ObjectSystem>()->Shutdown();
+		GetSystem<DebugSystem>()->Shutdown();
+
+		GetSystem<EntitySystem>()->Shutdown();
 		
 		GetSystem<EventSystem>()->Shutdown();
 		GetSystem<InputSystem>()->Shutdown();

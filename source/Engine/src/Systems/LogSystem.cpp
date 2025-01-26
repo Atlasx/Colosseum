@@ -1,14 +1,10 @@
 #include "Systems/LogSystem.h"
 
 #include "Systems/InputSystem.h"
+#include "GUI/Editor.h"
+#include "Engine.h"
 
 #include "imgui.h"
-#include <iostream>
-#include <format>
-#include <string>
-#include <chrono>
-#include <sstream>
-#include <bitset>
 
 namespace CE
 {
@@ -74,6 +70,12 @@ namespace CE
 		g_log = this;
 
 		LOG(LOGGER, "Startup");
+
+		std::shared_ptr<DebugSystem> DS = m_engine->GetSystem<DebugSystem>();
+		if (DS)
+		{
+			DS->Subscribe(this);
+		}
 	}
 
 	void LogSystem::Shutdown()
@@ -132,7 +134,7 @@ namespace CE
 		}
 	}
 
-	void LogSystem::DrawGUI()
+	void LogSystem::OnDrawGUI()
 	{
 		static bool s_bLogInfo = true;
 		static bool s_bLogWarning = true;

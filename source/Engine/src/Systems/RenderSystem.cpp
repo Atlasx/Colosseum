@@ -1,17 +1,36 @@
 #include "Systems/RenderSystem.h"
 
-#include <iostream>
-
 #include "Engine.h"
 #include "Systems/LogSystem.h"
 
 namespace CE
 {
-
 	void RenderSystem::Render()
 	{
-		// Render everything in game...
-		//ImGui::ShowDemoWindow();
+		BeginFrame();
+		DoFrame();
+		EndFrame();
+	}
+
+	void RenderSystem::BeginFrame()
+	{
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		ImGuiBeginFrame();
+		NotifyOnBeginFrame();
+	}
+
+	void RenderSystem::DoFrame()
+	{
+		NotifyOnDoFrame();
+	}
+
+	void RenderSystem::EndFrame()
+	{
+		NotifyOnEndFrame();
+		ImGuiEndFrame();
+
+		glfwSwapBuffers(m_window);
 	}
 
 	void RenderSystem::Startup()
@@ -27,5 +46,63 @@ namespace CE
 	{
 		LOG(RENDER, "Shutdown");
 		// Most of this moved back up to engine
+	}
+
+	void RenderSystem::Subscribe(IFrameEventSubscriber* sub)
+	{
+		m_frameSubscribers.push_back(sub);
+	}
+
+	void RenderSystem::NotifyOnBeginFrame()
+	{
+		for (auto sub : m_frameSubscribers)
+		{
+			if (sub)
+			{
+				sub->OnBeginFrame();
+			}
+		}
+	}
+
+	void RenderSystem::NotifyOnDoFrame()
+	{
+		for (auto sub : m_frameSubscribers)
+		{
+			if (sub)
+			{
+				sub->OnDoFrame();
+			}
+		}
+	}
+
+	void RenderSystem::NotifyOnEndFrame()
+	{
+		for (auto sub : m_frameSubscribers)
+		{
+			if (sub)
+			{
+				sub->OnEndFrame();
+			}
+		}
+	}
+
+	void RenderSystem::CleanFrameSubscribers()
+	{
+		m_frameSubscribers.erase(std::remove_if(m_frameSubscribers.begin(), m_frameSubscribers.end(), [](IFrameEventSubscriber* s) {
+			return s == nullptr;
+			}));
+	}
+
+	void RenderSystem::ImGuiBeginFrame()
+	{
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+	}
+
+	void RenderSystem::ImGuiEndFrame()
+	{
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
 }

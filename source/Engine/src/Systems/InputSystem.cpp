@@ -1,15 +1,14 @@
 #include "Systems/InputSystem.h"
 
 #include "Engine.h"
-
-#include <iostream>
-#include <algorithm>
+#include "Systems/LogSystem.h"
+#include "GUI/Editor.h"
 
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 
-#include "Systems/LogSystem.h"
+#include "stdlibincl.h"
 
 namespace CE
 {
@@ -31,6 +30,13 @@ namespace CE
 		glfwSetMouseButtonCallback(m_window, &GOnMouseButton);
 		glfwSetScrollCallback(m_window, &GOnScroll);
 		glfwSetWindowCloseCallback(m_window, &GOnWindowClose);
+
+		// Register debug GUI
+		std::shared_ptr<DebugSystem> DS = m_engine->GetSystem<DebugSystem>();
+		if (DS)
+		{
+			DS->Subscribe(this);
+		}
 	}
 
 	void InputSystem::Shutdown()
@@ -296,7 +302,8 @@ namespace CE
 		ImGui::PopID();
 	}
 
-	void InputSystem::DrawGUI()
+	
+	void InputSystem::OnDrawGUI()
 	{
 		if (m_showDebug)
 		{
@@ -366,6 +373,7 @@ namespace CE
 			ImGui::End();
 		}
 	}
+	
 
 	namespace InputUtilities
 	{

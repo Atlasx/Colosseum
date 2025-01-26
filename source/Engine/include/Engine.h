@@ -1,11 +1,6 @@
 #pragma once
 
-#include <iostream>
-#include <unordered_map>
-#include <memory>
-#include <typeindex>
-#include <typeinfo>
-#include <cassert>
+#include "Systems/EngineSystem.h"
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
@@ -14,16 +9,21 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
-#include "Globals.h"
-
-#include "Systems/EngineSystem.h"
-
-#include "GUI/Editor.h"
+#include "stdlibincl.h"
 
 struct GLFWwindow;
 
 namespace CE
 {
+	class ITickEventSubscriber
+	{
+	public:
+		virtual void OnTick() = 0;
+	};
+
+	template <typename T>
+	concept IsSystem = std::is_base_of_v<EngineSystem, T>;
+
 	class Engine
 	{
 	public:
@@ -39,12 +39,13 @@ namespace CE
 
 		void Stop();
 
+
 		//
 		// GetSystem<T>
 		// 
 		// Allows for a "singleton-like" design where anyone can query the engine's systems by type given an engine
 		//
-		template<typename System>
+		template<IsSystem System>
 		std::shared_ptr<System> GetSystem()
 		{
 			if (m_systems.contains(typeid(System)))
@@ -63,7 +64,6 @@ namespace CE
 	private:
 
 		GLFWwindow* m_window;
-		DebugMenu m_debugMenu;
 		
 		// Create necessary glfw window
 		bool Initialize();
@@ -72,7 +72,7 @@ namespace CE
 		void AddSystems();
 
 		// Systems are initialized and ready to use
-		void InitSystems();
+		void SystemInitialize();
 
 #ifdef CDEBUG
 		// Some debug only test code during system development
@@ -91,5 +91,6 @@ namespace CE
 		void Update();
 		void Render();
 		void ProcessInput();
+
 	};
 }

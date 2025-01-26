@@ -3,14 +3,11 @@
 #include "Systems/EngineSystem.h"
 
 #include "ObjectPool.h"
+#include "GUI/DebugGUISubscriber.h"
 
 #include "imgui.h"
 
-#include <cstdint>
-#include <iostream>
-#include <functional>
-#include <queue>
-#include <iterator>
+#include "stdlibincl.h"
 
 class GLFWwindow;
 
@@ -147,6 +144,8 @@ namespace CE
 	struct KeyboardState
 	{
 	public:
+		KeyboardState() : keys() {}
+
 		KeyState GetKey(const KeyType key) const
 		{
 			return keys[static_cast<std::underlying_type_t<KeyType>>(key)];
@@ -158,14 +157,14 @@ namespace CE
 		}
 
 	private:
-		constexpr static unsigned int KEYBOARD_MAX = static_cast<unsigned int>(KeyType::KEYS_MAX) - 1;
+		constexpr static std::size_t KEYBOARD_MAX = static_cast<std::size_t>(KeyType::KEYS_MAX) - 1;
 		
 		inline void SetKey(const KeyType key, const KeyState state)
 		{
 			keys[static_cast<std::underlying_type_t<KeyType>>(key)] = state;
 		}
 
-		KeyState keys[KEYBOARD_MAX] = {};
+		KeyState keys[KEYBOARD_MAX];
 
 		friend class InputSystem;
 	};
@@ -173,20 +172,22 @@ namespace CE
 	struct MouseState
 	{
 	public:
+		MouseState() : buttons() {}
+
 		KeyState GetButton(const MouseButtonType button) const
 		{
 			return buttons[static_cast<std::underlying_type_t<MouseButtonType>>(button)];
 		}
 
 	private:
-		constexpr static unsigned int MOUSE_BUTTON_MAX = static_cast<unsigned int>(MouseButtonType::BUTTONS_MAX) - 1;
-
-		KeyState buttons[MOUSE_BUTTON_MAX] = {};
+		constexpr static std::size_t MOUSE_BUTTON_MAX = static_cast<std::size_t>(MouseButtonType::BUTTONS_MAX) - 1;
 
 		inline void SetButton(const MouseButtonType button, const KeyState state)
 		{
 			buttons[static_cast<std::underlying_type_t<MouseButtonType>>(button)] = state;
 		}
+
+		KeyState buttons[MOUSE_BUTTON_MAX];
 
 		friend class InputSystem;
 	};
@@ -236,6 +237,13 @@ namespace CE
 
 	struct InputKnowledge
 	{
+		InputKnowledge() :
+			previousBoardState(),
+			currentBoardState(),
+			previousMouseState(),
+			currentMouseState(),
+			currentTime(0) {}
+
 		KeyboardState previousBoardState;
 		KeyboardState currentBoardState;
 
@@ -250,14 +258,6 @@ namespace CE
 
 		unsigned long long currentTime;
 		bool bNeedsUpdate = true;
-
-		InputKnowledge() :
-			previousBoardState(),
-			currentBoardState(),
-			previousMouseState(),
-			currentMouseState(),
-			currentTime(0)
-		{}
 	};
 
 	class IInputActionBase {
@@ -406,12 +406,34 @@ namespace CE
 	class InputSystem;
 	extern InputSystem* g_input;
 
-	class InputSystem final : public EngineSystem
-	{
-		
+	class InputSystem final : public EngineSystem, IDebugGUISubscriber
+	{		
 		using InputActionHandle = GenericHandle;
-		
+	
+		/* CEngineSystem Interface */
+	public:
+		InputSystem(Engine* engine) : EngineSystem(engine)
+		{
+			m_showDebug = true;
+		};
 
+		virtual std::string Name() const override { return "Input System"; }
+
+	protected:
+		virtual void Startup() override;
+		virtual void Shutdown() override;
+		
+		// More friendship to allow Engine to access protected functions on derived class pointers
+		friend class Engine;
+		
+		/* IDebugGUISubscriber Interface */
+	public:
+		virtual void OnDrawGUI() override;
+		virtual std::string_view GetDebugMenuName() override { return "Input"; }
+		virtual bool IsDrawEnabled() override { return m_showDebug; }
+		virtual void SetDrawEnabled(bool b) override { m_showDebug = b; }
+
+		/* Input System API */
 	public:
 		void PollInput();
 		
@@ -461,32 +483,9 @@ namespace CE
 		// Iterates through triggered actions and fires callbacks
 		void ProcessCallbacks();
 
-		// Polymorphic storage option for our actions
-		//std::vector<std::shared_ptr<IInputActionBase>> m_actions;
-		// Queue for processing action input events
-		//std::queue<std::weak_ptr<IInputActionBase>> m_triggeredActions;
-
 		ObjectPool<InputAction, 20> m_actions;
 		std::queue<InputActionHandle> m_triggeredActions;
 
-	public:
-
-		/* CEngineSystem Interface */
-		virtual std::string Name() const override { return "Input System"; }
-		virtual void DrawGUI() override;
-
-		InputSystem(Engine* engine) : EngineSystem(engine)
-		{
-			m_showDebug = true;
-		};
-
-	protected:
-
-		virtual void Startup() override;
-		virtual void Shutdown() override;
-		
-		// More friendship to allow Engine to access protected functions on derived class pointers
-		friend class Engine;
 
 		/* Handle Global Input Processing */
 	private:

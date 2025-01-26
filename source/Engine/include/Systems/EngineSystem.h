@@ -1,7 +1,6 @@
 #pragma once
 
-#include <vector>
-#include <string>
+#include "stdlibincl.h"
 
 namespace CE
 {
@@ -12,7 +11,7 @@ namespace CE
 	public:
 
 		virtual std::string Name() const = 0;
-		virtual void DrawGUI() = 0;
+		//virtual void DrawGUI() = 0;
 
 		bool m_showDebug = false;
 

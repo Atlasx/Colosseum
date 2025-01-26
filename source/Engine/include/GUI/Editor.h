@@ -2,39 +2,47 @@
 
 #include "imgui.h"
 
+#include <vector>
 #include <unordered_map>
 #include <functional>
 
+#include "DebugGUISubscriber.h"
+#include "Systems/EngineSystem.h"
+#include "Systems/RenderSystem.h"
 
 namespace CE
 {
-	class DebugMenu
-	{
-		using DebugItemCallback = std::function<void()>;
 
-		std::string m_menuName;
-		std::vector<std::pair<std::string, DebugItemCallback>> m_items;
+	class DebugSystem : public EngineSystem, public IFrameEventSubscriber
+	{
+		/* EngineSystem Interface */
+	public:
+		virtual std::string Name() const override { return "Debug System"; }
+
+		DebugSystem(Engine* engine) :
+			EngineSystem(engine),
+			m_debugSubscribers()
+		{}
+
+	protected:
+
+		virtual void Startup() override;
+		virtual void Shutdown() override;
+
+		friend class Engine;
 
 	public:
-		DebugMenu() : m_menuName("Debug"), m_items{} {}
 
-		void AddMenuItem(std::string name, DebugItemCallback callback);
-
-		void ShowMenuItems()
-		{
-			ImGui::MenuItem("Test");
-		}
-
+		void Subscribe(IDebugGUISubscriber* sub);
 	private:
-		bool HasMenuItem(std::string name)
-		{
-			for (auto [itemName, callback] : m_items)
-			{
-				if (name == itemName) {
-					return true;
-				}
-			}
-			return false;
-		}
+		std::vector<IDebugGUISubscriber*> m_debugSubscribers;
+
+		/* IFrameEventSubscriber Interface */
+	public:
+		virtual void OnDoFrame() override;
+	private:
+		void DrawMainMenu();
+		void NotifyOnDrawGUI();
+
 	};
 }

@@ -14,12 +14,13 @@ set(SOURCES
 	src/Systems/InputSystem.cpp
 	src/Systems/EventSystem.cpp
 	src/Systems/RenderSystem.cpp
-	src/Systems/ObjectSystem.cpp
+	src/Systems/EntitySystem.cpp
 	src/Systems/LogSystem.cpp
 )
 
 set(INCLUDES
 	include/Engine.h
+	include/stdlibincl.h
 	include/Globals.h
 
 	# Systems
@@ -28,11 +29,12 @@ set(INCLUDES
 	include/Systems/InputSystem.h
 	include/Systems/EventSystem.h
 	include/Systems/RenderSystem.h
-	include/Systems/ObjectSystem.h
+	include/Systems/EntitySystem.h
 	include/Systems/LogSystem.h
 
 	#Editor
 	include/GUI/Editor.h
+	include/GUI/DebugGUISubscriber.h
 )
 
 source_group("Source Files" FILES ${SOURCES})
@@ -54,6 +56,8 @@ target_include_directories(Engine PRIVATE ${CMAKE_SOURCE_DIR}/vendor/imgui)
 target_compile_definitions(Engine PRIVATE HAS_IMGUI)
 
 target_include_directories(Engine PUBLIC ${INCLUDE_DIR})
+
+add_compile_options(/showIncludes)
 
 target_compile_definitions(Engine PRIVATE 
 	$<$<CONFIG:Release>:CRELEASE>

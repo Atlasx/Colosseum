@@ -30,19 +30,11 @@
 
 #pragma once
 
-#include <vector>
-#include <any>
-#include <string>
-#include <queue>
-#include <chrono>
-#include <functional>
-#include <type_traits>
-#include <unordered_map>
-#include <typeindex>
-
 #include "Systems/EngineSystem.h"
 #include "Systems/LogSystem.h"
 #include "ObjectPool.h"
+
+#include "stdlibincl.h"
 
 namespace CE
 {
@@ -55,11 +47,11 @@ namespace CE
 
 	struct TestEvent : Event
 	{
+		TestEvent() : someData(10), moreData(2.f), someString("Test") {}
+
 		int someData;
 		float moreData;
 		std::string someString;
-
-		TestEvent() : someData(10), moreData(2.f), someString("Test") {}
 	};
 
 	struct GameplayEvent : Event
@@ -71,7 +63,8 @@ namespace CE
 	class Listener
 	{
 	public:
-		Listener(std::function<void(const EType&)> callable) : m_callable(callable) {}
+		explicit Listener(std::function<void(const EType&)> callable) : m_callable(callable) {}
+		~Listener() {}
 
 		void Fire(const EType& e)
 		{
@@ -81,7 +74,7 @@ namespace CE
 			}
 		}
 
-		std::function<void(const EType& )> m_callable;
+		std::function<void(const EType&)> m_callable;
 	};
 
 	class IEventQueue
@@ -94,6 +87,8 @@ namespace CE
 	class EventQueue : public IEventQueue
 	{
 	public:
+		EventQueue() : m_queue(), m_listeners() {}
+		~EventQueue() {}
 
 		void PostEvent(EType event)
 		{
@@ -130,8 +125,6 @@ namespace CE
 			}
 		}
 
-		EventQueue() : m_queue(), m_listeners() {}
-		~EventQueue() {}
 
 	private:
 		std::queue<EType> m_queue;
@@ -140,8 +133,21 @@ namespace CE
 
 	class EventSystem final : public EngineSystem
 	{
+		/* EngineSystem Interface */
 	public:
+		EventSystem(Engine* engine) : EngineSystem(engine) {}
+
+		virtual std::string Name() const override { return "Event System"; }
+
+	protected:
+		virtual void Startup() override;
+		virtual void Shutdown() override;
 		
+		// More friendship to allow Engine to access protected functions on derived class pointers
+		friend class Engine;
+		
+		/* Event System API */
+	public:
 		template <typename EType>
 		EventQueue<EType>* AddQueue()
 		{
@@ -229,20 +235,5 @@ namespace CE
 
 		std::unordered_map<std::type_index, IEventQueue*> m_queues;
 		
-	public:
-		/* EngineSystem Interface */
-
-		virtual std::string Name() const override { return "Event System"; }
-		virtual void DrawGUI() override { return; }
-
-		EventSystem(Engine* engine) : EngineSystem(engine) {}
-
-	protected:
-
-		virtual void Startup() override;
-		virtual void Shutdown() override;
-		
-		// More friendship to allow Engine to access protected functions on derived class pointers
-		friend class Engine;
 	};
 }
