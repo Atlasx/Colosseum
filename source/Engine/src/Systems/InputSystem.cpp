@@ -305,69 +305,66 @@ namespace CE
 	
 	void InputSystem::OnDrawGUI()
 	{
-		if (m_showDebug)
+		ImGui::SetNextWindowSize(ImVec2(200.f, 500.f), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(10.f, 30.f), ImGuiCond_Appearing);
+		ImGui::SetNextWindowSizeConstraints(ImVec2(50.f, 50.f), ImVec2(FLT_MAX, FLT_MAX));
+		ImGui::Begin("Input System Debug");
+		if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen ))
 		{
-			ImGui::SetNextWindowSize(ImVec2(200.f, 500.f), ImGuiCond_FirstUseEver);
-			ImGui::SetNextWindowPos(ImVec2(10.f, 30.f), ImGuiCond_Appearing);
-			ImGui::SetNextWindowSizeConstraints(ImVec2(50.f, 50.f), ImVec2(FLT_MAX, FLT_MAX));
-			ImGui::Begin("Input System Debug", &m_showDebug);
-			if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen ))
-			{
-				for (auto& [handle, action] : m_actions)
-				{	
-					std::string actionName = action.GetName();
-					ImGui::PushID(handle.GetIndex());
-					if (ImGui::CollapsingHeader(actionName.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet))
-					{
-						const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
-						ImGui::Text("Action: 0x%X", handle);
-						ImGui::Text("Key Binding: %s", bindingName);
-						if (ImGui::Button("Fire"))
-						{
-							action.Trigger();
-						}
-						ImGui::SameLine();
-						if (ImGui::Button("Remove"))
-						{
-							RemoveAction(handle);
-						}
-					}
-					ImGui::PopID();
-				}
-			}
-
-			if (ImGui::CollapsingHeader("Mouse"))
-			{
-				ImGui::Text("Mouse Input");
-				ImGui::BeginChild("MouseInput", ImVec2(0, 0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
-
-				auto& knowledge = GetKnowledge();
-				for (uint8_t i = 0; i < 8; i++)
+			for (auto& [handle, action] : m_actions)
+			{	
+				std::string actionName = action.GetName();
+				ImGui::PushID(handle.GetIndex());
+				if (ImGui::CollapsingHeader(actionName.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet))
 				{
-					MouseButtonType button = static_cast<MouseButtonType>(i);
-					KeyState state = knowledge.currentMouseState.GetButton(button);
-					ImGui::Text("%s: %s",
-						InputUtilities::GetMouseButtonName(button),
-						InputUtilities::GetKeyStateName(state)
-					);
+					const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
+					ImGui::Text("Action: 0x%X", handle);
+					ImGui::Text("Key Binding: %s", bindingName);
+					if (ImGui::Button("Fire"))
+					{
+						action.Trigger();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Remove"))
+					{
+						RemoveAction(handle);
+					}
 				}
-
-
-				ImGui::EndChild();
+				ImGui::PopID();
 			}
-
-			if (ImGui::CollapsingHeader("Keyboard"))
-			{
-				static bool bShowKeyboard = false;
-				ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
-				if (bShowKeyboard) {
-					ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-					DrawKeyboardState(GetKnowledge().currentBoardState, ImVec2(), ImVec2());
-					ImGui::End();
-				}
-			}
-			ImGui::End();
 		}
+
+		if (ImGui::CollapsingHeader("Mouse"))
+		{
+			ImGui::Text("Mouse Input");
+			ImGui::BeginChild("MouseInput", ImVec2(0, 0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
+
+			auto& knowledge = GetKnowledge();
+			for (uint8_t i = 0; i < 8; i++)
+			{
+				MouseButtonType button = static_cast<MouseButtonType>(i);
+				KeyState state = knowledge.currentMouseState.GetButton(button);
+				ImGui::Text("%s: %s",
+					InputUtilities::GetMouseButtonName(button),
+					InputUtilities::GetKeyStateName(state)
+				);
+			}
+
+
+			ImGui::EndChild();
+		}
+
+		if (ImGui::CollapsingHeader("Keyboard"))
+		{
+			static bool bShowKeyboard = false;
+			ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
+			if (bShowKeyboard) {
+				ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+				DrawKeyboardState(GetKnowledge().currentBoardState, ImVec2(), ImVec2());
+				ImGui::End();
+			}
+		}
+		ImGui::End();
 	}
 	
 

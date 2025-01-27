@@ -143,25 +143,23 @@ namespace CE
 
 	class EventSystem final : public EngineSystem, IDebugGUISubscriber
 	{
-		/* EngineSystem Interface */
 	public:
 		EventSystem(Engine* engine) : EngineSystem(engine) {}
 
+		/* EngineSystem Interface */
+	public:
 		virtual std::string Name() const override { return "Event System"; }
-
 	protected:
 		virtual void Startup() override;
 		virtual void Shutdown() override;
-		
-		// More friendship to allow Engine to access protected functions on derived class pointers
 		friend class Engine;
 		
+
 		/* DebugGUISubscriber Interface */
 	public:
 		virtual void OnDrawGUI() override;
 		virtual std::string_view GetDebugMenuName() { return "Events"; }
-		virtual bool IsDrawEnabled() { return m_showDebug; }
-		virtual void SetDrawEnabled(bool b) { m_showDebug = b; }
+
 
 		/* Event System API */
 	public:

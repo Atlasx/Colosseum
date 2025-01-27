@@ -142,9 +142,6 @@ namespace CE
 		
 		static std::bitset<static_cast<size_t>(LogChannel::MAX)> selectedChannels = {17};
 		
-		if (!m_showDebug)
-			return;
-		
 		ImGui::SetNextWindowSize(ImVec2(800.f, 400.f), ImGuiCond_Appearing);
 		ImGui::Begin("Log");
 

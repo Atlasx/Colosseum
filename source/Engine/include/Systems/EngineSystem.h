@@ -8,24 +8,18 @@ namespace CE
 
 	class EngineSystem
 	{
-	public:
-
-		virtual std::string Name() const = 0;
-
-		bool m_showDebug = false;
+	protected:
+		explicit EngineSystem(Engine* engine) : m_engine(engine) {};
+		friend class Engine;
 
 		virtual ~EngineSystem() = 0;
 
-	protected:
-		EngineSystem() = delete;
-		EngineSystem(Engine* engine) : m_engine(engine) {};
-
+	public:
 		virtual void Startup() = 0;
 		virtual void Shutdown() = 0;
 
-		// Engine can access protected interface on polymorphic pointers
-		friend class Engine;
-	
+		virtual std::string Name() const = 0;
+
 		Engine* m_engine;
 	};
 }

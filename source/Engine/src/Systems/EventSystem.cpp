@@ -15,8 +15,6 @@ namespace CE
 		{
 			DS->Subscribe(this);
 		}
-
-		m_showDebug = true;
 	}
 
 	void EventSystem::Shutdown()
@@ -78,9 +76,7 @@ namespace CE
 
 	void EventSystem::OnDrawGUI()
 	{
-		if (m_showDebug == false) return;
-
-		ImGui::Begin("Event System Debug", &m_showDebug);
+		ImGui::Begin("Event System Debug");
 		if (ImGui::CollapsingHeader("Queues", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			for (auto [typeIndex, queue] : m_queues)

@@ -10,16 +10,21 @@
 
 #include "Systems/EntitySystem.h"
 
-#include "imgui.h"
-#include <iostream>
-
+#include "Engine.h"
 #include "Systems/LogSystem.h"
+#include "GUI/Editor.h"
 
 namespace CE
 {
 	void EntitySystem::Startup()
 	{
 		LOG_INFO(ENTITY, "Startup Game Entity System");
+
+		std::shared_ptr<DebugSystem> DS = m_engine->GetSystem<DebugSystem>();
+		if (DS)
+		{
+			DS->Subscribe(this);
+		}
 	}
 
 	void EntitySystem::Shutdown()
@@ -27,18 +32,12 @@ namespace CE
 		LOG_INFO(ENTITY, "Shutdown Game Entity System");
 	}
 
-	/*
-	void EntitySystem::DrawGUI()
+	void EntitySystem::OnDrawGUI()
 	{
-		if (!m_showDebug)
-			return;
-
 		ImGui::Begin("Entity System Debug");
 
 		ImGui::Text("This is where the Entity System Debug window will go");
 
 		ImGui::End();
 	}
-	*/
-
 }

@@ -409,29 +409,24 @@ namespace CE
 	class InputSystem final : public EngineSystem, IDebugGUISubscriber
 	{		
 		using InputActionHandle = GenericHandle;
+
+	public:
+		InputSystem(Engine* engine) : EngineSystem(engine) {};
 	
 		/* CEngineSystem Interface */
 	public:
-		InputSystem(Engine* engine) : EngineSystem(engine)
-		{
-			m_showDebug = true;
-		};
-
 		virtual std::string Name() const override { return "Input System"; }
-
 	protected:
 		virtual void Startup() override;
 		virtual void Shutdown() override;
-		
-		// More friendship to allow Engine to access protected functions on derived class pointers
 		friend class Engine;
 		
+
 		/* IDebugGUISubscriber Interface */
 	public:
 		virtual void OnDrawGUI() override;
 		virtual std::string_view GetDebugMenuName() override { return "Input"; }
-		virtual bool IsDrawEnabled() override { return m_showDebug; }
-		virtual void SetDrawEnabled(bool b) override { m_showDebug = b; }
+
 
 		/* Input System API */
 	public:

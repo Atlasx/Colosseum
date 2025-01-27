@@ -15,27 +15,20 @@ namespace CE
 
 	class DebugSystem : public EngineSystem, public IFrameEventSubscriber
 	{
-		/* EngineSystem Interface */
 	public:
-		virtual std::string Name() const override { return "Debug System"; }
-
 		DebugSystem(Engine* engine) :
 			EngineSystem(engine),
 			m_debugSubscribers()
 		{}
 
+		/* EngineSystem Interface */
+	public:
+		virtual std::string Name() const override { return "Debug System"; }
 	protected:
-
+		friend class Engine;
 		virtual void Startup() override;
 		virtual void Shutdown() override;
 
-		friend class Engine;
-
-	public:
-
-		void Subscribe(IDebugGUISubscriber* sub);
-	private:
-		std::vector<IDebugGUISubscriber*> m_debugSubscribers;
 
 		/* IFrameEventSubscriber Interface */
 	public:
@@ -44,5 +37,19 @@ namespace CE
 		void DrawMainMenu();
 		void NotifyOnDrawGUI();
 
+
+		/* Debug System */
+	public:
+		void Subscribe(IDebugGUISubscriber* sub);
+	private:
+		struct DebugView
+		{
+			bool showDebug;
+			IDebugGUISubscriber* subscriber;
+
+			DebugView() : showDebug(true), subscriber(nullptr) {}
+		};
+
+		std::vector<DebugView> m_debugSubscribers;
 	};
 }

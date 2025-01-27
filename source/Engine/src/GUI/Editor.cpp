@@ -24,7 +24,11 @@ namespace CE
 
 	void DebugSystem::Subscribe(IDebugGUISubscriber* sub)
 	{
-		m_debugSubscribers.push_back(sub);
+		DebugView dv;
+		dv.subscriber = sub;
+		dv.showDebug = true;
+
+		m_debugSubscribers.push_back(dv);
 	}
 
 	void DebugSystem::OnDoFrame()
@@ -39,18 +43,15 @@ namespace CE
 		{
 			if (ImGui::BeginMenu("Debug"))
 			{
-				for (auto sub : m_debugSubscribers)
+				for (auto& dv : m_debugSubscribers)
 				{
+					auto sub = dv.subscriber;
 					auto name = std::string(sub->GetDebugMenuName());
-					if (ImGui::MenuItem(name.c_str(), NULL, sub->IsDrawEnabled()))
+					if (ImGui::MenuItem(name.c_str(), NULL, dv.showDebug))
 					{
-						sub->SetDrawEnabled(!sub->IsDrawEnabled());
+						dv.showDebug = !dv.showDebug;
 					}
 				}
-				/*for (auto [key, system] : m_systems)
-				{
-					ImGui::MenuItem(system->Name().c_str(), NULL, &system->m_showDebug);
-				}*/
 				ImGui::EndMenu();
 			}
 
@@ -60,11 +61,11 @@ namespace CE
 
 	void DebugSystem::NotifyOnDrawGUI()
 	{
-		for (auto sub : m_debugSubscribers)
+		for (auto& dv : m_debugSubscribers)
 		{
-			if (sub)
+			if (dv.subscriber && dv.showDebug)
 			{
-				sub->OnDrawGUI();
+				dv.subscriber->OnDrawGUI();
 			}
 		}
 	}

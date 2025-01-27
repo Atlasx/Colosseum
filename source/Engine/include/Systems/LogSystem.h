@@ -64,23 +64,28 @@ namespace CE
 	
 	class LogSystem final : public EngineSystem, private IDebugGUISubscriber
 	{
-		/* EngineSystem Interface */
 	public:
-		virtual std::string Name() const override { return "Log System"; }
-
 		LogSystem(Engine* engine) :
 			EngineSystem(engine),
 			m_log() 
-		{
-			m_showDebug = true;
-		};
+		{};
 
+
+		/* EngineSystem Interface */
+	public:
+		virtual std::string Name() const override { return "Log System"; }
 	private:
 		friend class Engine;
 		virtual void Startup() override;
 		virtual void Shutdown() override;
 
-		/* Log System API */
+
+		/* IDebugGUISubscriber Interface */
+		virtual void OnDrawGUI() override;
+		virtual std::string_view GetDebugMenuName() { return "Debug Log"; }
+
+
+		/* Log System */
 	public:
 		template<typename... Args>
 		static void Log(LogLevel level, LogChannel channel, std::string_view msg, Args&&... msgArgs)
@@ -134,12 +139,6 @@ namespace CE
 		std::vector<LogElement> m_log;
 
 		void LogImpl(LogLevel level, LogChannel channel, std::string_view message);
-
-		/* IDebugGUISubscriber Interface */
-		virtual void OnDrawGUI() override;
-		virtual std::string_view GetDebugMenuName() { return "Logging"; }
-		virtual bool IsDrawEnabled() override { return m_showDebug; }
-		virtual void SetDrawEnabled(bool bDraw) override { m_showDebug = bDraw; }
 
 
 	};
