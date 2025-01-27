@@ -311,33 +311,29 @@ namespace CE
 			ImGui::SetNextWindowPos(ImVec2(10.f, 30.f), ImGuiCond_Appearing);
 			ImGui::SetNextWindowSizeConstraints(ImVec2(50.f, 50.f), ImVec2(FLT_MAX, FLT_MAX));
 			ImGui::Begin("Input System Debug", &m_showDebug);
-			if (ImGui::CollapsingHeader("Actions"))
+			if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen ))
 			{
-				ImGui::BeginChild("Actions", ImVec2(0,0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
-
 				for (auto& [handle, action] : m_actions)
 				{	
 					std::string actionName = action.GetName();
 					ImGui::PushID(handle.GetIndex());
-					ImGui::BeginChild("action", ImVec2(ImGui::GetContentRegionAvail().x, 90.f), true);
-
-					const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
-					ImGui::Text("Name: %s", actionName.c_str());
-					ImGui::Text("Action: 0x%X", handle);
-					ImGui::Text("Key Binding: %s", bindingName);
-					if (ImGui::Button("Fire"))
+					if (ImGui::CollapsingHeader(actionName.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet))
 					{
-						action.Trigger();
+						const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
+						ImGui::Text("Action: 0x%X", handle);
+						ImGui::Text("Key Binding: %s", bindingName);
+						if (ImGui::Button("Fire"))
+						{
+							action.Trigger();
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("Remove"))
+						{
+							RemoveAction(handle);
+						}
 					}
-					ImGui::SameLine();
-					if (ImGui::Button("Remove"))
-					{
-						RemoveAction(handle);
-					}
-					ImGui::EndChild();
 					ImGui::PopID();
 				}
-				ImGui::EndChild();
 			}
 
 			if (ImGui::CollapsingHeader("Mouse"))

@@ -35,6 +35,7 @@
 
 #include "ObjectPool.h"
 #include "stdlibincl.h"
+#include "GUI/DebugGUISubscriber.h"
 
 namespace CE
 {
@@ -81,13 +82,17 @@ namespace CE
 	{
 	public:
 		virtual void Process() = 0;
+		virtual std::string_view GetQueueName() = 0;
 	};
 
 	template <IsEvent EType>
 	class EventQueue : public IEventQueue
 	{
 	public:
-		EventQueue() : m_queue(), m_listeners() {}
+		EventQueue() : m_queue(), m_listeners()
+		{
+			m_name = typeid(EType).name();
+		}
 		~EventQueue() {}
 
 		void PostEvent(EType event)
@@ -125,13 +130,18 @@ namespace CE
 			}
 		}
 
+		std::string_view GetQueueName() override
+		{
+			return m_name;
+		}
 
 	private:
 		std::queue<EType> m_queue;
 		std::vector<Listener<EType>> m_listeners;
+		std::string_view m_name;
 	};
 
-	class EventSystem final : public EngineSystem
+	class EventSystem final : public EngineSystem, IDebugGUISubscriber
 	{
 		/* EngineSystem Interface */
 	public:
@@ -146,6 +156,13 @@ namespace CE
 		// More friendship to allow Engine to access protected functions on derived class pointers
 		friend class Engine;
 		
+		/* DebugGUISubscriber Interface */
+	public:
+		virtual void OnDrawGUI() override;
+		virtual std::string_view GetDebugMenuName() { return "Events"; }
+		virtual bool IsDrawEnabled() { return m_showDebug; }
+		virtual void SetDrawEnabled(bool b) { m_showDebug = b; }
+
 		/* Event System API */
 	public:
 		template <typename EType>
