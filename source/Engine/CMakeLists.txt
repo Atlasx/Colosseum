@@ -63,9 +63,12 @@ target_link_libraries(Engine PUBLIC
 
 target_include_directories(Engine PRIVATE ${CMAKE_SOURCE_DIR}/vendor/imgui)
 target_compile_definitions(Engine PRIVATE HAS_IMGUI)
-target_include_directories(Engine PRIVATE ${CMAKE_SOURCE_DIR}/vendor/glm)
 
-target_include_directories(Engine PUBLIC ${INCLUDE_DIR})
+
+target_include_directories(Engine PUBLIC 
+	${INCLUDE_DIR}
+	${CMAKE_SOURCE_DIR}/source/vendor/glm
+)
 
 add_compile_options(/showIncludes)
 
