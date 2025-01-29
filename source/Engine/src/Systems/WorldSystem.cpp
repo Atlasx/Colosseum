@@ -34,7 +34,7 @@ namespace CE
 
 	Entity& WorldSystem::CreateEntity()
 	{
-		
+		return (*new Entity());
 	}
 
 	void WorldSystem::DestroyEntity(const EntityHandle& handle)
@@ -44,7 +44,7 @@ namespace CE
 
 	Entity& WorldSystem::GetEntity(const EntityHandle& handle)
 	{
-		
+		return (*new Entity());
 	}
 
 	void WorldSystem::OnDrawGUI()

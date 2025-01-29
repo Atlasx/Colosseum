@@ -99,6 +99,8 @@ const Handle<_T, _Idx, _Gen> Handle<_T, _Idx, _Gen>::INVALID{ Handle<_T, _Idx, _
 using ObjectHandle = Handle<std::uint32_t, 20, 11>;
 using ComponentHandle = Handle<std::uint32_t, 20, 11>;
 using GenericHandle = Handle<std::uint32_t, 20, 11>;
+using EntityHandle = Handle<std::uint32_t, 20, 11>;
+
 
 template <typename _HT>
 concept ValidHandleType = requires {
