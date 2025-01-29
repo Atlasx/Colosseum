@@ -4,7 +4,7 @@
 #include "Systems/InputSystem.h"
 #include "Systems/EventSystem.h"
 #include "Systems/RenderSystem.h"
-#include "Systems/EntitySystem.h"
+#include "Systems/WorldSystem.h"
 #include "Systems/LogSystem.h"
 #include "GUI/Editor.h"
 
@@ -103,7 +103,7 @@ namespace CE
 		m_systems[typeid(InputSystem)] = std::make_unique<InputSystem>(this);
 		m_systems[typeid(EventSystem)] = std::make_unique<EventSystem>(this);
 		m_systems[typeid(RenderSystem)] = std::make_unique<RenderSystem>(this);
-		m_systems[typeid(EntitySystem)] = std::make_unique<EntitySystem>(this);
+		m_systems[typeid(WorldSystem)] = std::make_unique<WorldSystem>(this);
 		m_systems[typeid(LogSystem)] = std::make_unique<LogSystem>(this);
 
 		m_systems[typeid(DebugSystem)] = std::make_unique<DebugSystem>(this);
@@ -122,7 +122,7 @@ namespace CE
 
 		GetSystem<InputSystem>()->Startup();
 
-		GetSystem<EntitySystem>()->Startup();
+		GetSystem<WorldSystem>()->Startup();
 
 		GetSystem<DebugSystem>()->Startup();
 	}
@@ -229,7 +229,7 @@ namespace CE
 		// Manual order once again
 		GetSystem<DebugSystem>()->Shutdown();
 
-		GetSystem<EntitySystem>()->Shutdown();
+		GetSystem<WorldSystem>()->Shutdown();
 		
 		GetSystem<EventSystem>()->Shutdown();
 		GetSystem<InputSystem>()->Shutdown();

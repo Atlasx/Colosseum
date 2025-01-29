@@ -54,6 +54,7 @@ namespace CE
 		EVENTS,
 		RESOURCES,
 		GAMEPLAY,
+		WORLD,
 		ENTITY,
 		MAX
 	};

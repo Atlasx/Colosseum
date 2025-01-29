@@ -6,6 +6,7 @@ set(SOURCES
 )
 
 set(INCLUDES 
+	include/Handle.h
 	include/Array.h
 	include/ObjectPool.h
 )

@@ -1,12 +1,10 @@
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(COMPILE_WARNING_AS_ERROR true)
 
 set(SOURCES
 	src/Engine.cpp
 	src/Globals.cpp
-
-	# Editor
-	src/GUI/Editor.cpp
 
 	# Systems
 	src/Systems/EngineSystem.cpp
@@ -14,8 +12,14 @@ set(SOURCES
 	src/Systems/InputSystem.cpp
 	src/Systems/EventSystem.cpp
 	src/Systems/RenderSystem.cpp
-	src/Systems/EntitySystem.cpp
 	src/Systems/LogSystem.cpp
+
+	# World
+	src/Systems/WorldSystem.cpp
+	src/Systems/World/EntitySubsystem.cpp
+
+	# Editor
+	src/GUI/Editor.cpp
 )
 
 set(INCLUDES
@@ -29,10 +33,13 @@ set(INCLUDES
 	include/Systems/InputSystem.h
 	include/Systems/EventSystem.h
 	include/Systems/RenderSystem.h
-	include/Systems/EntitySystem.h
 	include/Systems/LogSystem.h
 
-	#Editor
+	# World
+	include/Systems/WorldSystem.h
+	include/Systems/World/EntitySubsystem.h
+
+	# Editor
 	include/GUI/Editor.h
 	include/GUI/DebugGUISubscriber.h
 )

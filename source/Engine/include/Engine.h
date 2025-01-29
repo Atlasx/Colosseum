@@ -18,6 +18,7 @@ namespace CE
 	class ITickEventSubscriber
 	{
 	public:
+		virtual ~ITickEventSubscriber() = default;
 		virtual void OnTick() = 0;
 	};
 
