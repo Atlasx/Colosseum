@@ -21,8 +21,6 @@ concept UnsignedIntegral = std::is_unsigned_v<T>;
 // | A         | G G G G G G G G G G G G | I I I I I I I I I I ... I I I I |
 // |<- bit --> |<-------- 12 bits------> | < ---------- 20 bits----------->|
 
-// I have not been thinking about endian-ness here... I honestly don't know how to apply that stuff yet
-// 
 template<UnsignedIntegral _Type, std::size_t _IndexBits, std::size_t _GenerationBits>
 struct Handle
 {
