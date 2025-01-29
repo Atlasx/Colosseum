@@ -17,6 +17,7 @@ set(SOURCES
 	# World
 	src/Systems/WorldSystem.cpp
 	src/Systems/World/EntitySubsystem.cpp
+	src/Systems/World/ComponentSubsystem.cpp
 
 	# Editor
 	src/GUI/Editor.cpp
@@ -38,6 +39,7 @@ set(INCLUDES
 	# World
 	include/Systems/WorldSystem.h
 	include/Systems/World/EntitySubsystem.h
+	include/Systems/World/ComponentSubsystem.h
 
 	# Editor
 	include/GUI/Editor.h
@@ -61,6 +63,7 @@ target_link_libraries(Engine PUBLIC
 
 target_include_directories(Engine PRIVATE ${CMAKE_SOURCE_DIR}/vendor/imgui)
 target_compile_definitions(Engine PRIVATE HAS_IMGUI)
+target_include_directories(Engine PRIVATE ${CMAKE_SOURCE_DIR}/vendor/glm)
 
 target_include_directories(Engine PUBLIC ${INCLUDE_DIR})
 
