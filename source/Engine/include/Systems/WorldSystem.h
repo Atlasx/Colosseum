@@ -3,6 +3,7 @@
 #include "Systems/EngineSystem.h"
 
 #include "GUI/DebugGUISubscriber.h"
+#include "Handle.h"
 #include "ObjectPool.h"
 #include "Systems/World/EntitySubsystem.h"
 
@@ -11,9 +12,6 @@
 namespace CE
 {
 	class Entity;
-
-	using EntityHandle = Handle<std::uint32_t, 20, 11>;
-	using ComponentHandle = Handle<std::uint32_t, 20, 11>;
 
 	class WorldSystem final : public EngineSystem, IDebugGUISubscriber
 	{
