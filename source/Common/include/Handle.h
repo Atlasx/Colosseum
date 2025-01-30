@@ -86,6 +86,20 @@ struct Handle
 		return (m_value >> FlagShift) & FlagMask;
 	}
 
+	bool GetFlag(std::size_t offset) const
+	{
+		assert(offset < FlagBits); // Invalid flag bit offset
+		_Type mask = 1ULL << (offset + FlagShift);
+		return m_value & mask;
+	}
+
+	void SetFlag(bool value, std::size_t offset)
+	{
+		assert(offset < FlagBits); // Invalid flag bit offset
+		_Type mask = 1ULL << (offset + FlagShift);
+		m_value = value ? (m_value | mask) : (m_value & ~mask);
+	}
+
 	bool IsActive() const
 	{
 		return m_value & ActiveMask;
