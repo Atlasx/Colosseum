@@ -25,6 +25,10 @@ namespace CE
 		{
 			DS->Subscribe(this);
 		}
+
+		// Register some components for testing, not sure where to do this normally
+		RegisterComponent<TransformComponent>();
+		RegisterComponent<RenderComponent>();
 	}
 
 	void WorldSystem::Shutdown()
@@ -51,7 +55,7 @@ namespace CE
 	{
 		ImGui::Begin("World System Debug");
 
-		ImGui::Text("This is where the World System Debug window will go");
+		m_components.DrawComponentPools();
 
 		ImGui::End();
 	}

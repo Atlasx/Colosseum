@@ -55,12 +55,18 @@ public:
 	{
 		if (m_objects != nullptr)
 		{
-			delete m_objects;
+			delete[] m_objects;
 		}
 	}
 
 	template<typename... Args>
 	HandleType Create(Args&&... args)
+	{
+		return CreateWithType(0, 0, std::forward<Args>(args)...);
+	}
+
+	template<typename... Args>
+	HandleType CreateWithType(UnderlyingHandleType aType, UnderlyingHandleType aFlags, Args&&... args)
 	{
 		if (m_count >= _MaxItems)
 		{
@@ -78,7 +84,7 @@ public:
 		m_freelistHead = freePool.handle.GetIndex();
 
 		// Create handle, stow object
-		HandleType handle = HandleType::Generate(index, generation + 1, true);
+		HandleType handle = HandleType::Generate(index, generation + 1, true, aFlags, aType);
 		m_objects[index] = PoolEntry(handle, ObjectType{ std::forward<Args>(args)... });
 		m_count++;
 
@@ -107,10 +113,7 @@ public:
 	ObjectType& Get(const HandleType& handle)
 	{
 		// Validate handle id and gen
-		if (!IsHandleValid(handle))
-		{
-			// Old handle: not sure what to return here, maybe throw?
-		}
+		assert(IsHandleValid(handle));
 
 		return m_objects[handle.GetIndex()].object;
 	}
@@ -160,6 +163,7 @@ private:
 		return true;
 	}
 
+	// TODO Iterator doesn't have proper bounds checks
 	struct Iterator
 	{
 	public:

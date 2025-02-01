@@ -6,6 +6,8 @@
 #include "Handle.h"
 #include "ObjectPool.h"
 #include "Systems/World/EntitySubsystem.h"
+#include "Systems/World/ComponentSubsystem.h"
+#include "Systems/LogSystem.h"
 
 #define WORLD_SYSTEM "World System"
 
@@ -38,9 +40,11 @@ namespace CE
 		Entity& GetEntity(const EntityHandle& handle);
 
 		template <typename ComponentType>
-		ComponentType& AddComponent(const EntityHandle& handle, ComponentType component)
+		ComponentType* AddComponent(const EntityHandle& handle)
 		{
-			return ComponentType();
+			// Create new component
+			// Add component handle to entity
+			return nullptr;
 		}
 
 		void RemoveComponent(const EntityHandle& entityHandle, const ComponentHandle& componentHandle)
@@ -53,5 +57,15 @@ namespace CE
 		{
 			return ComponentType();
 		}
+
+		template <typename ComponentType>
+		void RegisterComponent()
+		{
+			LOG_INFO(WORLD, "Registering Component: {}", typeid(ComponentType).name());
+			m_components.RegisterComponent<ComponentType>();
+		}
+
+	private:
+		ComponentSubsystem m_components;
 	};
 }

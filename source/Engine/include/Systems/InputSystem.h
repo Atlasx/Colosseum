@@ -263,7 +263,7 @@ namespace CE
 	class IInputActionBase {
 	public:
 		virtual ~IInputActionBase() = default;
-		virtual std::string GetName() = 0;
+		virtual std::string_view GetName() = 0;
 		virtual void Execute() = 0;
 		virtual void Update(const InputKnowledge& knowledge) = 0;
 		virtual bool TryConsumeTrigger() = 0;
@@ -286,9 +286,9 @@ namespace CE
 			m_fromState(from)
 		{}
 
-		std::string GetName() override
+		std::string_view GetName() override
 		{
-			return m_name;
+			return std::string_view(m_name);
 		}
 
 		void Execute() override 

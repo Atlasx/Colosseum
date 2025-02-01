@@ -313,9 +313,9 @@ namespace CE
 		{
 			for (auto& [handle, action] : m_actions)
 			{	
-				std::string actionName = action.GetName();
+				std::string_view actionName = action.GetName();
 				ImGui::PushID(handle.GetIndex());
-				if (ImGui::CollapsingHeader(actionName.c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet))
+				if (ImGui::CollapsingHeader(actionName.data(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet))
 				{
 					const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
 					ImGui::Text("Action: 0x%X", handle);
