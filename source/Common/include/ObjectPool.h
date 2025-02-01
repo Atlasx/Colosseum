@@ -174,7 +174,7 @@ private:
 		using Pointer = PoolEntry*;
 		using Reference = PoolEntry&;
 
-		Iterator(Pointer ptr) : m_ptr(ptr) {}
+		Iterator(Pointer ptr, std::size_t index) : m_ptr(ptr), m_index(index) {}
 
 		Reference operator*() const
 		{
@@ -191,8 +191,9 @@ private:
 			do
 			{
 				++(m_ptr);
+				++m_index;
 			}
-			while ((*m_ptr).handle.IsActive() == false);
+			while ((*m_ptr).handle.IsActive() == false && m_index < _MaxItems);
 			return *this;
 		}
 
@@ -216,17 +217,18 @@ private:
 	private:
 
 		Pointer m_ptr;
+		std::size_t m_index;
 	};
 
 public:
 
 	Iterator begin()
 	{
-		return Iterator(&m_objects[0]);
+		return Iterator(&m_objects[0], 0);
 	}
 
 	Iterator end()
 	{
-		return Iterator(&m_objects[_MaxItems]);
+		return Iterator(&m_objects[_MaxItems], _MaxItems);
 	}
 };

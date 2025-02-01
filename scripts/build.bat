@@ -50,12 +50,12 @@ IF NOT EXIST "%BIN_DIR%" (
 )
 
 REM Move exe out of build
-FOR /R "%BUILD_DIR%" %%f IN (Colosseum.exe) DO (
+FOR /F "delims=" %%f IN ('dir /s /b "%BUILD_DIR%\Main.exe" 2^>nul') DO (
     echo Found executable: %%f
     move /Y "%%f" "%BIN_DIR%"
 )
 
-cd /d "%PROJECT_ROOT%"
+cd /d %PROJECT_DIR%
 
 REM Delete build files
 rmdir /s /q "%BUILD_DIR%"
