@@ -1,6 +1,19 @@
 # Colosseum
 
-Hello World!
+A C++ Game Engine, built on cmake using GLFW, GLM, ImGui, and OpenGL
+
+
+## cmake
+
+```
+cd [project_directory]
+git submodule update --init --recursive
+cmake .
+mkdir build
+cmake --build build --config [Debug|Release]
+cd bin/[Debug|Release]
+Main.exe
+```
 
 ## Setup
 
