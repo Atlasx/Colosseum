@@ -89,30 +89,30 @@ namespace CE
 		/* Log System */
 	public:
 		template<typename... Args>
-		static void Log(LogLevel level, LogChannel channel, std::string_view msg, Args&&... msgArgs)
+		static void Log(LogLevel level, LogChannel channel, std::string msg, Args&&... msgArgs)
 		{
 			assert(g_log != nullptr);
 			std::string message;
-			message = std::vformat(msg,
+			message = std::vformat(std::string_view(msg),
 				std::make_format_args(std::forward<Args>(msgArgs)...)
 			);
 			g_log->LogImpl(level, channel, message);
 		}
 
 		template<typename... Args>
-		static void LogInfo(LogChannel channel, std::string_view msg, Args&&... args)
+		static void LogInfo(LogChannel channel, std::string msg, Args&&... args)
 		{
 			Log(LogLevel::INFO, channel, msg, std::forward<Args>(args)...);
 		}
 
 		template<typename... Args>
-		static void LogWarning(LogChannel channel, std::string_view msg, Args&&... args)
+		static void LogWarning(LogChannel channel, std::string msg, Args&&... args)
 		{
 			Log(LogLevel::WARNING, channel, msg, std::forward<Args>(args)...);
 		}
 
 		template<typename... Args>
-		static void LogError(LogChannel channel, std::string_view msg, Args&&... args)
+		static void LogError(LogChannel channel, std::string msg, Args&&... args)
 		{
 			Log(LogLevel::ERROR, channel, msg, std::forward<Args>(args)...);
 		}
