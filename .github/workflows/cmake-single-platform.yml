@@ -11,16 +11,34 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository with submodules
       uses: actions/checkout@v4
       with:
-        submodules: recursive  # Ensure submodules (e.g., GLFW) are initialized and updated
+        submodules: recursive
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+    - name: Install Build Tools and Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake wayland-protocols libwayland-dev libxkbcommon-dev libx11-dev libgl1-mesa-dev xorg-dev
+
+    - name: Verify GCC and G++ Installations
+      run: |
+        gcc --version
+        g++ --version
+
+    - name: Clean CMake Cache
+      run: |
+        rm -rf ${{github.workspace}}/build
+
+    - name: Configure CMake with Explicit Compilers
+      run: |
+        cmake -B ${{github.workspace}}/build \
+              -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+              -DCMAKE_C_COMPILER=/usr/bin/gcc \
+              -DCMAKE_CXX_COMPILER=/usr/bin/g++
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
