@@ -168,7 +168,6 @@ private:
 		return true;
 	}
 
-	// TODO Iterator doesn't have proper bounds checks
 	struct Iterator
 	{
 	public:
@@ -229,6 +228,7 @@ public:
 
 	Iterator begin()
 	{
+		if (m_count == 0) return end();
 		return Iterator(&m_objects[0], 0);
 	}
 

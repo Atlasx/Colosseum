@@ -166,7 +166,7 @@ namespace CE
 
 		UpdateKeyState(keyT, keyS);
 
-		LOG_INFO(INPUT, "Key Pressed! {}", InputUtilities::GetKeyName(keyT));
+		LOG_INFO(INPUT, "Key Pressed! {}", std::string_view(InputUtilities::GetKeyName(keyT)));
 	}
 
 	void InputSystem::OnMouseButton(GLFWwindow* window, int button, int action, int mods)
@@ -311,6 +311,10 @@ namespace CE
 		ImGui::Begin("Input System Debug");
 		if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen ))
 		{
+			if (m_actions.GetFill() == 0)
+			{
+				ImGui::Text("No Actions Bound!");
+			}
 			for (auto& [handle, action] : m_actions)
 			{	
 				std::string_view actionName = action.GetName();

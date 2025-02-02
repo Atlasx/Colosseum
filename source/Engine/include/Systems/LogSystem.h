@@ -93,7 +93,7 @@ namespace CE
 		{
 			assert(g_log != nullptr);
 			std::string message;
-			message = std::vformat(std::string(msg),
+			message = std::vformat(msg,
 				std::make_format_args(std::forward<Args>(msgArgs)...)
 			);
 			g_log->LogImpl(level, channel, message);
