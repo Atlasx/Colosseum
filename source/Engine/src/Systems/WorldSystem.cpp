@@ -29,6 +29,11 @@ namespace CE
 		// Register some components for testing, not sure where to do this normally
 		RegisterComponent<TransformComponent>();
 		RegisterComponent<RenderComponent>();
+
+		// Test out registering some components
+		EntityHandle handle;
+		for (int i = 0; i < 1500; i++)
+			AddComponent<TransformComponent>(handle);
 	}
 
 	void WorldSystem::Shutdown()

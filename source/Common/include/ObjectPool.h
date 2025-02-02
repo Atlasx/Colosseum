@@ -118,7 +118,12 @@ public:
 		return m_objects[handle.GetIndex()].object;
 	}
 
-	std::size_t Capacity()
+	std::size_t GetFill()
+	{
+		return m_count;
+	}
+
+	constexpr std::size_t Capacity()
 	{
 		return _MaxItems;
 	}

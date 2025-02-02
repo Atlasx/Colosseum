@@ -43,12 +43,15 @@ namespace CE
 		ComponentType* AddComponent(const EntityHandle& handle)
 		{
 			// Create new component
+			m_components.AddComponent<ComponentType>();
 			// Add component handle to entity
 			return nullptr;
 		}
 
 		void RemoveComponent(const EntityHandle& entityHandle, const ComponentHandle& componentHandle)
 		{
+			// Remove component from pools
+			// remove component handle from entity
 			return;
 		}
 
@@ -67,5 +70,6 @@ namespace CE
 
 	private:
 		ComponentSubsystem m_components;
+		EntitySubsystem m_entities;
 	};
 }

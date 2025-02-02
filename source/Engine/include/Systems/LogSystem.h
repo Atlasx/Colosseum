@@ -167,6 +167,7 @@ namespace CE
 		case LogChannel::RESOURCES: return "Resources";
 		case LogChannel::GAMEPLAY: return "Gameplay";
 		case LogChannel::ENTITY: return "Entity";
+		case LogChannel::WORLD: return "World";
 		default: return "";
 		}
 	}
