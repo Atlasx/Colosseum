@@ -11,6 +11,7 @@
 #include "Systems/WorldSystem.h"
 
 #include "Engine.h"
+#include "stdlibincl.h"
 #include "Systems/LogSystem.h"
 #include "GUI/Editor.h"
 
@@ -31,9 +32,16 @@ namespace CE
 		RegisterComponent<RenderComponent>();
 
 		// Test out registering some components
-		EntityHandle handle;
+		std::array<EntityHandle, 15> someEntities{};
+		for (int en = 0; en < 15; en++)
+		{
+			Entity& entity = CreateEntity();
+			someEntities[en] = entity.m_handle;
+		}
 		for (int i = 0; i < 1500; i++)
-			AddComponent<TransformComponent>(handle);
+		{
+			AddComponent<TransformComponent>(someEntities[i % 15]);
+		}
 	}
 
 	void WorldSystem::Shutdown()
@@ -43,17 +51,18 @@ namespace CE
 
 	Entity& WorldSystem::CreateEntity()
 	{
-		return (*new Entity());
+		EntityHandle handle = m_entities.CreateEntity();
+		return m_entities.Get(handle);
 	}
 
 	void WorldSystem::DestroyEntity(const EntityHandle& handle)
 	{
-
+		m_entities.DestroyEntity(handle);
 	}
 
 	Entity& WorldSystem::GetEntity(const EntityHandle& handle)
 	{
-		return (*new Entity());
+		return m_entities.Get(handle);
 	}
 
 	void WorldSystem::OnDrawGUI()
@@ -61,6 +70,8 @@ namespace CE
 		ImGui::Begin("World System Debug");
 
 		m_components.DrawComponentPools();
+
+		m_entities.DrawEntityPool();
 
 		ImGui::End();
 	}

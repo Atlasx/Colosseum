@@ -110,6 +110,11 @@ struct Handle
 		return GetIndex() != IndexMask;
 	}
 
+	_Type raw() const
+	{
+		return m_value;
+	}
+
 	bool operator==(const Handle& other) const
 	{
 		return m_value == other.m_value;

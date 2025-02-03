@@ -17,3 +17,4 @@
 #include <sstream>
 #include <bitset>
 #include <filesystem>
+#include <algorithm>

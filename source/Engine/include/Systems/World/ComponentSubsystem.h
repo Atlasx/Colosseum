@@ -11,25 +11,29 @@ namespace CE
 	class Component
 	{
 	public:
+		Component() : m_handle(ComponentHandle::INVALID) {}
+
 		ComponentHandle m_handle;
 	};
 
 	class TransformComponent : public Component
 	{
 	public:
-		glm::mat4 transform;
+		TransformComponent() : m_transform(0) {}
+
+		glm::mat4 m_transform;
 
 		glm::vec3 Position()
 		{
-			return transform[3];
+			return m_transform[3];
 		}
 
 		glm::vec3 Scale()
 		{
 			glm::vec3 scale;
-			scale.x = glm::length(glm::vec3(transform[0]));
-			scale.y = glm::length(glm::vec3(transform[1]));
-			scale.z = glm::length(glm::vec3(transform[2]));
+			scale.x = glm::length(glm::vec3(m_transform[0]));
+			scale.y = glm::length(glm::vec3(m_transform[1]));
+			scale.z = glm::length(glm::vec3(m_transform[2]));
 			return scale;
 		}
 
@@ -38,6 +42,8 @@ namespace CE
 	class RenderComponent : public Component
 	{
 	public:
+		RenderComponent() :woof(0) {}
+
 		// Rendering Data here
 		int woof;
 	};

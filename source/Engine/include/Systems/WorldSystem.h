@@ -43,16 +43,18 @@ namespace CE
 		ComponentType* AddComponent(const EntityHandle& handle)
 		{
 			// Create new component
-			m_components.AddComponent<ComponentType>();
+			ComponentType* component = m_components.AddComponent<ComponentType>();
 			// Add component handle to entity
-			return nullptr;
+			m_entities.AddComponentToEntity(handle, component->m_handle);
+			return component;
 		}
 
 		void RemoveComponent(const EntityHandle& entityHandle, const ComponentHandle& componentHandle)
 		{
-			// Remove component from pools
 			// remove component handle from entity
-			return;
+			m_entities.RemoveComponentFromEntity(entityHandle, componentHandle);
+			// Remove component from pools
+			m_components.RemoveComponent(componentHandle);
 		}
 
 		template <typename ComponentType>

@@ -29,8 +29,9 @@ public:
 		PoolEntry() 
 		{
 			handle = HandleType::INVALID;
+			object = ObjectType();
 		}
-		PoolEntry(HandleType h, ObjectType obj) : handle(h), object(obj) {}
+		PoolEntry(HandleType h, ObjectType obj) : handle(h), object(std::move(obj)) {}
 
 		~PoolEntry() {}
 	};
@@ -85,7 +86,9 @@ public:
 
 		// Create handle, stow object
 		HandleType handle = HandleType::Generate(index, generation + 1, true, aFlags, aType);
-		m_objects[index] = PoolEntry(handle, ObjectType{ std::forward<Args>(args)... });
+		PoolEntry& entry = m_objects[index];
+		entry.handle = handle;
+		entry.object = ObjectType{ std::forward<Args>(args)... };
 		m_count++;
 
 		return handle;
