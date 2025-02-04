@@ -315,12 +315,14 @@ namespace CE
 			{
 				ImGui::Text("No Actions Bound!");
 			}
+			ImGui::Indent();
 			for (auto& [handle, action] : m_actions)
 			{	
 				std::string_view actionName = action.GetName();
 				ImGui::PushID(handle.GetIndex());
 				if (ImGui::CollapsingHeader(actionName.data(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet))
 				{
+					ImGui::Indent();
 					const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
 					ImGui::Text("Action: 0x%X", handle);
 					ImGui::Text("Key Binding: %s", bindingName);
@@ -333,9 +335,11 @@ namespace CE
 					{
 						RemoveAction(handle);
 					}
+					ImGui::Unindent();
 				}
 				ImGui::PopID();
 			}
+			ImGui::Unindent();
 		}
 
 		if (ImGui::CollapsingHeader("Mouse"))

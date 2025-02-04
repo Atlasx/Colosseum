@@ -44,6 +44,7 @@ set(INCLUDES
 	# Editor
 	include/GUI/Editor.h
 	include/GUI/DebugGUISubscriber.h
+	include/GUI/FrameCounter.h
 )
 
 source_group("Source Files" FILES ${SOURCES})

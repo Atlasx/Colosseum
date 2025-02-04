@@ -11,6 +11,7 @@
 #include "Systems/WorldSystem.h"
 
 #include "Engine.h"
+#include "Globals.h"
 #include "stdlibincl.h"
 #include "Systems/LogSystem.h"
 #include "GUI/Editor.h"
@@ -40,7 +41,12 @@ namespace CE
 		}
 		for (int i = 0; i < 1500; i++)
 		{
-			AddComponent<TransformComponent>(someEntities[i % 15]);
+			TransformComponent* comp = AddComponent<TransformComponent>(someEntities[i % 15]);
+			comp->SetPosition(glm::vec3(
+				CE::Globals::g_rand.GetFloat(-100.f, 100.f),
+				CE::Globals::g_rand.GetFloat(-100.f, 100.f),
+				CE::Globals::g_rand.GetFloat(-100.f, 100.f)
+			));
 		}
 	}
 

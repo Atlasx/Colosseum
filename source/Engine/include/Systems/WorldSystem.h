@@ -70,6 +70,12 @@ namespace CE
 			m_components.RegisterComponent<ComponentType>();
 		}
 
+		template <typename ComponentType>
+		void ForEachComponent(std::function<void(ComponentType*)> function)
+		{
+			m_components.ForEachComponent<ComponentType>(std::move(function));
+		}
+
 	private:
 		ComponentSubsystem m_components;
 		EntitySubsystem m_entities;

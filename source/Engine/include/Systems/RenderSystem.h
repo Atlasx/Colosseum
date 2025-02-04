@@ -2,6 +2,7 @@
 
 #include "Systems/EngineSystem.h"
 #include "stdlibincl.h"
+#include "glad/glad.h" // TODO Remove this dependency
 
 struct GLFWwindow;
 
@@ -37,6 +38,15 @@ namespace CE
 		void CleanFrameSubscribers();
 
 		std::vector<IFrameEventSubscriber*> m_frameSubscribers;
+
+		// Testing OpenGL
+	private:
+		GLuint VertexArrayID;
+		GLuint programID;
+		GLuint MatrixID;
+		GLuint vertexbuffer;
+
+		GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
 
 		// ImGui
 	private:

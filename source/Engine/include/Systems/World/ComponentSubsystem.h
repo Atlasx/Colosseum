@@ -23,12 +23,17 @@ namespace CE
 
 		glm::mat4 m_transform;
 
-		glm::vec3 Position()
+		void SetPosition(glm::vec3 pos)
+		{
+			m_transform[3] = glm::vec4(pos, 1.f);
+		}
+
+		glm::vec3 GetPosition()
 		{
 			return m_transform[3];
 		}
 
-		glm::vec3 Scale()
+		glm::vec3 GetScale()
 		{
 			glm::vec3 scale;
 			scale.x = glm::length(glm::vec3(m_transform[0]));
@@ -101,6 +106,14 @@ namespace CE
 			return &(m_pool.Get(handle));
 		}
 
+		void ForEach(std::function<void(ComponentType*)> function)
+		{
+			for (auto& [handle, comp] : m_pool)
+			{
+				function(&comp);
+			}
+		}
+
 	private:
 		ComponentPoolType m_pool;
 		std::uint8_t m_componentID;
@@ -163,6 +176,16 @@ namespace CE
 
 			std::shared_ptr<ComponentPool<T>> pool = GetComponentPool<T>();
 			return pool->Get(handle);
+		}
+
+		template<typename T>
+		void ForEachComponent(std::function<void(T*)> function)
+		{
+			std::shared_ptr<ComponentPool<T>> ptrPool = GetComponentPool<T>();
+			if (ptrPool)
+			{
+				ptrPool->ForEach(std::move(function));
+			}
 		}
 
 		void DrawComponentPools();

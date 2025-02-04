@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Systems/EngineSystem.h"
+#include "GUI/Editor.h"
 
+// Eventually get rid of these 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include "imgui.h"
@@ -10,8 +12,10 @@
 #include "backends/imgui_impl_opengl3.h"
 
 #include "stdlibincl.h"
+#include "Globals.h"
 
 struct GLFWwindow;
+class FrameCounter;
 
 namespace CE
 {
@@ -93,5 +97,6 @@ namespace CE
 		void Render();
 		void ProcessInput();
 
+		FrameCounter* m_frameCounter;
 	};
 }

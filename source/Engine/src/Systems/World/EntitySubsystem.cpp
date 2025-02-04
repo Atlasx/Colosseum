@@ -8,21 +8,29 @@ namespace CE
 	{
 		if (ImGui::CollapsingHeader("Entities", ImGuiTreeNodeFlags_DefaultOpen))
 		{
+			ImGui::Indent();
 			auto& entityPool = (*m_entityPool.get());
 			for (auto& [handle, entity] : entityPool)
 			{
 				ImGui::PushID(handle.raw());
-				ImGui::Text("Handle: 0x%X", handle);
-				if (ImGui::CollapsingHeader("Components"))
+				char headerName[16];
+				sprintf(headerName, "Entity: 0x%X8", handle.raw());
+				if (ImGui::CollapsingHeader(headerName))
 				{
-					auto& components = entity.GetComponentList();
-					for (auto compHandle : components)
+					ImGui::Indent();
+					if (ImGui::CollapsingHeader("Components"))
 					{
-						ImGui::Text("Component Handle: 0x%X", compHandle.raw());
+						auto& components = entity.GetComponentList();
+						for (auto compHandle : components)
+						{
+							ImGui::Text("Component Handle: 0x%X8", compHandle.raw());
+						}
 					}
+					ImGui::Unindent();
 				}
 				ImGui::PopID();
 			}
+			ImGui::Unindent();
 		}
 	}
 }

@@ -6,13 +6,17 @@
 #include "Systems/RenderSystem.h"
 #include "Systems/WorldSystem.h"
 #include "Systems/LogSystem.h"
+
 #include "GUI/Editor.h"
+#include "GUI/FrameCounter.h"
+
 
 namespace CE
 {
 	Engine::Engine() :
 		m_exit(false),
-		m_window(nullptr)
+		m_window(nullptr),
+		m_frameCounter(nullptr)
 	{
 		std::cout << "Good Morning Engine" << std::endl;
 	}
@@ -20,6 +24,8 @@ namespace CE
 	Engine::~Engine()
 	{
 		std::cout << "Good Night Engine" << std::endl;
+
+		delete m_frameCounter;
 
 		ShutdownSystems();
 
@@ -31,6 +37,8 @@ namespace CE
 
 	void Engine::Start()
 	{
+		
+
 		if (Initialize() == false)
 		{
 			return;
@@ -88,8 +96,17 @@ namespace CE
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		ImGui::StyleColorsDark();
+		ImGuiStyle& style = ImGui::GetStyle();
+		style.IndentSpacing = 10.f;
 		ImGui_ImplGlfw_InitForOpenGL(m_window, true);
 		ImGui_ImplOpenGL3_Init("#version 130");
+
+		m_frameCounter = new FrameCounter();
+		std::shared_ptr<DebugSystem> DS = GetSystem<DebugSystem>();
+		if (DS)
+		{
+			DS->Subscribe(m_frameCounter);
+		}
 	}
 
 	void Engine::Stop()
@@ -178,9 +195,18 @@ namespace CE
 	{
 		while (m_exit == false)
 		{
+			m_frameCounter->FrameStart();
+
 			Update();
 			Render();
 			ProcessInput();
+
+			double excess = m_frameCounter->FrameEnd();
+			if (excess > 0)
+			{
+				// This caused my frames to skyrocket? TODO investigate
+				//std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(excess)));
+			}
 		}
 	}
 
