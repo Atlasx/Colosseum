@@ -71,8 +71,7 @@ public:
 	{
 		if (m_count >= _MaxItems)
 		{
-			// Hit max: throw? allocate more space?
-			std::cout << "Failed to create new object, out of space!" << std::endl;
+			assert(false); // Failed to create new object, out of space!
 			return HandleType::INVALID;
 		}
 
@@ -181,7 +180,15 @@ private:
 		using Pointer = PoolEntry*;
 		using Reference = PoolEntry&;
 
-		Iterator(Pointer ptr, std::size_t index) : m_ptr(ptr), m_index(index) {}
+		Iterator(Pointer ptr, std::size_t index) : m_ptr(ptr), m_index(index) 
+		{
+			// Find actual starting point
+			while ((*m_ptr).handle.IsActive() == false && m_index < _MaxItems)
+			{
+				++(m_ptr);
+				++m_index;
+			}
+		}
 
 		Reference operator*() const
 		{

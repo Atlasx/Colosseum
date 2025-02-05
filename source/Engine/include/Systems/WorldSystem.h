@@ -79,5 +79,8 @@ namespace CE
 	private:
 		ComponentSubsystem m_components;
 		EntitySubsystem m_entities;
+
+		void CreateTestComponents(std::size_t amount);
+		void OnAddTestComponents();
 	};
 }

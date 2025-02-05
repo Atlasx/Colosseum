@@ -14,6 +14,7 @@
 #include "Globals.h"
 #include "stdlibincl.h"
 #include "Systems/LogSystem.h"
+#include "Systems/InputSystem.h"
 #include "GUI/Editor.h"
 
 namespace CE
@@ -33,20 +34,14 @@ namespace CE
 		RegisterComponent<RenderComponent>();
 
 		// Test out registering some components
-		std::array<EntityHandle, 15> someEntities{};
-		for (int en = 0; en < 15; en++)
+		CreateTestComponents(10);
+
+		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
+		if (IS)
 		{
-			Entity& entity = CreateEntity();
-			someEntities[en] = entity.m_handle;
-		}
-		for (int i = 0; i < 1500; i++)
-		{
-			TransformComponent* comp = AddComponent<TransformComponent>(someEntities[i % 15]);
-			comp->SetPosition(glm::vec3(
-				CE::Globals::g_rand.GetFloat(-100.f, 100.f),
-				CE::Globals::g_rand.GetFloat(-100.f, 100.f),
-				CE::Globals::g_rand.GetFloat(-100.f, 100.f)
-			));
+			IS->RegisterAction("Add Test Components", KeyType::EQUAL, [&]() {
+				this->OnAddTestComponents();
+			});
 		}
 	}
 
@@ -80,5 +75,29 @@ namespace CE
 		m_entities.DrawEntityPool();
 
 		ImGui::End();
+	}
+
+	void WorldSystem::CreateTestComponents(std::size_t amount)
+	{
+		std::array<EntityHandle, 15> someEntities{};
+		for (int en = 0; en < 15; en++)
+		{
+			Entity& entity = CreateEntity();
+			someEntities[en] = entity.m_handle;
+		}
+		for (int i = 0; i < amount; i++)
+		{
+			TransformComponent* comp = AddComponent<TransformComponent>(someEntities[i % 15]);
+			comp->SetPosition(glm::vec3(
+				CE::Globals::g_rand.GetFloat(-100.f, 100.f),
+				CE::Globals::g_rand.GetFloat(-100.f, 100.f),
+				CE::Globals::g_rand.GetFloat(-100.f, 100.f)
+			));
+		}
+	}
+
+	void WorldSystem::OnAddTestComponents()
+	{
+		CreateTestComponents(100);
 	}
 }

@@ -306,7 +306,7 @@ namespace CE
 	void InputSystem::OnDrawGUI()
 	{
 		ImGui::SetNextWindowSize(ImVec2(200.f, 500.f), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowPos(ImVec2(10.f, 30.f), ImGuiCond_Appearing);
+		ImGui::SetNextWindowPos(ImVec2(10.f, 110.f), ImGuiCond_Appearing);
 		ImGui::SetNextWindowSizeConstraints(ImVec2(50.f, 50.f), ImVec2(FLT_MAX, FLT_MAX));
 		ImGui::Begin("Input System Debug");
 		if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen ))

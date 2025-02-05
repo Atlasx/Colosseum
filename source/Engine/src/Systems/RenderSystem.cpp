@@ -86,7 +86,7 @@ namespace CE
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 		glVertexAttribPointer(
-			0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
+			0,                  // attribute
 			3,                  // size
 			GL_FLOAT,           // type
 			GL_FALSE,           // normalized?
@@ -94,18 +94,22 @@ namespace CE
 			(void*)0            // array buffer offset
 		);
 
-		glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
+		
 
 		NotifyOnDoFrame();
 
 		std::shared_ptr<WorldSystem> WS = m_engine->GetSystem<WorldSystem>();
 		if (WS)
 		{
-			WS->ForEachComponent<TransformComponent>([](TransformComponent* component) {
+			WS->ForEachComponent<TransformComponent>([&](TransformComponent* component) {
 				
 				// This is hitting every Transform Component
 				component->GetPosition();
 
+				glm::mat4 Model = component->m_transform;//glm::mat4(1.0f);
+				glm::mat4 MVP = Projection * View * Model;
+				glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+				glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
 				});
 		}
 	}

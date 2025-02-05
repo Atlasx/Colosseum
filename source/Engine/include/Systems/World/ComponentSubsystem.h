@@ -19,7 +19,7 @@ namespace CE
 	class TransformComponent : public Component
 	{
 	public:
-		TransformComponent() : m_transform(0) {}
+		TransformComponent() : m_transform(glm::mat4(1.0)) {}
 
 		glm::mat4 m_transform;
 

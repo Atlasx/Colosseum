@@ -170,7 +170,7 @@ namespace CE
 				}, KeyState::RELEASED, KeyState::PRESSED);
 			IS->RegisterAction("Add Action", KeyType::N, [IS]()
 				{
-					std::cout << "Creating new keybinding!" << std::endl;
+					LOG_INFO(INPUT, "Creating new keybinding!");
 
 					std::random_device rd;
 					std::mt19937 gen(rd());
@@ -180,7 +180,7 @@ namespace CE
 					std::cout << "This is a random binding: " << InputUtilities::GetKeyName(randBinding) << std::endl;
 					auto randBindingLambda = []
 						{
-							std::cout << "Random binding pressed!" << std::endl;
+							LOG_INFO(INPUT, "Random binding pressed!");
 						};
 
 					IS->RegisterAction("Random Action", randBinding, randBindingLambda);
