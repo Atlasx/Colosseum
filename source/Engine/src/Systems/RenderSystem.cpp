@@ -72,7 +72,7 @@ namespace CE
 	{
 		glUseProgram(programID);
 	
-		glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+		glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 200.0f);
 		// Camera matrix
 		glm::mat4 View = glm::lookAt(
 			glm::vec3(4, 3, -3),
