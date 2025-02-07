@@ -77,7 +77,8 @@ namespace CE
 		KEYS_MAX
 	};
 
-	enum class KeyState : unsigned char {
+	enum class KeyState : unsigned char
+	{
 		UNKNOWN		= 0,
 		RELEASED	= 1 << 0,
 		PRESSED		= 1 << 1,
@@ -260,147 +261,146 @@ namespace CE
 		bool bNeedsUpdate = true;
 	};
 
-	class IInputActionBase {
-	public:
-		virtual ~IInputActionBase() = default;
-		virtual std::string_view GetName() = 0;
-		virtual void Execute() = 0;
-		virtual void Update(const InputKnowledge& knowledge) = 0;
-		virtual bool TryConsumeTrigger() = 0;
-		virtual void Trigger() = 0;
-		virtual bool IsBoundTo(const KeyType key) const = 0;
-		virtual KeyType GetBinding() const = 0;
-	};
+	enum class InputEventType { UNKNOWN, PRESSED, RELEASED, HELD, AXIS };
 
-	class InputAction : public IInputActionBase
-	{
-	public:
-		using Callback = std::function<void()>;
-
-		InputAction() : m_callback([] {}), m_name() {}
-		InputAction(std::string name, KeyType binding, Callback cb, KeyState to, KeyState from) :
-			m_name(name),
-			m_binding(binding),
-			m_callback(std::move(cb)),
-			m_toState(to),
-			m_fromState(from)
-		{}
-
-		std::string_view GetName() override
-		{
-			return std::string_view(m_name);
-		}
-
-		void Execute() override 
-		{
-			m_callback();
-			m_bIsTriggered = false;
-		}
-
-		void Trigger() override
-		{
-			m_bIsTriggered = true;
-		}
-
-		bool TryConsumeTrigger() override
-		{
-			if (m_bIsTriggered)
-			{
-				m_bIsTriggered = false;
-				return true;
-			}
-			return false;
-		}
-
-		bool IsBoundTo(const KeyType key) const override
-		{
-			return key == m_binding;
-		}
-
-		KeyType GetBinding() const override
-		{
-			return m_binding;
-		}
-
-		void Update(const InputKnowledge& knowledge) override
-		{
-			if (knowledge.lastKey != m_binding)
-			{
-				return;
-			}
-
-			bool bShouldTrigger = true;
-
-			// To State Condition
-			bShouldTrigger &= knowledge.lastKeyState == m_toState;
-			
-			// From State Condition
-			if (m_fromState != KeyState::UNKNOWN)
-			{
-				bShouldTrigger &= knowledge.previousBoardState.GetKey(knowledge.lastKey) == m_fromState;
-			}
-			
-			m_bIsTriggered = bShouldTrigger;
-		}
+	struct InputEvent {
 	private:
-		bool m_bIsTriggered = false;
-		Callback m_callback;
-		KeyType m_binding = KeyType::UNKNOWN;
-		KeyState m_fromState = KeyState::UNKNOWN;
-		KeyState m_toState = KeyState::UNKNOWN;
-		std::string m_name;
-	};
+		InputEventType type;
+		union
+		{
+			KeyType key = KeyType::UNKNOWN;
+			AxisType axis = AxisType::UNKNOWN;
+			float value1D = 0.0f;  // 1D input 
+			struct {
+				float valueX = 0.0f;
+				float valueY = 0.0f;
+			} value2D;
+		};
 
-	class InputAxisAction : public IInputActionBase
+	public:
+		InputEvent() : type(InputEventType::UNKNOWN) {}
+
+		void SetKey(KeyType k)
+		{
+			
+		}
+	};
+	
+	class InputAction
 	{
 	public:
-		using Callback = std::function<void(float)>;
+		virtual ~InputAction() = default;
+		virtual void ProcessEvents(const std::vector<InputEvent>& events) = 0;
+		virtual void ExecuteCallback() = 0;
+		virtual void Update(float deltaTime) {};
 
-		InputAxisAction() : m_callback([](float) {}) {}
-		InputAxisAction(KeyType binding, Callback callback)
-			: m_binding(binding), m_callback(std::move(callback)) {}
+		bool m_bTriggered = false;
+	};
 
-		bool TryConsumeTrigger() override
+	class ButtonAction : public InputAction
+	{
+	public:
+		explicit ButtonAction(KeyType key) : m_key(key) {}
+
+		void ProcessEvents(const std::vector<InputEvent>& events, float deltaTime) override
 		{
-			if (m_bIsTriggered)
+			for (const auto& event : events)
 			{
-				m_bIsTriggered = false;
-				return true;
-			}
-			return false;
-		}
-
-		bool IsBoundTo(const KeyType key) const override
-		{
-			return key == m_binding;
-		}
-
-		void Execute() override
-		{
-			m_callback(m_axisValue);
-		}
-
-		void Update(const InputKnowledge& knowledge) override
-		{
-			if (knowledge.lastKey == m_binding)
-			{
-				if (knowledge.lastKeyState == KeyState::PRESSED || knowledge.lastKeyState == KeyState::HELD)
+				if (event.key == m_key && event.type == InputEventType::PRESSED)
 				{
-					m_axisValue += 0.05f;
+					m_activated = true;
 				}
 			}
 		}
 
-		void SetAxisValue(float value)
+		bool IsActive() const { return m_activated; }
+
+	private:
+		KeyType m_key;
+		bool m_activated = false;
+	};
+
+	class HoldAction : public InputAction
+	{
+		using Callback = std::function<void(float)>;
+
+	public:
+		explicit HoldAction(KeyType key) : m_key(key) {}
+
+		void ProcessEvents(const std::vector<InputEvent>& events) override
 		{
-			m_axisValue = value;
+			for (const auto& event : events)
+			{
+				if (event.key == m_key)
+				{
+					if (event.type == InputEventType::PRESSED)
+					{
+						m_holdTime = 0.0f;
+						m_holding = true;
+					}
+					else if (event.type == InputEventType::RELEASED)
+					{
+						m_holding = false;
+					}
+				}
+			}
+		}
+
+		float GetHoldTime() const { return m_holdTime; }
+
+		void Update(float deltaTime) override
+		{
+			if (m_holding)
+			{
+				m_holdTime += deltaTime;
+				if (m_holdTime > m_threshold)
+				{
+					m_bTriggered = true;
+				}
+			}
+		}
+
+		void ExecuteCallback() override
+		{
+			if (m_callback)
+			{
+				m_callback(m_holdTime);
+			}
+			else
+			{
+				LOG_ERROR(INPUT, "No callback registered for InputAction!");
+			}
 		}
 
 	private:
-		float m_axisValue = 0.0f;
-		bool m_bIsTriggered = false;
 		Callback m_callback;
-		KeyType m_binding = KeyType::UNKNOWN;
+		KeyType m_key;
+		bool m_holding = false;
+		float m_holdTime = 0.f;
+		float m_threshold = 0.f;
+	};
+
+	class AxisAction : public InputAction
+	{
+	public:
+		explicit AxisAction(KeyType key) : m_key(key) {}
+
+		void ProcessEvents(const std::vector<InputEvent>& events, float deltaTime) override
+		{
+			for (const auto& event : events)
+			{
+				if (event.key == m_key && event.type == InputEventType::AXIS_MOVED)
+				{
+					m_value += event.value * deltaTime;
+				}
+			}
+		}
+
+		float GetValue() const { return m_value; }
+
+	private:
+		KeyType m_key;
+		float m_value = 0.0f;
 	};
 
 	class InputSystem;
@@ -475,9 +475,12 @@ namespace CE
 		// Iterates through actions and updates
 		void ProcessActions();
 
+		void ProcessTriggers();
+
 		// Iterates through triggered actions and fires callbacks
 		void ProcessCallbacks();
 
+		std::vector<ActionTriggerBase*> m_triggers;
 		ObjectPool<InputAction, 20> m_actions;
 		std::queue<InputActionHandle> m_triggeredActions;
 

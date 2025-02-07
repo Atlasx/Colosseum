@@ -74,9 +74,9 @@ namespace CE
 		m_inputKnowledge.lastKey = key;
 		m_inputKnowledge.lastKeyState = newState;
 
-		// Check all actions 
+		ProcessTriggers();
+
 		ProcessActions();
-		// Do not process callbacks until frame?
 
 		// Reset transitory input data fields
 		m_inputKnowledge.lastKey = KeyType::UNKNOWN;
@@ -113,6 +113,14 @@ namespace CE
 			MouseButtonType button = static_cast<MouseButtonType>(i);
 			int glfwButtonAction = glfwGetMouseButton(m_window, InputUtilities::MouseButtonTypeToGLFWMouseButton(button));
 			UpdateMouseButtonState(button, InputUtilities::GLFWActionToKeyState(glfwButtonAction));
+		}
+	}
+
+	void InputSystem::ProcessTriggers()
+	{
+		for (auto& trigger : m_triggers)
+		{
+			trigger->Update(m_inputKnowledge);
 		}
 	}
 
