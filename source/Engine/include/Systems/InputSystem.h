@@ -261,29 +261,94 @@ namespace CE
 		bool bNeedsUpdate = true;
 	};
 
-	enum class InputEventType { UNKNOWN, PRESSED, RELEASED, HELD, AXIS };
+	enum class InputEventType
+	{
+		UNKNOWN = 0,
+		KEY,
+		AXIS,
+		AXIS_2D
+	};
+
+	enum class AxisType
+	{
+		UNKNOWN = 0,
+		MOUSE_X,
+		MOUSE_Y,
+		MOUSE_WHEEL,
+		TRIGGER_LEFT,
+		TRIGGER_RIGHT
+	};
+
+	enum class Axis2DType
+	{
+		UNKNOWN = 0,
+		MOUSE_XY,
+		STICK_LEFT,
+		STICK_RIGHT
+	};
+
 
 	struct InputEvent {
+	public:
+		InputEvent() : type(InputEventType::UNKNOWN) {}
+
+		void SetKey(KeyType k, KeyState s)
+		{
+			type = InputEventType::KEY;
+			keyInfo.key = k;
+			keyInfo.state = s;
+		}
+
+		void SetAxis(AxisType a, float v)
+		{
+			type = InputEventType::AXIS;
+			axisInfo.value = v;
+		}
+
+		void SetAxis2D(Axis2DType a, float x, float y)
+		{
+			type = InputEventType::AXIS_2D;
+			axis2DInfo.axis = a;
+			axis2DInfo.value.X = x;
+			axis2DInfo.value.Y = y;
+		}
+
+		std::optional<std::reference_wrapper<const auto>> GetKey() const
+		{
+			if (type == InputEventType::KEY)
+			{
+				return std::cref(keyInfo);
+			}
+			return std::nullopt;
+		}
+
+		std::optional<std::reference_wrapper<const auto>> GetAxis() const
+		{
+			if (type == InputEventType::AXIS)
+			{
+				return std::cref(axisInfo);
+			}
+			return std::nullopt;
+		}
+
+		std::optional<std::reference_wrapper<const auto>> GetAxis2D() const
+		{
+			if (type == InputEventType::AXIS_2D)
+			{
+				return std::cref(axis2DInfo);
+			}
+			return std::nullopt;
+		}
+
 	private:
 		InputEventType type;
 		union
 		{
-			KeyType key = KeyType::UNKNOWN;
-			AxisType axis = AxisType::UNKNOWN;
-			float value1D = 0.0f;  // 1D input 
-			struct {
-				float valueX = 0.0f;
-				float valueY = 0.0f;
-			} value2D;
+			struct { KeyType key = KeyType::UNKNOWN; KeyState state = KeyState::UNKNOWN; } keyInfo;
+			struct { AxisType axis = AxisType::UNKNOWN; float value = 0.0f } axisInfo;
+			struct { Axis2DType axis = Axis2DType::UNKNOWN; struct { float X = 0.0f, float Y = 0.0f; } value; } axis2DInfo;
 		};
 
-	public:
-		InputEvent() : type(InputEventType::UNKNOWN) {}
-
-		void SetKey(KeyType k)
-		{
-			
-		}
 	};
 	
 	class InputAction
@@ -294,30 +359,45 @@ namespace CE
 		virtual void ExecuteCallback() = 0;
 		virtual void Update(float deltaTime) {};
 
+		bool IsTriggered() const { return m_bTriggered; }
+	protected:
 		bool m_bTriggered = false;
 	};
 
-	class ButtonAction : public InputAction
+	class PressedAction : public InputAction
 	{
+		using Callback = std::function<void()>;
+
 	public:
-		explicit ButtonAction(KeyType key) : m_key(key) {}
+		explicit ButtonAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
 
 		void ProcessEvents(const std::vector<InputEvent>& events, float deltaTime) override
 		{
-			for (const auto& event : events)
+			for (const auto& ev : events)
 			{
-				if (event.key == m_key && event.type == InputEventType::PRESSED)
+				if (ev.type != InputEventType::PRESSED) { continue; }
+				if (ev.key == m_key)
 				{
-					m_activated = true;
+					m_bTriggered = true;
 				}
 			}
 		}
 
-		bool IsActive() const { return m_activated; }
+		void ExecuteCallback() override
+		{
+			if (m_callback)
+			{
+				m_callback();
+			}
+			else
+			{
+				LOG_ERROR(INPUT, "No callback registered for Hold InputAction!");
+			}
+		}
 
 	private:
 		KeyType m_key;
-		bool m_activated = false;
+		Callback m_callback;
 	};
 
 	class HoldAction : public InputAction
@@ -325,20 +405,21 @@ namespace CE
 		using Callback = std::function<void(float)>;
 
 	public:
-		explicit HoldAction(KeyType key) : m_key(key) {}
+		explicit HoldAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
 
 		void ProcessEvents(const std::vector<InputEvent>& events) override
 		{
-			for (const auto& event : events)
+			for (const auto& ev : events)
 			{
-				if (event.key == m_key)
+				if (ev.type != InputEventType::PRESSED && ev.type != InputEventType::RELEASED) { continue; }
+				if (ev.key == m_key)
 				{
-					if (event.type == InputEventType::PRESSED)
+					if (ev.type == InputEventType::PRESSED)
 					{
 						m_holdTime = 0.0f;
 						m_holding = true;
 					}
-					else if (event.type == InputEventType::RELEASED)
+					else if (ev.type == InputEventType::RELEASED)
 					{
 						m_holding = false;
 					}
@@ -368,7 +449,7 @@ namespace CE
 			}
 			else
 			{
-				LOG_ERROR(INPUT, "No callback registered for InputAction!");
+				LOG_ERROR(INPUT, "No callback registered for Hold InputAction!");
 			}
 		}
 
@@ -382,25 +463,53 @@ namespace CE
 
 	class AxisAction : public InputAction
 	{
+		using Callback = std::function<void(float)>;
+
 	public:
-		explicit AxisAction(KeyType key) : m_key(key) {}
+		explicit AxisAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
 
 		void ProcessEvents(const std::vector<InputEvent>& events, float deltaTime) override
 		{
+			m_bTriggered = false;
 			for (const auto& event : events)
 			{
 				if (event.key == m_key && event.type == InputEventType::AXIS_MOVED)
 				{
 					m_value += event.value * deltaTime;
+					m_bTriggered = true;
 				}
+			}
+		}
+
+		void Update(float deltaTime) override
+		{
+			if (m_value != m_lastValue)
+			{
+				// Fires every frame the value changes
+				m_bTriggered = true;
+				m_lastValue = m_value;
+			}
+		}
+
+		void ExecuteCallback() override
+		{
+			if (m_callback)
+			{
+				m_callback(m_value);
+			}
+			else
+			{
+				LOG_ERROR(INPUT, "Axis Action triggered without callback!");
 			}
 		}
 
 		float GetValue() const { return m_value; }
 
 	private:
+		Callback m_callback;
 		KeyType m_key;
 		float m_value = 0.0f;
+		float m_lastValue = 0.0f;
 	};
 
 	class InputSystem;
