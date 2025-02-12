@@ -371,7 +371,7 @@ namespace CE
 	public:
 		explicit ButtonAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
 
-		void ProcessEvents(const std::vector<InputEvent>& events, float deltaTime) override
+		void ProcessEvents(const std::vector<InputEvent>& events) override
 		{
 			for (const auto& ev : events)
 			{
@@ -465,17 +465,30 @@ namespace CE
 	{
 		using Callback = std::function<void(float)>;
 
+		struct AxisBind
+		{
+			KeyType key;
+			float value;
+
+			bool operator<(const AxisBind& rhs) { return key < rhs.key; }
+		};
+
 	public:
 		explicit AxisAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
 
-		void ProcessEvents(const std::vector<InputEvent>& events, float deltaTime) override
+		void AddKeyBind(KeyType key, float value)
+		{
+			m_axisBinds.push_back(AxisBind{ key, value });
+		}
+
+		void ProcessEvents(const std::vector<InputEvent>& events) override
 		{
 			m_bTriggered = false;
-			for (const auto& event : events)
+			for (const auto& ev : events)
 			{
-				if (event.key == m_key && event.type == InputEventType::AXIS_MOVED)
+				if (ev.key == m_key && ev.type == InputEventType::AXIS)
 				{
-					m_value += event.value * deltaTime;
+					m_value += ev.value * deltaTime;
 					m_bTriggered = true;
 				}
 			}
@@ -483,6 +496,10 @@ namespace CE
 
 		void Update(float deltaTime) override
 		{
+			if (m_bTriggered)
+			{
+				m_value +=
+			}
 			if (m_value != m_lastValue)
 			{
 				// Fires every frame the value changes
@@ -510,6 +527,8 @@ namespace CE
 		KeyType m_key;
 		float m_value = 0.0f;
 		float m_lastValue = 0.0f;
+
+		std::vector<AxisBind> m_axisBinds;
 	};
 
 	class InputSystem;
