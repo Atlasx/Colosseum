@@ -19,6 +19,9 @@ set(SOURCES
 	src/Systems/World/EntitySubsystem.cpp
 	src/Systems/World/ComponentSubsystem.cpp
 
+	# Input
+	src/Input/InputAction.cpp
+
 	# Editor
 	src/GUI/Editor.cpp
 )
@@ -40,6 +43,10 @@ set(INCLUDES
 	include/Systems/WorldSystem.h
 	include/Systems/World/EntitySubsystem.h
 	include/Systems/World/ComponentSubsystem.h
+
+	#Input
+	include/Input/Input.h
+	include/Input/InputAction.h
 
 	# Editor
 	include/GUI/Editor.h

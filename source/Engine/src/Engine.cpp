@@ -160,6 +160,7 @@ namespace CE
 		auto IS = GetSystem<InputSystem>();
 		if (IS)
 		{
+			/*
 			IS->RegisterAction("TestAction One", KeyType::T, []()
 				{
 					std::cout << "Hey this action system works!" << std::endl;
@@ -185,6 +186,7 @@ namespace CE
 
 					IS->RegisterAction("Random Action", randBinding, randBindingLambda);
 				}, KeyState::PRESSED, KeyState::RELEASED);
+			*/
 		}
 
 		GetSystem<EventSystem>()->TestEventSystem();

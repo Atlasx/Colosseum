@@ -7,6 +7,7 @@
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
+#include "glm/ext.hpp"
 
 #include "stdlibincl.h"
 
@@ -118,35 +119,35 @@ namespace CE
 
 	void InputSystem::ProcessTriggers()
 	{
-		for (auto& trigger : m_triggers)
+		/*for (auto& trigger : m_triggers)
 		{
 			trigger->Update(m_inputKnowledge);
-		}
+		}*/
 	}
 
 	void InputSystem::ProcessActions()
 	{
 		// Side note on object pool iterators, not a fan of order specific deduction
-		for (auto& [handle, action] : m_actions)
-		{
-			action.Update(GetKnowledge());
-			if (action.TryConsumeTrigger())
-			{
-				m_triggeredActions.push(handle);
-			}
-		}
+		//for (auto& [handle, action] : m_actions)
+		//{
+		//	action->Update(GetKnowledge());
+		//	/*if (action.TryConsumeTrigger())
+		//	{
+		//		m_triggeredActions.push(handle);
+		//	}*/
+		//}
 	}
 
 	void InputSystem::ProcessCallbacks()
 	{
-		while (!m_triggeredActions.empty())
+		/*while (!m_triggeredActions.empty())
 		{
 			auto actionHandle = m_triggeredActions.front();
 			m_triggeredActions.pop();
 
 			auto& action = m_actions.Get(actionHandle);
 			action.Execute();
-		}
+		}*/
 	}
 
 	bool InputSystem::RemoveAction(InputActionHandle handle)
@@ -154,7 +155,7 @@ namespace CE
 		if (handle == InputActionHandle::INVALID)
 			return false;
 
-		m_actions.Destroy(handle);
+		//m_actions.Destroy(handle);
 		return true;	
 	}
 
@@ -319,11 +320,12 @@ namespace CE
 		ImGui::Begin("Input System Debug");
 		if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen ))
 		{
-			if (m_actions.GetFill() == 0)
+			//if (m_actions.GetFill() == 0)
 			{
 				ImGui::Text("No Actions Bound!");
 			}
 			ImGui::Indent();
+			/*
 			for (auto& [handle, action] : m_actions)
 			{	
 				std::string_view actionName = action.GetName();
@@ -347,6 +349,7 @@ namespace CE
 				}
 				ImGui::PopID();
 			}
+			*/
 			ImGui::Unindent();
 		}
 

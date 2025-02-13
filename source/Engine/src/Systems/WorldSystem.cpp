@@ -1,13 +1,3 @@
-/*
-* Entity System Notes
-* 
-* Core Data:
-*	- Entity
-*	- Component
-* 
-*/
-
-
 #include "Systems/WorldSystem.h"
 
 #include "Engine.h"
@@ -36,6 +26,7 @@ namespace CE
 		// Test out registering some components
 		CreateTestComponents(10);
 
+		/*
 		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
 		if (IS)
 		{
@@ -43,6 +34,7 @@ namespace CE
 				this->OnAddTestComponents();
 			});
 		}
+		*/
 	}
 
 	void WorldSystem::Shutdown()

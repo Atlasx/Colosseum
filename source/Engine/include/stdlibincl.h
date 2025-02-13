@@ -1,7 +1,9 @@
 #pragma once
 
 #include <vector>
+#include <array>
 #include <unordered_map>
+#include <queue>
 #include <iostream>
 #include <memory>
 #include <typeindex>
@@ -9,7 +11,6 @@
 #include <type_traits>
 #include <cassert>
 #include <random>
-#include <queue>
 #include <chrono>
 #include <iterator>
 #include <functional>
