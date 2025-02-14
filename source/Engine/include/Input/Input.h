@@ -197,14 +197,8 @@ namespace CE
 		KeyboardState previousBoardState;
 		KeyboardState currentBoardState;
 
-		KeyType lastKey = KeyType::UNKNOWN;
-		KeyState lastKeyState = KeyState::UNKNOWN;
-
 		MouseState currentMouseState;
 		MouseState previousMouseState;
-
-		MouseButtonType lastButton = MouseButtonType::UNKNOWN;
-		KeyState lastButtonState = KeyState::UNKNOWN;
 
 		unsigned long long currentTime;
 		bool bNeedsUpdate = true;
@@ -215,7 +209,8 @@ namespace CE
 		UNKNOWN = 0,
 		KEY,
 		AXIS,
-		AXIS_2D
+		AXIS_2D,
+		MOUSE_BUTTON
 	};
 
 	enum class AxisType
@@ -240,22 +235,30 @@ namespace CE
 
 	public:
 
-		InputEvent() : type(InputEventType::UNKNOWN) {}
+		InputEvent() : type(InputEventType::UNKNOWN), keyInfo({KeyType::UNKNOWN, KeyState::UNKNOWN}) {}
 
 		struct KeyInfo
 		{
 			KeyType key = KeyType::UNKNOWN;
 			KeyState state = KeyState::UNKNOWN;
 		};
+
 		struct AxisInfo
 		{
 			AxisType axis = AxisType::UNKNOWN;
 			float value = 0.0f;
 		};
+
 		struct Axis2DInfo
 		{
 			Axis2DType axis = Axis2DType::UNKNOWN;
 			struct { float X = 0.0f; float Y = 0.0f; } value;
+		};
+
+		struct MouseButtonInfo
+		{
+			MouseButtonType button = MouseButtonType::UNKNOWN;
+			KeyState state = KeyState::UNKNOWN;
 		};
 
 		void SetKey(KeyType k, KeyState s)
@@ -277,6 +280,13 @@ namespace CE
 			axis2DInfo.axis = a;
 			axis2DInfo.value.X = x;
 			axis2DInfo.value.Y = y;
+		}
+
+		void SetMouseButton(MouseButtonType mb, KeyState s)
+		{
+			type = InputEventType::MOUSE_BUTTON;
+			mouseButtonInfo.button = mb;
+			mouseButtonInfo.state = s;
 		}
 
 		std::optional<const KeyInfo> GetKey() const
@@ -306,6 +316,15 @@ namespace CE
 			return std::nullopt;
 		}
 
+		std::optional<const MouseButtonInfo> GetMouseButton() const
+		{
+			if (type == InputEventType::MOUSE_BUTTON)
+			{
+				return mouseButtonInfo;
+			}
+			return std::nullopt;
+		}
+
 	private:
 		InputEventType type;
 		union
@@ -313,6 +332,7 @@ namespace CE
 			KeyInfo keyInfo;
 			AxisInfo axisInfo;
 			Axis2DInfo axis2DInfo;
+			MouseButtonInfo mouseButtonInfo;
 		};
 
 	};

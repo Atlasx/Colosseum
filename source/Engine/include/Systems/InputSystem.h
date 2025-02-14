@@ -88,6 +88,8 @@ namespace CE
 		/* Input System API */
 	public:
 		void PollInput();
+		void ProcessActions();
+		void ExecuteActionCallbacks();
 		
 		template <typename T>
 		std::shared_ptr<InputAction> RegisterAction(std::string name, KeyType key, T::Callback callback)
@@ -139,19 +141,14 @@ namespace CE
 		// Update input knowledge for a mouse button with a keystate
 		void UpdateMouseButtonState(const MouseButtonType button, const KeyState newState);
 
-		// Iterates through actions and updates
-		void ProcessActions();
 
-		void ProcessTriggers();
-
-		// Iterates through triggered actions and fires callbacks
-		void ProcessCallbacks();
 
 		//std::vector<ActionTriggerBase*> m_triggers;
 		//ObjectPool<InputAction, 20> m_actions;
 		//std::queue<InputActionHandle> m_triggeredActions;
 		
 		std::vector<std::shared_ptr<InputAction>> m_actions;
+		std::queue<InputEvent> m_events;
 
 
 		/* Handle Global Input Processing */

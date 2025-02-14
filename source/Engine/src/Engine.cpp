@@ -218,6 +218,7 @@ namespace CE
 
 		// TODO Calculate delta time
 
+		GetSystem<InputSystem>()->ExecuteActionCallbacks();
 		GetSystem<EventSystem>()->ProcessEvents();
 	}
 	
@@ -250,6 +251,7 @@ namespace CE
 	{
 		// caching IS pointer?
 		GetSystem<InputSystem>()->PollInput();
+		GetSystem<InputSystem>()->ProcessActions();
 	}
 
 	void Engine::ShutdownSystems()

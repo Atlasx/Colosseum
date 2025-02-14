@@ -10,7 +10,7 @@ namespace CE
 	{
 	public:
 		virtual ~InputAction() = default;
-		virtual void ProcessEvents(const std::vector<InputEvent>& events) = 0;
+		virtual void ProcessEvent(const InputEvent& event) = 0;
 		virtual void ExecuteCallback() = 0;
 		virtual void Update(float deltaTime) {};
 
@@ -21,12 +21,12 @@ namespace CE
 
 	class PressedAction : public InputAction
 	{
+	public:
 		using Callback = std::function<void()>;
 
-	public:
 		explicit PressedAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
 
-		void ProcessEvents(const std::vector<InputEvent>& events) override;
+		void ProcessEvent(const InputEvent& event) override;
 		void ExecuteCallback() override;
 
 	private:
@@ -36,12 +36,12 @@ namespace CE
 
 	class HoldAction : public InputAction
 	{
+	public:
 		using Callback = std::function<void(float)>;
 
-	public:
 		explicit HoldAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
 
-		void ProcessEvents(const std::vector<InputEvent>& events) override;
+		void ProcessEvent(const InputEvent& event) override;
 		void Update(float deltaTime) override;
 		void ExecuteCallback() override;
 
@@ -62,10 +62,9 @@ namespace CE
 	// Multiple binds are allowed (might want to do this for all actions too) So W, Up Arrow = 1.f
 	class AxisAction : public InputAction
 	{
+	public:
 		using Callback = std::function<void(float)>;
 
-
-	public:
 		explicit AxisAction(KeyType key, float sense, Callback cb) :
 			m_sensitivity(sense),
 			m_callback(std::move(cb)),
@@ -75,7 +74,7 @@ namespace CE
 			AddKeyBind(key, 1.f);
 		}
 
-		void ProcessEvents(const std::vector<InputEvent>& events) override;
+		void ProcessEvent(const InputEvent& event) override;
 		void Update(float deltaTime) override;
 		void ExecuteCallback() override;
 

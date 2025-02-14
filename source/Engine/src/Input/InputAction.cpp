@@ -9,22 +9,20 @@ namespace CE
 	// ==================================
 	//			  PressedAction
 	// ==================================
-	void PressedAction::ProcessEvents(const std::vector<InputEvent>& events)
+	void PressedAction::ProcessEvent(const InputEvent& event)
 	{
-		for (const auto& ev : events)
+		if (auto info = event.GetKey())
 		{
-			if (auto info = ev.GetKey())
+			if (info->key == m_key && info->state == KeyState::PRESSED)
 			{
-				if (info->key == m_key)
-				{
-					m_bTriggered = true;
-				}
+				m_bTriggered = true;
 			}
 		}
 	}
 
 	void PressedAction::ExecuteCallback()
 	{
+		m_bTriggered = false;
 		if (m_callback)
 		{
 			m_callback();
@@ -38,23 +36,20 @@ namespace CE
 	// ==================================
 	//				HoldAction
 	// ==================================
-	void HoldAction::ProcessEvents(const std::vector<InputEvent>& events)
+	void HoldAction::ProcessEvent(const InputEvent& event)
 	{
-		for (const auto& ev : events)
+		if (auto info = event.GetKey())
 		{
-			if (auto info = ev.GetKey())
+			if (info->key == m_key)
 			{
-				if (info->key == m_key)
+				if (info->state == KeyState::PRESSED)
 				{
-					if (info->state == KeyState::PRESSED)
-					{
-						m_holdTime = 0.0f;
-						m_holding = true;
-					}
-					else if (info->state == KeyState::RELEASED)
-					{
-						m_holding = false;
-					}
+					m_holdTime = 0.0f;
+					m_holding = true;
+				}
+				else if (info->state == KeyState::RELEASED)
+				{
+					m_holding = false;
 				}
 			}
 		}
@@ -70,10 +65,14 @@ namespace CE
 				m_bTriggered = true;
 			}
 		}
+		else {
+			m_bTriggered = false;
+		}
 	}
 
 	void HoldAction::ExecuteCallback()
 	{
+		m_bTriggered = false;
 		if (m_callback)
 		{
 			m_callback(m_holdTime);
@@ -93,19 +92,16 @@ namespace CE
 		m_axisBinds[m_numBindings++] = { key, value };
 	}
 
-	void AxisAction::ProcessEvents(const std::vector<InputEvent>& events)
+	void AxisAction::ProcessEvent(const InputEvent& event)
 	{
 		m_bTriggered = false;
 		m_targetValue = 0.0f;
-		for (const auto& ev : events)
+		if (auto info = event.GetKey())
 		{
-			if (auto info = ev.GetKey())
+			if (HasBinding(info->key))
 			{
-				if (HasBinding(info->key))
-				{
-					m_targetValue += GetBindingValue(info->key);
-					m_bTriggered = true;
-				}
+				m_targetValue += GetBindingValue(info->key);
+				m_bTriggered = true;
 			}
 		}
 	}
@@ -121,6 +117,7 @@ namespace CE
 
 	void AxisAction::ExecuteCallback()
 	{
+		m_bTriggered = false;
 		if (m_callback)
 		{
 			m_callback(m_value);

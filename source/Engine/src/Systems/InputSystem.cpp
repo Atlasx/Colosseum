@@ -38,6 +38,12 @@ namespace CE
 		{
 			DS->Subscribe(this);
 		}
+
+		// Test action
+		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
+		IS->RegisterAction<PressedAction>("Event System Hook", KeyType::P, []() {
+			LOG_INFO(INPUT, "Successfully fired action callback");
+		});
 	}
 
 	void InputSystem::Shutdown()
@@ -55,9 +61,6 @@ namespace CE
 		}
 
 		glfwPollEvents();
-
-		ProcessActions();
-		ProcessCallbacks();
 	}
 
 	/*
@@ -72,16 +75,13 @@ namespace CE
 		const KeyState prevState = m_inputKnowledge.currentBoardState.GetKey(key);
 		m_inputKnowledge.currentBoardState.SetKey(key, newState);
 		m_inputKnowledge.previousBoardState.SetKey(key, prevState);
-		m_inputKnowledge.lastKey = key;
-		m_inputKnowledge.lastKeyState = newState;
 
-		ProcessTriggers();
-
-		ProcessActions();
-
-		// Reset transitory input data fields
-		m_inputKnowledge.lastKey = KeyType::UNKNOWN;
-		m_inputKnowledge.lastKeyState = KeyState::UNKNOWN;
+		if (newState != prevState)
+		{
+			InputEvent state;
+			state.SetKey(key, newState);
+			m_events.push(state);
+		}
 	}
 
 	void InputSystem::UpdateMouseButtonState(const MouseButtonType button, const KeyState newState)
@@ -89,13 +89,13 @@ namespace CE
 		const KeyState prevState = m_inputKnowledge.currentMouseState.GetButton(button);
 		m_inputKnowledge.currentMouseState.SetButton(button, newState);
 		m_inputKnowledge.previousMouseState.SetButton(button, prevState);
-		m_inputKnowledge.lastButton = button;
-		m_inputKnowledge.lastButtonState = newState;
 
-		ProcessActions();
-
-		m_inputKnowledge.lastButton = MouseButtonType::UNKNOWN;
-		m_inputKnowledge.lastButtonState = KeyState::UNKNOWN;
+		if (newState != prevState)
+		{
+			InputEvent state;
+			state.SetMouseButton(button, newState);
+			m_events.push(state);
+		}
 	}
 
 	void InputSystem::UpdateInputKnowledge()
@@ -117,37 +117,30 @@ namespace CE
 		}
 	}
 
-	void InputSystem::ProcessTriggers()
-	{
-		/*for (auto& trigger : m_triggers)
-		{
-			trigger->Update(m_inputKnowledge);
-		}*/
-	}
 
 	void InputSystem::ProcessActions()
 	{
-		// Side note on object pool iterators, not a fan of order specific deduction
-		//for (auto& [handle, action] : m_actions)
-		//{
-		//	action->Update(GetKnowledge());
-		//	/*if (action.TryConsumeTrigger())
-		//	{
-		//		m_triggeredActions.push(handle);
-		//	}*/
-		//}
+		while (!m_events.empty())
+		{
+			for (size_t i = 0; i < m_actions.size(); i++)
+			{
+				auto action = m_actions[i];
+				action->ProcessEvent(m_events.front());
+			}
+			m_events.pop();
+		}
 	}
 
-	void InputSystem::ProcessCallbacks()
+	void InputSystem::ExecuteActionCallbacks()
 	{
-		/*while (!m_triggeredActions.empty())
+		for (size_t i = 0; i < m_actions.size(); i++)
 		{
-			auto actionHandle = m_triggeredActions.front();
-			m_triggeredActions.pop();
-
-			auto& action = m_actions.Get(actionHandle);
-			action.Execute();
-		}*/
+			auto action = m_actions[i];
+			if (action->IsTriggered())
+			{
+				action->ExecuteCallback();
+			}
+		}
 	}
 
 	bool InputSystem::RemoveAction(InputActionHandle handle)
@@ -163,7 +156,20 @@ namespace CE
 	{
 		if (window != m_window) return;
 
-		// TODO build move deltas
+		// TODO Add to knowledge base
+		/*
+		InputEvent eventX;
+		eventX.SetAxis(AxisType::MOUSE_X, xPos);
+		m_events.push(eventX);
+
+		InputEvent eventY;
+		eventY.SetAxis(AxisType::MOUSE_Y, yPos);
+		m_events.push(eventY);
+
+		InputEvent eventXY;
+		eventXY.SetAxis2D(Axis2DType::MOUSE_XY, xPos, yPos);
+		m_events.push(eventXY);
+		*/
 	}
 
 	void InputSystem::OnKey(GLFWwindow* window, int key, int scancode, int action, int mods)

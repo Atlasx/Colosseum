@@ -61,13 +61,13 @@ namespace CE
 
 		// Register a lambda to post an event on input action
 		
-		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
-		IS->RegisterAction("Event System Hook", KeyType::P, [this]() {
+		/*std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
+		IS->RegisterAction<PressedAction>("Event System Hook", KeyType::P, [this]() {
 			TestEvent inputActionEventTest;
 			inputActionEventTest.moreData = 5;
 			inputActionEventTest.someString = "Input Hook";
 			PostEvent(inputActionEventTest);
-		});
+		});*/
 		
 	}
 

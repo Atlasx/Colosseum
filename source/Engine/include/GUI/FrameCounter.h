@@ -32,7 +32,7 @@ public:
 
 	virtual void OnDrawGUI() override
 	{
-		ImGuiWindowFlags statsFlags;
+		ImGuiWindowFlags statsFlags = 0;
 		statsFlags |= ImGuiWindowFlags_NoCollapse;
 		statsFlags |= ImGuiWindowFlags_NoResize;
 		statsFlags |= ImGuiWindowFlags_NoDocking;
