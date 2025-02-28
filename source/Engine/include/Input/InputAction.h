@@ -6,51 +6,102 @@
 
 namespace CE
 {
-	class InputAction
-	{
+	class InputAction {
 	public:
-		virtual ~InputAction() = default;
-		virtual void ProcessEvent(const InputEvent& event) = 0;
-		virtual void ExecuteCallback() = 0;
-		virtual void Update(float deltaTime) {};
+		using Callback = std::function<void()>;
+		using CallbackFloat = std::function<void(float)>;
 
-		bool IsTriggered() const { return m_bTriggered; }
+		virtual ~InputAction() = default;
+
+		void AddKeyBind(KeyType key) { keyBinds.push_back(key); }
+		void AddAxisBind(AxisType axis) { axisBinds.push_back(axis); }
+
+		bool IsKeyBound(KeyType key) const
+		{
+			return std::find(keyBinds.begin(), keyBinds.end(), key) != keyBinds.end();
+		}
+
+		bool IsAxisBound(AxisType axis) const
+		{
+			return std::find(axisBinds.begin(), axisBinds.end(), axis) != axisBinds.end();
+		}
+
+		virtual void ProcessEvent(const InputEvent& event) = 0;
+		virtual void Update(float deltaTime) = 0;
+
 	protected:
-		bool m_bTriggered = false;
+		std::vector<KeyType> keyBinds;
+		std::vector<AxisType> axisBinds;
+		bool triggered = false;
 	};
 
 	class PressedAction : public InputAction
 	{
 	public:
-		using Callback = std::function<void()>;
+		explicit PressedAction(Callback cb) : m_callback(std::move(cb)) {}
 
-		explicit PressedAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
+		void ProcessEvent(const InputEvent& event) override
+		{
+			if (event.GetKey() && IsKeyBound(event.GetKey()->key) && event.GetKey()->state == KeyState::PRESSED)
+			{
+				triggered = true;
+			}
+		}
 
-		void ProcessEvent(const InputEvent& event) override;
-		void ExecuteCallback() override;
+		void Update(float deltaTime) override
+		{
+			if (triggered)
+			{
+				triggered = false;
+				if (m_callback)
+				{
+					m_callback();
+				}
+			}
+		}
 
 	private:
-		KeyType m_key;
 		Callback m_callback;
 	};
 
 	class HoldAction : public InputAction
 	{
 	public:
-		using Callback = std::function<void(float)>;
+		HoldAction(Callback cb, float holdThreshold = 0.f)
+			: m_callback(std::move(cb)), m_threshold(holdThreshold) {}
 
-		explicit HoldAction(KeyType key, Callback cb) : m_key(key), m_callback(std::move(cb)) {}
+		void ProcessEvent(const InputEvent& event) override
+		{
+			if (event.GetKey() && IsKeyBound(event.GetKey()->key))
+			{
+				if (event.GetKey()->state == KeyState::PRESSED)
+				{
+					m_bHolding = true;
+					m_holdTime = 0.f;
+				}
+				if (event.GetKey()->state == KeyState::RELEASED)
+				{
+					m_bHolding = false;
+					m_holdTime = 0.f;
+				}
+			}
+		}
 
-		void ProcessEvent(const InputEvent& event) override;
-		void Update(float deltaTime) override;
-		void ExecuteCallback() override;
-
-		float GetHoldTime() const { return m_holdTime; }
+		void Update(float deltaTime) override
+		{
+			if (m_bHolding)
+			{
+				m_holdTime += deltaTime;
+				if (m_holdTime >= threshold)
+				{
+					m_callback();
+				}
+			}
+		}
 
 	private:
 		Callback m_callback;
-		KeyType m_key;
-		bool m_holding = false;
+		bool m_bHolding = false;
 		float m_holdTime = 0.f;
 		float m_threshold = 0.f;
 	};
@@ -63,41 +114,42 @@ namespace CE
 	class AxisAction : public InputAction
 	{
 	public:
-		using Callback = std::function<void(float)>;
+		explicit AxisAction(CallbackFloat cb) : callback(std::move(cb)) {}
 
-		explicit AxisAction(KeyType key, float sense, Callback cb) :
-			m_sensitivity(sense),
-			m_callback(std::move(cb)),
-			m_axisBinds()
+		void AddKeyBind(KeyType key, float value)
 		{
-			// Test KeyBind
-			AddKeyBind(key, 1.f);
+			keyBinds[key] = value;
 		}
 
-		void ProcessEvent(const InputEvent& event) override;
-		void Update(float deltaTime) override;
-		void ExecuteCallback() override;
+		void AddAxisBind(AxisType axis) {
+			axisBinds.push_back(axis);
+		}
 
-		void AddKeyBind(KeyType key, float value);
-		float GetValue() const { return m_value; }
+		void ProcessEvent(const InputEvent& event) override
+		{
+			// Handle digital key input
+			if (event.GetKey()) {
+				KeyType key = event.GetKey()->key;
+				if (keyBinds.find(key) != keyBinds.end()) {
+					float value = keyBinds[key] * (event.GetKey()->state == KeyState::PRESSED ? 1.0f : 0.0f);
+					accumulatedValue += value; // Adjust value when pressed/released
+					callback(accumulatedValue);
+				}
+			}
+
+			// Handle analog axis input
+			if (event.GetAxis() && IsAxisBound(event.GetAxis()->axis)) {
+				callback(event.GetAxis()->value);
+			}
+		}
+
+		void Reset() {
+			accumulatedValue = 0.0f;
+		}
 
 	private:
-		struct AxisBind
-		{
-			KeyType key;
-			float value;
-		};
-
-		Callback m_callback;
-		float m_value = 0.0f;
-		float m_targetValue = 0.0f;
-		float m_sensitivity = 15.f;
-
-
-		std::array<AxisBind, 4> m_axisBinds;
-		size_t m_numBindings = 0;
-
-		bool HasBinding(KeyType key) const;
-		float GetBindingValue(KeyType key) const;
+		CallbackFloat callback;
+		std::unordered_map<KeyType, float> keyBinds; // Map of digital key values
+		float accumulatedValue = 0.0f; // Stores sum of keybind values
 	};
 }

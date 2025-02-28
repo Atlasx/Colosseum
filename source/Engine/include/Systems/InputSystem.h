@@ -92,26 +92,24 @@ namespace CE
 		void ExecuteActionCallbacks();
 		
 		template <typename T>
-		std::shared_ptr<InputAction> RegisterAction(std::string name, KeyType key, T::Callback callback)
+		InputActionHandle RegisterAction(std::string name)
 		{
-			 m_actions.push_back(std::make_shared<T>(key, callback));
-			 return m_actions.back();
+			std::shared_ptr<InputAction> ptr = std::make_shared<T>(name);
+
+			InputActionHandle handle = m_actionPool.Create(ptr);
+			if (handle == InputActionHandle::INVALID)
+			{
+				LOG_ERROR(INPUT, "Failed to create new InputActionHandle");
+			}
+
+			return handle;
 		}
 
-
-		/*
-		InputActionHandle RegisterAction(std::string actionName, KeyType keyBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from = KeyState::RELEASED)
+		template <typename T>
+		T* GetAction(const InputActionHandle& handle)
 		{
-			return m_actions.Create(actionName, keyBinding, std::move(callback), to, from);
-		}
-		*/
 
-		/* Removing Mouse Input Actions for now, TODO mouse input implementation
-		InputActionHandle RegisterAction(std::string actionName, MouseButtonType mouseBinding, InputAction::Callback callback, KeyState to = KeyState::PRESSED, KeyState from KeyState::RELEASED)
-		{
-			return m_actions.Create(actionName, mouseBinding, std::move(callback), to, from);
 		}
-		*/
 
 		bool RemoveAction(InputActionHandle actionHandle);
 
@@ -140,16 +138,9 @@ namespace CE
 		
 		// Update input knowledge for a mouse button with a keystate
 		void UpdateMouseButtonState(const MouseButtonType button, const KeyState newState);
-
-
-
-		//std::vector<ActionTriggerBase*> m_triggers;
-		//ObjectPool<InputAction, 20> m_actions;
-		//std::queue<InputActionHandle> m_triggeredActions;
 		
-		std::vector<std::shared_ptr<InputAction>> m_actions;
+		ObjectPool<std::shared_ptr<InputAction>, 128, InputActionHandle> m_actionPool;
 		std::queue<InputEvent> m_events;
-
 
 		/* Handle Global Input Processing */
 	private:

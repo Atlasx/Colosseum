@@ -332,7 +332,7 @@ namespace CE
 			}
 			ImGui::Indent();
 			/*
-			for (auto& [handle, action] : m_actions)
+			for (auto [action] : m_actions)
 			{	
 				std::string_view actionName = action.GetName();
 				ImGui::PushID(handle.GetIndex());
