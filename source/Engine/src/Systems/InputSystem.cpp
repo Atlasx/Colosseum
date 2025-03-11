@@ -169,7 +169,7 @@ namespace CE
 
 		UpdateKeyState(keyT, keyS);
 
-		LOG_INFO(INPUT, "Key Pressed! {}", std::string_view(InputUtilities::GetKeyName(keyT)));
+		LOG_INFO(INPUT, "Key Pressed! {}", InputUtilities::GetKeyName(keyT));
 	}
 
 	void InputSystem::OnMouseButton(GLFWwindow* window, int button, int action, int mods)
