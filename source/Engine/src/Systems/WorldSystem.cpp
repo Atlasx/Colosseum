@@ -26,15 +26,13 @@ namespace CE
 		// Test out registering some components
 		CreateTestComponents(10);
 
-		/*
 		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
 		if (IS)
 		{
-			IS->RegisterAction("Add Test Components", KeyType::EQUAL, [&]() {
+			IS->RegisterAction<PressedAction>("Add Test Components", KeyType::EQUAL, [&]() {
 				this->OnAddTestComponents();
 			});
 		}
-		*/
 	}
 
 	void WorldSystem::Shutdown()

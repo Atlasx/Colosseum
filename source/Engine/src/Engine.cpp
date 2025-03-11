@@ -160,16 +160,16 @@ namespace CE
 		auto IS = GetSystem<InputSystem>();
 		if (IS)
 		{
-			/*
-			IS->RegisterAction("TestAction One", KeyType::T, []()
+			
+			IS->RegisterAction<PressedAction>("TestAction One", KeyType::T, []()
 				{
 					std::cout << "Hey this action system works!" << std::endl;
-				}, KeyState::PRESSED);
-			IS->RegisterAction("TestAction Two", KeyType::B, []()
+				});
+			IS->RegisterAction<PressedAction>("TestAction Two", KeyType::B, []()
 				{
 					std::cout << "This one also works, not a fluke!" << std::endl;
-				}, KeyState::RELEASED, KeyState::PRESSED);
-			IS->RegisterAction("Add Action", KeyType::N, [IS]()
+				});
+			IS->RegisterAction<PressedAction>("Add Action", KeyType::N, [IS]()
 				{
 					LOG_INFO(INPUT, "Creating new keybinding!");
 
@@ -184,9 +184,8 @@ namespace CE
 							LOG_INFO(INPUT, "Random binding pressed!");
 						};
 
-					IS->RegisterAction("Random Action", randBinding, randBindingLambda);
-				}, KeyState::PRESSED, KeyState::RELEASED);
-			*/
+					IS->RegisterAction<PressedAction>("Random Action", randBinding, randBindingLambda);
+				});
 		}
 
 		GetSystem<EventSystem>()->TestEventSystem();
@@ -218,7 +217,7 @@ namespace CE
 
 		// TODO Calculate delta time
 
-		GetSystem<InputSystem>()->ExecuteActionCallbacks();
+		GetSystem<InputSystem>()->UpdateActions();
 		GetSystem<EventSystem>()->ProcessEvents();
 	}
 	
@@ -251,7 +250,6 @@ namespace CE
 	{
 		// caching IS pointer?
 		GetSystem<InputSystem>()->PollInput();
-		GetSystem<InputSystem>()->ProcessActions();
 	}
 
 	void Engine::ShutdownSystems()

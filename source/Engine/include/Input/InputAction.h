@@ -26,8 +26,14 @@ namespace CE
 			return std::find(axisBinds.begin(), axisBinds.end(), axis) != axisBinds.end();
 		}
 
+		KeyType GetBinding() const
+		{
+			return keyBinds[0];
+		}
+
 		virtual void ProcessEvent(const InputEvent& event) = 0;
 		virtual void Update(float deltaTime) = 0;
+		virtual void Trigger() {};
 
 	protected:
 		std::vector<KeyType> keyBinds;
@@ -38,7 +44,10 @@ namespace CE
 	class PressedAction : public InputAction
 	{
 	public:
-		explicit PressedAction(Callback cb) : m_callback(std::move(cb)) {}
+		explicit PressedAction(KeyType binding, Callback cb) : m_callback(std::move(cb))
+		{
+			AddKeyBind(binding);
+		}
 
 		void ProcessEvent(const InputEvent& event) override
 		{
@@ -58,6 +67,11 @@ namespace CE
 					m_callback();
 				}
 			}
+		}
+
+		void Trigger() override
+		{
+			m_callback();
 		}
 
 	private:
@@ -92,11 +106,16 @@ namespace CE
 			if (m_bHolding)
 			{
 				m_holdTime += deltaTime;
-				if (m_holdTime >= threshold)
+				if (m_holdTime >= m_threshold)
 				{
 					m_callback();
 				}
 			}
+		}
+
+		void Trigger() override
+		{
+			m_callback();
 		}
 
 	private:
@@ -121,7 +140,8 @@ namespace CE
 			keyBinds[key] = value;
 		}
 
-		void AddAxisBind(AxisType axis) {
+		void AddAxisBind(AxisType axis)
+		{
 			axisBinds.push_back(axis);
 		}
 
@@ -143,8 +163,19 @@ namespace CE
 			}
 		}
 
-		void Reset() {
+		void Update(float deltaTime) override
+		{
+
+		}
+
+		void Reset()
+		{
 			accumulatedValue = 0.0f;
+		}
+
+		void Trigger() override
+		{
+			callback(0.0f);
 		}
 
 	private:

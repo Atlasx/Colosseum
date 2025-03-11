@@ -135,6 +135,15 @@ struct Handle
 template <UnsignedIntegral _T, std::size_t _Idx, std::size_t _Gen, std::size_t _Type, std::size_t _Flags>
 const Handle<_T, _Idx, _Gen, _Type, _Flags> Handle<_T, _Idx, _Gen, _Type, _Flags>::INVALID{ Handle<_T, _Idx, _Gen, _Type, _Flags>::IndexMask, 0, false };
 
+// Special hash function extension for use as a key in containers
+template <typename _Type, std::size_t _IndexBits, std::size_t _GenerationBits, std::size_t _TypeBits, std::size_t _FlagBits>
+struct std::hash<Handle<_Type, _IndexBits, _GenerationBits, _TypeBits, _FlagBits>>
+{
+	std::size_t operator()(const Handle<_Type, _IndexBits, _GenerationBits, _TypeBits, _FlagBits>& handle) const noexcept
+	{
+		return std::hash<_Type>{}(handle.raw()); // Hash the underlying value
+	}
+};
 
 // Finally! Handle type declarations! Systems can create their own too
 using ObjectHandle = Handle<std::uint64_t, 32, 16, 8, 7>;

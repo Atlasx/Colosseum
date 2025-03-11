@@ -17,8 +17,8 @@ namespace CE
 		Entity(const Entity&) = delete;
 		Entity& operator=(const Entity&) = delete;
 
-		Entity(Entity&&) = default;
-		Entity& operator=(Entity&&) = default;
+		Entity(Entity&&) = delete;
+		Entity& operator=(Entity&&) = delete;
 
 		void OnBegin() {}
 		void Update(float dt) {}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Systems/EngineSystem.h"
+#include "Systems/LogSystem.h"
 
 #include "Input/Input.h"
 #include "Input/InputAction.h"
@@ -88,19 +89,20 @@ namespace CE
 		/* Input System API */
 	public:
 		void PollInput();
-		void ProcessActions();
-		void ExecuteActionCallbacks();
+		void UpdateActions();
 		
-		template <typename T>
-		InputActionHandle RegisterAction(std::string name)
+		template <typename T, typename... Args>
+		InputActionHandle RegisterAction(std::string name, Args&&... args)
 		{
-			std::shared_ptr<InputAction> ptr = std::make_shared<T>(name);
+			std::shared_ptr<InputAction> ptr = std::make_shared<T>(std::forward<Args>(args)...);
 
 			InputActionHandle handle = m_actionPool.Create(ptr);
 			if (handle == InputActionHandle::INVALID)
 			{
 				LOG_ERROR(INPUT, "Failed to create new InputActionHandle");
 			}
+
+			m_actionNames[handle] = name;
 
 			return handle;
 		}
@@ -138,9 +140,11 @@ namespace CE
 		
 		// Update input knowledge for a mouse button with a keystate
 		void UpdateMouseButtonState(const MouseButtonType button, const KeyState newState);
-		
+
 		ObjectPool<std::shared_ptr<InputAction>, 128, InputActionHandle> m_actionPool;
 		std::queue<InputEvent> m_events;
+
+		std::unordered_map<InputActionHandle, std::string> m_actionNames;
 
 		/* Handle Global Input Processing */
 	private:

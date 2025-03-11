@@ -26,10 +26,9 @@ public:
 		HandleType handle;
 		ObjectType object;
 
-		PoolEntry() 
+		PoolEntry() : object()
 		{
 			handle = HandleType::INVALID;
-			object = ObjectType();
 		}
 		PoolEntry(HandleType h, ObjectType obj) : handle(h), object(std::move(obj)) {}
 
@@ -87,7 +86,9 @@ public:
 		HandleType handle = HandleType::Generate(index, generation + 1, true, aFlags, aType);
 		PoolEntry& entry = m_objects[index];
 		entry.handle = handle;
-		entry.object = ObjectType{ std::forward<Args>(args)... };
+
+		// This is a little funky, essentially creates the ObjectType in-place
+		new (&entry.object) ObjectType(std::forward<Args>(args)...);
 		m_count++;
 
 		return handle;

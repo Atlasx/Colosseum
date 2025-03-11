@@ -13,8 +13,8 @@ namespace CE
 			for (auto& [handle, entity] : entityPool)
 			{
 				ImGui::PushID(handle.raw());
-				char headerName[16];
-				sprintf(headerName, "Entity: 0x%X8", static_cast<std::uint64_t>(handle.raw()));
+				char headerName[32];
+				sprintf(headerName, "Entity: 0x%8X", static_cast<std::uint64_t>(handle.raw()));
 				if (ImGui::CollapsingHeader(headerName))
 				{
 					ImGui::Indent();

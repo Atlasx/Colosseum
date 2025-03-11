@@ -118,28 +118,16 @@ namespace CE
 	}
 
 
-	void InputSystem::ProcessActions()
+	void InputSystem::UpdateActions()
 	{
+		// Flush Event Queue
 		while (!m_events.empty())
 		{
-			for (size_t i = 0; i < m_actions.size(); i++)
+			for (auto& [handle, action] : m_actionPool)
 			{
-				auto action = m_actions[i];
 				action->ProcessEvent(m_events.front());
 			}
 			m_events.pop();
-		}
-	}
-
-	void InputSystem::ExecuteActionCallbacks()
-	{
-		for (size_t i = 0; i < m_actions.size(); i++)
-		{
-			auto action = m_actions[i];
-			if (action->IsTriggered())
-			{
-				action->ExecuteCallback();
-			}
 		}
 	}
 
@@ -148,7 +136,7 @@ namespace CE
 		if (handle == InputActionHandle::INVALID)
 			return false;
 
-		//m_actions.Destroy(handle);
+		m_actionPool.Destroy(handle);
 		return true;	
 	}
 
@@ -326,25 +314,25 @@ namespace CE
 		ImGui::Begin("Input System Debug");
 		if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen ))
 		{
-			//if (m_actions.GetFill() == 0)
+			if (m_actionPool.GetFill() == 0)
 			{
 				ImGui::Text("No Actions Bound!");
 			}
 			ImGui::Indent();
-			/*
-			for (auto [action] : m_actions)
+			
+			for (auto& [handle, action] : m_actionPool)
 			{	
-				std::string_view actionName = action.GetName();
+				std::string_view actionName = m_actionNames[handle];
 				ImGui::PushID(handle.GetIndex());
 				if (ImGui::CollapsingHeader(actionName.data(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet))
 				{
 					ImGui::Indent();
-					const char* bindingName = InputUtilities::GetKeyName(action.GetBinding());
+					const char* bindingName = InputUtilities::GetKeyName(action->GetBinding());
 					ImGui::Text("Action: 0x%X", handle);
 					ImGui::Text("Key Binding: %s", bindingName);
 					if (ImGui::Button("Fire"))
 					{
-						action.Trigger();
+						action->Trigger();
 					}
 					ImGui::SameLine();
 					if (ImGui::Button("Remove"))
@@ -355,7 +343,7 @@ namespace CE
 				}
 				ImGui::PopID();
 			}
-			*/
+			
 			ImGui::Unindent();
 		}
 
