@@ -66,7 +66,8 @@ namespace CE
 		template <typename ComponentType>
 		void RegisterComponent()
 		{
-			LOG_INFO(WORLD, "Registering Component: {}", typeid(ComponentType).name());
+			LOG_INFO(WORLD, "Registering Component");
+			//LOG_INFO(WORLD, "Registering Component: {}", typeid(ComponentType).name());
 			m_components.RegisterComponent<ComponentType>();
 		}
 

@@ -33,8 +33,9 @@ namespace CE
 				tag << std::vformat("[{}]", std::make_format_args(logChannelStr));
 			}
 
+			std::string tagStr(tag.str());
 			message = std::vformat("{} {}\n",
-				std::make_format_args(tag.str(), msg)
+				std::make_format_args(tagStr, msg)
 			);
 		}
 		catch (const std::format_error& e)
