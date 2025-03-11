@@ -187,7 +187,8 @@ namespace CE
 				return static_cast<EventQueue<EType>*>(it->second);
 			}
 
-			LOG_WARN(EVENTS, "Failed to GetQueue of type {}", typeid(EType).name());
+			LOG_WARN(EVENTS, "Failed to GetQueue");
+			//LOG_WARN(EVENTS, "Failed to GetQueue of type {}", typeid(EType).name());
 			return nullptr;
 		}
 

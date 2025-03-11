@@ -24,11 +24,13 @@ namespace CE
 			}
 			if (m_bShowLevel)
 			{
-				tag << std::vformat("[{}]", std::make_format_args(GetLogLevelName(level)));
+				std::string_view logLevelStr(GetLogLevelName(level));
+				tag << std::vformat("[{}]", std::make_format_args(logLevelStr));
 			}
 			if (m_bShowChannel)
 			{
-				tag << std::vformat("[{}]", std::make_format_args(GetLogChannelName(channel)));
+				std::string_view logChannelStr(GetLogChannelName(channel));
+				tag << std::vformat("[{}]", std::make_format_args(logChannelStr));
 			}
 
 			message = std::vformat("{} {}\n",
