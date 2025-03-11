@@ -100,7 +100,7 @@ namespace CE
 			else
 			{
 				message = std::vformat(std::string_view(msg),
-					std::make_format_args(std::forward<Args>(msgArgs)...)
+					std::make_format_args(msgArgs...)
 				);
 			}
 			g_log->LogImpl(level, channel, message);
