@@ -14,7 +14,7 @@ namespace CE
 			{
 				ImGui::PushID(handle.raw());
 				char headerName[32];
-				sprintf(headerName, "Entity: 0x%8X", static_cast<std::uint64_t>(handle.raw()));
+				sprintf(headerName, "Entity: 0x%8X", static_cast<unsigned int>(handle.raw()));
 				if (ImGui::CollapsingHeader(headerName))
 				{
 					ImGui::Indent();

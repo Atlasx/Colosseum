@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stdlibincl.h"
+
 class IDebugGUISubscriber
 {
 public:
