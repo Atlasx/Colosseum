@@ -59,6 +59,16 @@ namespace CE
 		MAX
 	};
 
+	template<typename T>
+	constexpr decltype(auto) FormatArg(T&& arg) {
+		if constexpr (std::is_same_v<std::decay_t<T>, const char*>) {
+			return std::string_view(arg); // Convert `const char*` to `std::string_view`
+		}
+		else {
+			return std::forward<T>(arg); // Forward everything else unchanged
+		}
+	}
+
 	// Chicken and egg here
 	class LogSystem;
 	extern LogSystem* g_log;
@@ -85,7 +95,6 @@ namespace CE
 		virtual void OnDrawGUI() override;
 		virtual std::string_view GetDebugMenuName() { return "Debug Log"; }
 
-
 		/* Log System */
 	public:
 		template<typename... Args>
@@ -100,7 +109,7 @@ namespace CE
 			else
 			{
 				message = std::vformat(std::string_view(msg),
-					std::make_format_args(msgArgs...)
+					std::make_format_args(FormatArg(msgArgs)...)
 				);
 			}
 			g_log->LogImpl(level, channel, message);

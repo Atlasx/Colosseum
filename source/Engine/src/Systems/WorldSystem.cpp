@@ -24,7 +24,7 @@ namespace CE
 		RegisterComponent<RenderComponent>();
 
 		// Test out registering some components
-		CreateTestComponents(10);
+		CreateTestComponents(100);
 
 		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
 		if (IS)
