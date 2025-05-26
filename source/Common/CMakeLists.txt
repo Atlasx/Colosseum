@@ -12,8 +12,12 @@ set(INCLUDES
 	include/ObjectPool.h
 )
 
-source_group("Source Files" FILES ${SOURCES})
-source_group("Header Files" FILES ${INCLUDES})
+# Setup source group to mimic file structure
+foreach(source IN LISTS SOURCES INCLUDES)
+    get_filename_component(source_path "${source}" PATH)
+    string(REPLACE "/" "\\" source_path_msvc "${source_path}")
+    source_group("${source_path_msvc}" FILES "${source}")
+endforeach()
 
 add_library(Common STATIC ${SOURCES} ${INCLUDES})
 
