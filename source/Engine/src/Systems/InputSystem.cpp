@@ -309,7 +309,7 @@ namespace CE
 		ImGui::PopID();
 	}
 
-	
+#ifdef CDEBUG
 	void InputSystemDebug::OnDrawGUI()
 	{
 		if (m_owner == nullptr) { return; }
@@ -385,6 +385,7 @@ namespace CE
 		}
 		ImGui::End();
 	}
+#endif
 	
 
 	namespace InputUtilities

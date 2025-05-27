@@ -144,6 +144,7 @@ namespace CE
 		}
 	}
 	
+#ifdef CDEBUG
 	void LogSystemDebug::OnDrawGUI()
 	{
 		static bool s_bLogInfo = true;
@@ -222,4 +223,5 @@ namespace CE
 		ImGui::EndChild();
 		ImGui::End();
 	}
+#endif
 }

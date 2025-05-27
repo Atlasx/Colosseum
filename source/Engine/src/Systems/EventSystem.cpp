@@ -86,6 +86,7 @@ namespace CE
 		LOG(EVENTS, "Member Listener Works! {}", e.someString);
 	}
 
+#ifdef CDEBUG
 	void EventSystemDebug::OnDrawGUI()
 	{
 		if (m_owner == nullptr) { return; }
@@ -114,4 +115,5 @@ namespace CE
 
 		ImGui::End();
 	}
+#endif
 }
