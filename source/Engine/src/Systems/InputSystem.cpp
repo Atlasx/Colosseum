@@ -32,12 +32,15 @@ namespace CE
 		glfwSetScrollCallback(m_window, &GOnScroll);
 		glfwSetWindowCloseCallback(m_window, &GOnWindowClose);
 
+#ifdef CDEBUG
 		// Register debug GUI
+		m_debugger = new InputSystemDebug(this);
 		std::shared_ptr<DebugSystem> DS = m_engine->GetSystem<DebugSystem>();
 		if (DS)
 		{
-			DS->Subscribe(this);
+			DS->Subscribe(m_debugger);
 		}
+#endif
 
 		// Test action
 		std::shared_ptr<InputSystem> IS = m_engine->GetSystem<InputSystem>();
@@ -307,23 +310,25 @@ namespace CE
 	}
 
 	
-	void InputSystem::OnDrawGUI()
+	void InputSystemDebug::OnDrawGUI()
 	{
+		if (m_owner == nullptr) { return; }
+
 		ImGui::SetNextWindowSize(ImVec2(200.f, 500.f), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowPos(ImVec2(10.f, 110.f), ImGuiCond_Appearing);
 		ImGui::SetNextWindowSizeConstraints(ImVec2(50.f, 50.f), ImVec2(FLT_MAX, FLT_MAX));
 		ImGui::Begin("Input System Debug");
 		if (ImGui::CollapsingHeader("Actions", ImGuiTreeNodeFlags_DefaultOpen ))
 		{
-			if (m_actionPool.GetFill() == 0)
+			if (m_owner->m_actionPool.GetFill() == 0)
 			{
 				ImGui::Text("No Actions Bound!");
 			}
 			ImGui::Indent();
 			
-			for (auto& [handle, action] : m_actionPool)
+			for (auto& [handle, action] : m_owner->m_actionPool)
 			{	
-				std::string_view actionName = m_actionNames[handle];
+				std::string_view actionName = m_owner->m_actionNames[handle];
 				ImGui::PushID(handle.GetIndex());
 				if (ImGui::CollapsingHeader(actionName.data(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Bullet))
 				{
@@ -338,7 +343,7 @@ namespace CE
 					ImGui::SameLine();
 					if (ImGui::Button("Remove"))
 					{
-						RemoveAction(handle);
+						m_owner->RemoveAction(handle);
 					}
 					ImGui::Unindent();
 				}
@@ -353,7 +358,7 @@ namespace CE
 			ImGui::Text("Mouse Input");
 			ImGui::BeginChild("MouseInput", ImVec2(0, 0), ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY);
 
-			auto& knowledge = GetKnowledge();
+			auto& knowledge = m_owner->GetKnowledge();
 			for (uint8_t i = 0; i < 8; i++)
 			{
 				MouseButtonType button = static_cast<MouseButtonType>(i);
@@ -374,7 +379,7 @@ namespace CE
 			ImGui::Checkbox("Show Keyboard", &bShowKeyboard);
 			if (bShowKeyboard) {
 				ImGui::Begin("Keyboard Debug", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-				DrawKeyboardState(GetKnowledge().currentBoardState, ImVec2(), ImVec2());
+				DrawKeyboardState(m_owner->GetKnowledge().currentBoardState, ImVec2(), ImVec2());
 				ImGui::End();
 			}
 		}

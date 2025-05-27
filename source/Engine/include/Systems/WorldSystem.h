@@ -14,8 +14,12 @@
 namespace CE
 {
 	class Entity;
+	
+#ifdef CDEBUG
+	class WorldSystemDebug;
+#endif
 
-	class WorldSystem final : public EngineSystem, IDebugGUISubscriber
+	class WorldSystem final : public EngineSystem
 	{
 	public:
 		WorldSystem(Engine* engine) : EngineSystem(engine) {};
@@ -28,13 +32,10 @@ namespace CE
 		virtual void Startup() override;
 		virtual void Shutdown() override;
 
-		/* IDebugGUISubscriber Interface */
-	public:
-		virtual void OnDrawGUI() override;
-		virtual std::string_view GetDebugMenuName() override { return WORLD_SYSTEM; }
-	
+		friend class WorldSystemDebug;
+
 		/* World System API */
-	
+	public:
 		Entity& CreateEntity();
 		void DestroyEntity(const EntityHandle& handle);
 		Entity& GetEntity(const EntityHandle& handle);
@@ -83,5 +84,16 @@ namespace CE
 
 		void CreateTestComponents(std::size_t amount);
 		void OnAddTestComponents();
+	};
+
+	class WorldSystemDebug : public IDebugGUI
+	{
+		WorldSystem* m_owner;
+
+	public:
+		WorldSystemDebug(WorldSystem* owner) : m_owner(owner) {}
+
+		void OnDrawGUI() override;
+		std::string_view GetDebugMenuName() override { return "World"; }
 	};
 }

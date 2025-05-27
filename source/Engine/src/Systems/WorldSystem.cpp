@@ -13,11 +13,14 @@ namespace CE
 	{
 		LOG_INFO(WORLD, "Startup Game World System");
 
+#ifdef CDEBUG
+		m_debugger = new WorldSystemDebug(this);
 		std::shared_ptr<DebugSystem> DS = m_engine->GetSystem<DebugSystem>();
 		if (DS)
 		{
-			DS->Subscribe(this);
+			DS->Subscribe(m_debugger);
 		}
+#endif
 
 		// Register some components for testing, not sure where to do this normally
 		RegisterComponent<TransformComponent>();
@@ -38,6 +41,10 @@ namespace CE
 	void WorldSystem::Shutdown()
 	{
 		LOG_INFO(WORLD, "Shutdown Game World System");
+		
+#ifdef CDEBUG
+		delete m_debugger;
+#endif
 	}
 
 	Entity& WorldSystem::CreateEntity()
@@ -54,17 +61,6 @@ namespace CE
 	Entity& WorldSystem::GetEntity(const EntityHandle& handle)
 	{
 		return m_entities.Get(handle);
-	}
-
-	void WorldSystem::OnDrawGUI()
-	{
-		ImGui::Begin("World System Debug");
-
-		m_components.DrawComponentPools();
-
-		m_entities.DrawEntityPool();
-
-		ImGui::End();
 	}
 
 	void WorldSystem::CreateTestComponents(std::size_t amount)
@@ -90,4 +86,19 @@ namespace CE
 	{
 		CreateTestComponents(100);
 	}
+
+#ifdef CDEBUG
+	void WorldSystemDebug::OnDrawGUI()
+	{
+		if (m_owner == nullptr) { return; }
+
+		ImGui::Begin("World System Debug");
+
+		m_owner->m_components.DrawComponentPools();
+
+		m_owner->m_entities.DrawEntityPool();
+
+		ImGui::End();
+	}
+#endif
 }

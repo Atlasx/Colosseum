@@ -1,6 +1,6 @@
 #pragma once
 
-class FrameCounter : public IDebugGUISubscriber
+class FrameCounter
 {
 	using TimePoint = std::chrono::steady_clock::time_point;
 
@@ -30,7 +30,7 @@ public:
 		return 0;
 	}
 
-	virtual void OnDrawGUI() override
+	virtual void OnDrawGUI()
 	{
 		ImGuiWindowFlags statsFlags = 0;
 		statsFlags |= ImGuiWindowFlags_NoCollapse;
@@ -48,7 +48,7 @@ public:
 		ImGui::End();
 	}
 
-	virtual std::string_view GetDebugMenuName() override { return "FPS"; }
+	virtual std::string_view GetDebugMenuName() { return "FPS"; }
 
 private:
 	int m_fps;

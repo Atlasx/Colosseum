@@ -105,7 +105,7 @@ namespace CE
 		std::shared_ptr<DebugSystem> DS = GetSystem<DebugSystem>();
 		if (DS)
 		{
-			DS->Subscribe(m_frameCounter);
+			//DS->Subscribe(m_frameCounter);
 		}
 	}
 

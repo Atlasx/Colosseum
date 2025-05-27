@@ -2,7 +2,7 @@
 
 #include "stdlibincl.h"
 
-class IDebugGUISubscriber
+class IDebugGUI
 {
 public:
 	virtual void OnDrawGUI() = 0;

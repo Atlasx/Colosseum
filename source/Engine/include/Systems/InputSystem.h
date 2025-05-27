@@ -17,6 +17,9 @@ class GLFWwindow;
 
 namespace CE
 {	
+
+	class InputSystemDebug;
+
 	/*
 	* MISC NOTES
 	* 
@@ -59,12 +62,11 @@ namespace CE
 	*	once per frame, at a specific time in the update cycle.
 	* 
 	*/
-	
 
 	class InputSystem;
 	extern InputSystem* g_input;
 
-	class InputSystem final : public EngineSystem, IDebugGUISubscriber
+	class InputSystem final : public EngineSystem
 	{		
 		using InputActionHandle = GenericHandle;
 
@@ -78,12 +80,10 @@ namespace CE
 		virtual void Startup() override;
 		virtual void Shutdown() override;
 		friend class Engine;
-		
 
-		/* IDebugGUISubscriber Interface */
-	public:
-		virtual void OnDrawGUI() override;
-		virtual std::string_view GetDebugMenuName() override { return "Input"; }
+#ifdef CDEBUG
+		friend class InputSystemDebug;
+#endif
 
 
 		/* Input System API */
@@ -172,5 +172,16 @@ namespace CE
 		{
 			g_input->OnWindowClose(window);
 		}
+	};
+
+	class InputSystemDebug : public IDebugGUI
+	{
+		InputSystem* m_owner;
+
+	public:
+		InputSystemDebug(InputSystem* owner) : m_owner(owner) {}
+
+		void OnDrawGUI() override;
+		std::string_view GetDebugMenuName() override { return "Input"; }
 	};
 }

@@ -2,6 +2,10 @@
 
 #include "stdlibincl.h"
 
+#ifdef CDEBUG
+#include "GUI/DebugGUISubscriber.h"
+#endif
+
 namespace CE
 {
 	class Engine;
@@ -9,10 +13,15 @@ namespace CE
 	class EngineSystem
 	{
 	protected:
-		explicit EngineSystem(Engine* engine) : m_engine(engine) {};
+		explicit EngineSystem(Engine* engine) : m_engine(engine) {}
+
 		friend class Engine;
 
 		virtual ~EngineSystem() = 0;
+
+#ifdef CDEBUG
+		IDebugGUI* m_debugger;
+#endif
 
 	public:
 		virtual void Startup() = 0;

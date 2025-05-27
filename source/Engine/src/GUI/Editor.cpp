@@ -22,7 +22,7 @@ namespace CE
 
 	}
 
-	void DebugSystem::Subscribe(IDebugGUISubscriber* sub)
+	void DebugSystem::Subscribe(IDebugGUI* sub)
 	{
 		DebugView dv;
 		dv.subscriber = sub;

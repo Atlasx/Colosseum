@@ -6,19 +6,29 @@
 
 namespace CE
 {
+	EventSystem::EventSystem(Engine* engine) : EngineSystem(engine) {}
+
 	void EventSystem::Startup()
 	{
 		AddQueue<GameplayEvent>();
 
+
+#ifdef CDEBUG
+		m_debugger = new EventSystemDebug(this);
 		std::shared_ptr<DebugSystem> DS = m_engine->GetSystem<DebugSystem>();
 		if (DS)
 		{
-			DS->Subscribe(this);
+			DS->Subscribe(m_debugger);
 		}
+#endif
 	}
 
 	void EventSystem::Shutdown()
 	{
+#ifdef CDEBUG
+		delete m_debugger;
+#endif
+
 		for (auto [index, queue] : m_queues)
 		{
 			delete queue;
@@ -76,12 +86,14 @@ namespace CE
 		LOG(EVENTS, "Member Listener Works! {}", e.someString);
 	}
 
-	void EventSystem::OnDrawGUI()
+	void EventSystemDebug::OnDrawGUI()
 	{
+		if (m_owner == nullptr) { return; }
+
 		ImGui::Begin("Event System Debug");
 		if (ImGui::CollapsingHeader("Queues", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			for (auto [typeIndex, queue] : m_queues)
+			for (auto [typeIndex, queue] : m_owner->m_queues)
 			{
 				std::string queueName = std::string(queue->GetQueueName());
 				ImGui::Bullet();

@@ -74,11 +74,14 @@ namespace CE
 
 		LOG(LOGGER, "Startup");
 
+#ifdef CDEBUG
+		m_debugger = new LogSystemDebug(this);
 		std::shared_ptr<DebugSystem> DS = m_engine->GetSystem<DebugSystem>();
 		if (DS)
 		{
-			DS->Subscribe(this);
+			DS->Subscribe(m_debugger);
 		}
+#endif
 	}
 
 	void LogSystem::Shutdown()
@@ -86,6 +89,10 @@ namespace CE
 		LOG(LOGGER, "Shutdown");
 
 		g_log = nullptr;
+
+#ifdef CDEBUG
+		delete m_debugger;
+#endif
 	}
 
 	constexpr static ImVec4 GetWarningColor(LogLevel level)
@@ -136,15 +143,17 @@ namespace CE
 			ImGui::EndCombo();
 		}
 	}
-
-	void LogSystem::OnDrawGUI()
+	
+	void LogSystemDebug::OnDrawGUI()
 	{
 		static bool s_bLogInfo = true;
 		static bool s_bLogWarning = true;
 		static bool s_bLogError = true;
-		
+	
 		static std::bitset<static_cast<size_t>(LogChannel::MAX)> selectedChannels = {17};
-		
+	
+		if (m_owner == nullptr) { return; }
+
 		ImGui::SetNextWindowSize(ImVec2(800.f, 400.f), ImGuiCond_Appearing);
 		ImGui::Begin("Log");
 
@@ -183,9 +192,9 @@ namespace CE
 		if (ImGui::BeginCombo("##dropdown", "Settings"))
 		{			
 			ImGui::SeparatorText("Tag Settings");
-			ImGui::Checkbox("Error Level Tag", &m_bShowLevel);
-			ImGui::Checkbox("Channel Tag", &m_bShowChannel);
-			ImGui::Checkbox("Timestamp Tag", &m_bShowTimestamp);
+			ImGui::Checkbox("Error Level Tag", &(m_owner->m_bShowLevel));
+			ImGui::Checkbox("Channel Tag", &(m_owner->m_bShowChannel));
+			ImGui::Checkbox("Timestamp Tag", &(m_owner->m_bShowTimestamp));
 			ImGui::SeparatorText("Other");
 			ImGui::Checkbox("Debug Break", &CE::Globals::bDebugBreakOnError);
 			ImGui::EndCombo();
@@ -194,7 +203,7 @@ namespace CE
 		ImGui::SeparatorText("Log");
 		ImGui::BeginChild("Log", ImVec2(0,0), true);
 
-		for (LogElement elem : m_log)
+		for (LogSystem::LogElement& elem : m_owner->m_log)
 		{
 			bool bMatchLevel = (elem.level == LogLevel::INFO && s_bLogInfo) ||
 				(elem.level == LogLevel::WARNING && s_bLogWarning) ||

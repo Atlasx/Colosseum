@@ -141,25 +141,24 @@ namespace CE
 		std::string_view m_name;
 	};
 
-	class EventSystem final : public EngineSystem, IDebugGUISubscriber
+	class EventSystemDebug;
+
+	class EventSystem final : public EngineSystem
 	{
 	public:
-		EventSystem(Engine* engine) : EngineSystem(engine) {}
+		explicit EventSystem(Engine* engine);
 
 		/* EngineSystem Interface */
 	public:
-		virtual std::string Name() const override { return "Event System"; }
+		std::string Name() const override { return "Event System"; }
 	protected:
-		virtual void Startup() override;
-		virtual void Shutdown() override;
+		void Startup() override;
+		void Shutdown() override;
 		friend class Engine;
-		
 
-		/* DebugGUISubscriber Interface */
-	public:
-		virtual void OnDrawGUI() override;
-		virtual std::string_view GetDebugMenuName() { return "Events"; }
-
+#ifdef CDEBUG
+		friend class EventSystemDebug;
+#endif
 
 		/* Event System API */
 	public:
@@ -251,5 +250,19 @@ namespace CE
 
 		std::unordered_map<std::type_index, IEventQueue*> m_queues;
 		
+	};
+
+	class EventSystemDebug : public IDebugGUI
+	{
+	public:
+		EventSystemDebug(EventSystem* owner) : m_owner(owner) {}
+
+	private:
+		EventSystem* m_owner;
+
+		/* IDebugGUISubscriber Interface */
+	public:
+		void OnDrawGUI() override;
+		std::string_view GetDebugMenuName() override { return "Events"; }
 	};
 }

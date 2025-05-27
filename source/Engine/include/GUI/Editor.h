@@ -40,12 +40,12 @@ namespace CE
 
 		/* Debug System */
 	public:
-		void Subscribe(IDebugGUISubscriber* sub);
+		void Subscribe(IDebugGUI* sub);
 	private:
 		struct DebugView
 		{
 			bool showDebug;
-			IDebugGUISubscriber* subscriber;
+			IDebugGUI* subscriber;
 
 			DebugView() : showDebug(true), subscriber(nullptr) {}
 		};

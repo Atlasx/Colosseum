@@ -59,11 +59,13 @@ namespace CE
 		MAX
 	};
 
+	class LogSystemDebug;
+
 	// Chicken and egg here
 	class LogSystem;
 	extern LogSystem* g_log;
 	
-	class LogSystem final : public EngineSystem, private IDebugGUISubscriber
+	class LogSystem final : public EngineSystem
 	{
 	public:
 		LogSystem(Engine* engine) :
@@ -80,10 +82,9 @@ namespace CE
 		virtual void Startup() override;
 		virtual void Shutdown() override;
 
-
-		/* IDebugGUISubscriber Interface */
-		virtual void OnDrawGUI() override;
-		virtual std::string_view GetDebugMenuName() { return "Debug Log"; }
+#ifdef CDEBUG
+		friend class LogSystemDebug;
+#endif
 
 		/* Log System */
 	public:
@@ -178,6 +179,17 @@ namespace CE
 		}
 	}
 
+	class LogSystemDebug : public IDebugGUI
+	{
+		LogSystem* m_owner;
+	public:
+		LogSystemDebug(LogSystem* owner) : m_owner(owner) {}
+		
 
+		/* IDebugGUISubscriber Interface */
+	public:
+		void OnDrawGUI() override;
+		std::string_view GetDebugMenuName() override { return "Debug Log"; }
+	};
 
 }
