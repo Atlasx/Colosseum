@@ -1,21 +1,23 @@
 #pragma once
+#ifdef CDEBUG
 
 #include "GUI/DebugGUI.h"
-#include "Systems/EventSystem.h"
 
 namespace CE
 {
+	class EventSystem;
+
 	class EventSystemDebug : public IDebugGUI
 	{
-	public:
-		EventSystemDebug(EventSystem* owner) : m_owner(owner) {}
-
-	private:
 		EventSystem* m_owner;
 
-		/* IDebugGUISubscriber Interface */
 	public:
+		EventSystemDebug(EventSystem* owner) : m_owner(owner) {};
+		~EventSystemDebug() override = default;
+
+		/* IDebugGUISubscriber Interface */
 		void OnDrawGUI() override;
 		std::string_view GetDebugMenuName() override { return "Events"; }
 	};
 }
+#endif

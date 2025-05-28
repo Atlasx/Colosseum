@@ -2,7 +2,6 @@
 
 #include "Systems/EngineSystem.h"
 #include "Globals.h"
-#include "GUI/DebugGUI.h"
 
 #include "stdlibincl.h"
 
@@ -59,7 +58,9 @@ namespace CE
 		MAX
 	};
 
+#ifdef CDEBUG
 	class LogSystemDebug;
+#endif
 
 	// Chicken and egg here
 	class LogSystem;
@@ -178,18 +179,5 @@ namespace CE
 		default: return "";
 		}
 	}
-
-	class LogSystemDebug : public IDebugGUI
-	{
-		LogSystem* m_owner;
-	public:
-		LogSystemDebug(LogSystem* owner) : m_owner(owner) {}
-		
-
-		/* IDebugGUISubscriber Interface */
-	public:
-		void OnDrawGUI() override;
-		std::string_view GetDebugMenuName() override { return "Debug Log"; }
-	};
 
 }

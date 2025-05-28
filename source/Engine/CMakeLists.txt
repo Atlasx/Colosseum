@@ -28,6 +28,7 @@ set(SOURCES
 	# Debug
 	src/Systems/Debug/EventSystemDebug.cpp
 	src/Systems/Debug/InputSystemDebug.cpp
+	src/Systems/Debug/LogSystemDebug.cpp
 )
 
 set(INCLUDES
@@ -60,6 +61,7 @@ set(INCLUDES
 	# Debug
 	include/Systems/Debug/EventSystemDebug.h
 	include/Systems/Debug/InputSystemDebug.h
+	include/Systems/Debug/LogSystemDebug.h
 )
 
 # Setup source group to mimic file structure

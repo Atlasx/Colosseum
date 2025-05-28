@@ -1,5 +1,7 @@
 #include "Systems/Debug/EventSystemDebug.h"
 
+#include "Systems/EventSystem.h"
+
 #include "imgui.h"
 #include "stdlibincl.h"
 
