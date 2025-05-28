@@ -1,5 +1,6 @@
 #include "GUI/Editor.h"
 
+#include "imgui.h"
 #include "Engine.h"
 #include "Systems/RenderSystem.h"
 
