@@ -141,7 +141,9 @@ namespace CE
 		std::string_view m_name;
 	};
 
+#ifdef CDEBUG
 	class EventSystemDebug;
+#endif
 
 	class EventSystem final : public EngineSystem
 	{

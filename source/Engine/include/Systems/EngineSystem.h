@@ -2,13 +2,13 @@
 
 #include "stdlibincl.h"
 
-#ifdef CDEBUG
-#include "GUI/DebugGUISubscriber.h"
-#endif
-
 namespace CE
 {
 	class Engine;
+	
+#ifdef CDEBUG
+	class IDebugGUI;
+#endif
 
 	class EngineSystem
 	{

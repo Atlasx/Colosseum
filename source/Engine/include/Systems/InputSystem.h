@@ -7,9 +7,6 @@
 #include "Input/InputAction.h"
 
 #include "ObjectPool.h"
-#include "GUI/DebugGUISubscriber.h"
-
-#include "imgui.h"
 
 #include "stdlibincl.h"
 
@@ -17,9 +14,6 @@ class GLFWwindow;
 
 namespace CE
 {	
-
-	class InputSystemDebug;
-
 	/*
 	* MISC NOTES
 	* 
@@ -62,6 +56,10 @@ namespace CE
 	*	once per frame, at a specific time in the update cycle.
 	* 
 	*/
+
+#ifdef CDEBUG
+	class InputSystemDebug;
+#endif
 
 	class InputSystem;
 	extern InputSystem* g_input;
@@ -172,16 +170,5 @@ namespace CE
 		{
 			g_input->OnWindowClose(window);
 		}
-	};
-
-	class InputSystemDebug : public IDebugGUI
-	{
-		InputSystem* m_owner;
-
-	public:
-		InputSystemDebug(InputSystem* owner) : m_owner(owner) {}
-
-		void OnDrawGUI() override;
-		std::string_view GetDebugMenuName() override { return "Input"; }
 	};
 }

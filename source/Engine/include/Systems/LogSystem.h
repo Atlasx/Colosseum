@@ -2,7 +2,7 @@
 
 #include "Systems/EngineSystem.h"
 #include "Globals.h"
-#include "GUI/DebugGUISubscriber.h"
+#include "GUI/DebugGUI.h"
 
 #include "stdlibincl.h"
 

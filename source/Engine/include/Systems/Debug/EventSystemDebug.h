@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GUI/DebugGUISubscriber.h"
+#include "GUI/DebugGUI.h"
 #include "Systems/EventSystem.h"
 
 namespace CE

@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <functional>
 
-#include "DebugGUISubscriber.h"
+#include "DebugGUI.h"
 #include "Systems/EngineSystem.h"
 #include "Systems/RenderSystem.h"
 

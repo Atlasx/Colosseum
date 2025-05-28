@@ -2,7 +2,7 @@
 
 #include "Systems/EngineSystem.h"
 
-#include "GUI/DebugGUISubscriber.h"
+#include "GUI/DebugGUI.h"
 #include "Handle.h"
 #include "ObjectPool.h"
 #include "Systems/World/EntitySubsystem.h"

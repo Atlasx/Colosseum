@@ -25,7 +25,9 @@ set(SOURCES
 	# Editor
 	src/GUI/Editor.cpp
 
+	# Debug
 	src/Systems/Debug/EventSystemDebug.cpp
+	src/Systems/Debug/InputSystemDebug.cpp
 )
 
 set(INCLUDES
@@ -52,11 +54,12 @@ set(INCLUDES
 
 	# Editor
 	include/GUI/Editor.h
-	include/GUI/DebugGUISubscriber.h
+	include/GUI/DebugGUI.h
 	include/GUI/FrameCounter.h
 
-	
+	# Debug
 	include/Systems/Debug/EventSystemDebug.h
+	include/Systems/Debug/InputSystemDebug.h
 )
 
 # Setup source group to mimic file structure
