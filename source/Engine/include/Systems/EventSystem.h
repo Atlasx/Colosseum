@@ -35,7 +35,7 @@
 
 #include "ObjectPool.h"
 #include "stdlibincl.h"
-#include "GUI/DebugGUISubscriber.h"
+
 
 namespace CE
 {
@@ -250,19 +250,5 @@ namespace CE
 
 		std::unordered_map<std::type_index, IEventQueue*> m_queues;
 		
-	};
-
-	class EventSystemDebug : public IDebugGUI
-	{
-	public:
-		EventSystemDebug(EventSystem* owner) : m_owner(owner) {}
-
-	private:
-		EventSystem* m_owner;
-
-		/* IDebugGUISubscriber Interface */
-	public:
-		void OnDrawGUI() override;
-		std::string_view GetDebugMenuName() override { return "Events"; }
 	};
 }
