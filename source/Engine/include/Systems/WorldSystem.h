@@ -2,7 +2,6 @@
 
 #include "Systems/EngineSystem.h"
 
-#include "GUI/DebugGUI.h"
 #include "Handle.h"
 #include "ObjectPool.h"
 #include "Systems/World/EntitySubsystem.h"
@@ -84,16 +83,5 @@ namespace CE
 
 		void CreateTestComponents(std::size_t amount);
 		void OnAddTestComponents();
-	};
-
-	class WorldSystemDebug : public IDebugGUI
-	{
-		WorldSystem* m_owner;
-
-	public:
-		WorldSystemDebug(WorldSystem* owner) : m_owner(owner) {}
-
-		void OnDrawGUI() override;
-		std::string_view GetDebugMenuName() override { return "World"; }
 	};
 }

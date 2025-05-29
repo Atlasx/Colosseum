@@ -5,7 +5,8 @@
 #include "stdlibincl.h"
 #include "Systems/LogSystem.h"
 #include "Systems/InputSystem.h"
-#include "GUI/Editor.h"
+
+#include "Systems/Debug/WorldSystemDebug.h"
 
 namespace CE
 {
@@ -86,19 +87,4 @@ namespace CE
 	{
 		CreateTestComponents(100);
 	}
-
-#ifdef CDEBUG
-	void WorldSystemDebug::OnDrawGUI()
-	{
-		if (m_owner == nullptr) { return; }
-
-		ImGui::Begin("World System Debug");
-
-		m_owner->m_components.DrawComponentPools();
-
-		m_owner->m_entities.DrawEntityPool();
-
-		ImGui::End();
-	}
-#endif
 }
