@@ -29,6 +29,7 @@ set(SOURCES
 	src/Systems/Debug/EventSystemDebug.cpp
 	src/Systems/Debug/InputSystemDebug.cpp
 	src/Systems/Debug/LogSystemDebug.cpp
+	src/Systems/Debug/WorldSystemDebug.cpp
 )
 
 set(INCLUDES
@@ -62,6 +63,7 @@ set(INCLUDES
 	include/Systems/Debug/EventSystemDebug.h
 	include/Systems/Debug/InputSystemDebug.h
 	include/Systems/Debug/LogSystemDebug.h
+	include/Systems/Debug/WorldSystemDebug.h
 )
 
 # Setup source group to mimic file structure
