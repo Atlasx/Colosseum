@@ -250,6 +250,7 @@ namespace CE
 	{
 		// caching IS pointer?
 		GetSystem<InputSystem>()->PollInput();
+		GetSystem<InputSystem>()->ProcessActions();
 	}
 
 	void Engine::ShutdownSystems()

@@ -87,6 +87,7 @@ namespace CE
 		/* Input System API */
 	public:
 		void PollInput();
+		void ProcessActions();
 		void UpdateActions();
 		
 		template <typename T, typename... Args>

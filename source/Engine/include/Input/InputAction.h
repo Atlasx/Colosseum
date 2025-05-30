@@ -13,32 +13,38 @@ namespace CE
 
 		virtual ~InputAction() = default;
 
-		void AddKeyBind(KeyType key) { keyBinds.push_back(key); }
-		void AddAxisBind(AxisType axis) { axisBinds.push_back(axis); }
+		void AddKeyBind(KeyType key) { m_keyBinds.push_back(key); }
+		void AddAxisBind(AxisType axis) { m_axisBinds.push_back(axis); }
 
 		bool IsKeyBound(KeyType key) const
 		{
-			return std::find(keyBinds.begin(), keyBinds.end(), key) != keyBinds.end();
+			return std::find(m_keyBinds.begin(), m_keyBinds.end(), key) != m_keyBinds.end();
 		}
 
 		bool IsAxisBound(AxisType axis) const
 		{
-			return std::find(axisBinds.begin(), axisBinds.end(), axis) != axisBinds.end();
+			return std::find(m_axisBinds.begin(), m_axisBinds.end(), axis) != m_axisBinds.end();
 		}
 
 		KeyType GetBinding() const
 		{
-			return keyBinds[0];
+			return m_keyBinds[0];
 		}
 
 		virtual void ProcessEvent(const InputEvent& event) = 0;
 		virtual void Update(float deltaTime) = 0;
-		virtual void Trigger() {};
+		virtual void Trigger()
+		{
+			m_triggered = false;
+			if (m_singleUse) { m_ready = false; }
+		};
 
 	protected:
-		std::vector<KeyType> keyBinds;
-		std::vector<AxisType> axisBinds;
-		bool triggered = false;
+		std::vector<KeyType> m_keyBinds;
+		std::vector<AxisType> m_axisBinds;
+		bool m_triggered = false;
+		bool m_singleUse = false;
+		bool m_ready = true;
 	};
 
 	class PressedAction : public InputAction
@@ -51,26 +57,26 @@ namespace CE
 
 		void ProcessEvent(const InputEvent& event) override
 		{
+			if (m_ready == false) { return; }
+
 			if (event.GetKey() && IsKeyBound(event.GetKey()->key) && event.GetKey()->state == KeyState::PRESSED)
 			{
-				triggered = true;
+				m_triggered = true;
 			}
 		}
 
 		void Update(float deltaTime) override
 		{
-			if (triggered)
+			if (m_triggered)
 			{
-				triggered = false;
-				if (m_callback)
-				{
-					m_callback();
-				}
+				if (m_singleUse) { m_ready = false; }
+				if (m_callback) { Trigger(); }
 			}
 		}
 
 		void Trigger() override
 		{
+			InputAction::Trigger();
 			m_callback();
 		}
 
@@ -81,11 +87,15 @@ namespace CE
 	class HoldAction : public InputAction
 	{
 	public:
-		HoldAction(Callback cb, float holdThreshold = 0.f)
-			: m_callback(std::move(cb)), m_threshold(holdThreshold) {}
+		HoldAction(KeyType binding, float holdThreshold, Callback cb) : m_callback(std::move(cb)), m_threshold(holdThreshold)
+		{
+			AddKeyBind(binding);
+		}
 
 		void ProcessEvent(const InputEvent& event) override
 		{
+			if (m_ready == false) { return; }
+
 			if (event.GetKey() && IsKeyBound(event.GetKey()->key))
 			{
 				if (event.GetKey()->state == KeyState::PRESSED)
@@ -108,14 +118,17 @@ namespace CE
 				m_holdTime += deltaTime;
 				if (m_holdTime >= m_threshold)
 				{
-					m_callback();
+					Trigger();
 				}
 			}
 		}
 
 		void Trigger() override
 		{
+			InputAction::Trigger();
 			m_callback();
+			m_holdTime = 0.f;
+			m_bHolding = false;
 		}
 
 	private:
@@ -142,11 +155,13 @@ namespace CE
 
 		void AddAxisBind(AxisType axis)
 		{
-			axisBinds.push_back(axis);
+			m_axisBinds.push_back(axis);
 		}
 
 		void ProcessEvent(const InputEvent& event) override
 		{
+			if (m_ready == false) { return; }
+
 			// Handle digital key input
 			if (event.GetKey()) {
 				KeyType key = event.GetKey()->key;

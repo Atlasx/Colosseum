@@ -51,6 +51,10 @@ namespace CE
 		IS->RegisterAction<PressedAction>("Event System Hook", KeyType::P, []() {
 			LOG_INFO(INPUT, "Successfully fired action callback");
 		});
+
+		IS->RegisterAction<HoldAction>("Hold Action Test", KeyType::H, 10.f, []() {
+			LOG_INFO(INPUT, "Fired Hold Action");
+			});
 	}
 
 	void InputSystem::Shutdown()
@@ -125,7 +129,7 @@ namespace CE
 	}
 
 
-	void InputSystem::UpdateActions()
+	void InputSystem::ProcessActions()
 	{
 		// Flush Event Queue
 		while (!m_events.empty())
@@ -135,6 +139,14 @@ namespace CE
 				action->ProcessEvent(m_events.front());
 			}
 			m_events.pop();
+		}
+	}
+
+	void InputSystem::UpdateActions()
+	{
+		for (auto& [handle, action] : m_actionPool)
+		{
+			action->Update(0.16f);
 		}
 	}
 
@@ -175,9 +187,6 @@ namespace CE
 		const KeyState keyS = InputUtilities::GLFWActionToKeyState(action);
 
 		UpdateKeyState(keyT, keyS);
-
-		LOG_INFO(INPUT, "Key Pressed!");
-		//LOG_INFO(INPUT, "Key Pressed! {}", InputUtilities::GetKeyName(keyT));
 	}
 
 	void InputSystem::OnMouseButton(GLFWwindow* window, int button, int action, int mods)

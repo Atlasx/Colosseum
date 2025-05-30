@@ -49,6 +49,8 @@ namespace CE
 		// GetSystem<T>
 		// 
 		// Allows for a "singleton-like" design where anyone can query the engine's systems by type given an engine
+		// 
+		// TODO this is bad design. need to have zero lookup cost for what could just be globals
 		//
 		template<IsSystem System>
 		std::shared_ptr<System> GetSystem()
