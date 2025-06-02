@@ -2,7 +2,10 @@
 
 #include "Systems/EngineSystem.h"
 
+#include "Systems/LogSystem.h"
 #include "stdlibincl.h"
+
+#include "Mesh.h"
 
 namespace CE
 {
@@ -22,9 +25,9 @@ namespace CE
 	template<>
 	struct IsResourceType<Texture> : std::true_type {};
 
-	class Mesh {};
+	class rl::Mesh;
 	template <>
-	struct IsResourceType<Mesh> : std::true_type {};
+	struct IsResourceType<rl::Mesh> : std::true_type {};
 
 
 	template<ResourceTypeConcept ResourceType>
@@ -75,13 +78,13 @@ namespace CE
 		bool RequestResource(const std::filesystem::path& resourcePath, std::function<void(std::shared_ptr<ResourceType>)> callback)
 		{
 			if (!IsValidResourcePath(resourcePath)) {
-				// TODO Logging
+				LOG_ERROR(LogChannel::RESOURCES, "Failed loading resource. %s", resourcePath.string());
 				return false;
 			}
 
 			ResourceRequest req(resourcePath, callback);
 			m_requests.push([this, req]() {
-				// TODO Logging
+				LOG_INFO(LogChannel::RESOURCES, "Processing Resource Request");
 				this->ProcessRequest<ResourceType>(req);
 			});
 			return true;
@@ -106,7 +109,6 @@ namespace CE
 	public:
 		/* EngineSystem Interface */
 		virtual std::string Name() const override { return "Resource System"; }
-		//virtual void DrawGUI() override { return; }
 
 		ResourceSystem(Engine* engine) : EngineSystem(engine) {};
 	
@@ -115,7 +117,7 @@ namespace CE
 #endif
 
 	private:
-		virtual void Startup() override;
-		virtual void Shutdown() override;
+		void Startup() override;
+		void Shutdown() override;
 	};
 }

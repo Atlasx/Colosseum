@@ -13,6 +13,7 @@
 
 #include "stdlibincl.h"
 #include "Globals.h"
+#include "Mesh.h"
 
 struct GLFWwindow;
 class FrameCounter;

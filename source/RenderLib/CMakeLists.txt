@@ -1,7 +1,23 @@
+
+
 set(SOURCES
 	include/Shader.h
 	src/Shader.cpp
+
+	src/Mesh.cpp
 )
+
+set(INCLUDES
+
+	include/Mesh.h
+)
+
+# Setup source group to mimic file structure
+foreach(source IN LISTS SOURCES INCLUDES)
+    get_filename_component(source_path "${source}" PATH)
+    string(REPLACE "/" "\\" source_path_msvc "${source_path}")
+    source_group("${source_path_msvc}" FILES "${source}")
+endforeach()
 
 add_library(RenderLib STATIC ${SOURCES})
 
@@ -12,7 +28,10 @@ target_link_libraries(RenderLib PUBLIC
 	glad
 )
 
-target_include_directories(RenderLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(RenderLib PUBLIC
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_SOURCE_DIR}/source/vendor/glm
+)
 
 file(GLOB_RECURSE SHADER_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/../../assets/shaders/*.vert"

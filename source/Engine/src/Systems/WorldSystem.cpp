@@ -5,6 +5,8 @@
 #include "stdlibincl.h"
 #include "Systems/LogSystem.h"
 #include "Systems/InputSystem.h"
+#include "Components/RenderComponent.h"
+#include "Components/TransformComponent.h"
 
 #include "Systems/Debug/WorldSystemDebug.h"
 

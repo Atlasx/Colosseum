@@ -16,43 +16,6 @@ namespace CE
 		ComponentHandle m_handle;
 	};
 
-	class TransformComponent : public Component
-	{
-	public:
-		TransformComponent() : m_transform(glm::mat4(1.0)) {}
-
-		glm::mat4 m_transform;
-
-		void SetPosition(glm::vec3 pos)
-		{
-			m_transform[3] = glm::vec4(pos, 1.f);
-		}
-
-		glm::vec3 GetPosition()
-		{
-			return m_transform[3];
-		}
-
-		glm::vec3 GetScale()
-		{
-			glm::vec3 scale;
-			scale.x = glm::length(glm::vec3(m_transform[0]));
-			scale.y = glm::length(glm::vec3(m_transform[1]));
-			scale.z = glm::length(glm::vec3(m_transform[2]));
-			return scale;
-		}
-
-	};
-
-	class RenderComponent : public Component
-	{
-	public:
-		RenderComponent() :woof(0) {}
-
-		// Rendering Data here
-		int woof;
-	};
-
 	struct PoolInfo
 	{
 		std::size_t currentCount;

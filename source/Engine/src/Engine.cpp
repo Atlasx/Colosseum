@@ -189,6 +189,9 @@ namespace CE
 		}
 
 		GetSystem<EventSystem>()->TestEventSystem();
+
+		//auto RS = GetSystem<ResourceSystem>();
+		//g_testCube = RS->LoadResource<rl::Mesh>("C:/Users/cjdou/source/repos/colosseum/assets/meshes/cube.obj");
 	}
 #endif
 
@@ -201,6 +204,8 @@ namespace CE
 			Update();
 			Render();
 			ProcessInput();
+
+			
 
 			double excess = m_frameCounter->FrameEnd();
 			if (excess > 0)

@@ -19,6 +19,9 @@ set(SOURCES
 	src/Systems/World/EntitySubsystem.cpp
 	src/Systems/World/ComponentSubsystem.cpp
 
+	# Components
+	#src/Components/RenderComponent.cpp
+
 	# Input
 	src/Input/InputAction.cpp
 
@@ -49,6 +52,9 @@ set(INCLUDES
 	include/Systems/WorldSystem.h
 	include/Systems/World/EntitySubsystem.h
 	include/Systems/World/ComponentSubsystem.h
+
+	# Components
+	include/Components/RenderComponent.h
 
 	# Input
 	include/Input/Input.h
@@ -83,6 +89,7 @@ target_link_libraries(Engine PUBLIC
 	glad
 	ImGui
 	glfw
+	RenderLib
 )
 
 target_include_directories(Engine PRIVATE ${CMAKE_SOURCE_DIR}/vendor/imgui)
